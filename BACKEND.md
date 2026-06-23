@@ -62,8 +62,15 @@ Supabase necesita una credencial de Google. Pasos (te guío en vivo cuando hagam
 
 ---
 
-### 3) Código por correo (OTP)  → no necesitas casi nada
-Supabase Auth envía el código/enlace por email **automáticamente** (sirve para empezar).
+### 3) Código por correo (OTP)  → 1 ajuste de plantilla
+La app pide un **código de 6 dígitos**. Por defecto Supabase envía un *enlace mágico*, así que hay
+que decirle que mande el código:
+- Supabase → **Authentication → Email Templates → "Magic Link"** → en el cuerpo del correo usa
+  `{{ .Token }}` (el código de 6 dígitos). Ejemplo: *"Tu código de Origen es: **{{ .Token }}**"*.
+- En **Authentication → Providers → Email**: deja activado *Enable Email provider* y
+  *Allow new users to sign up*.
+
+Supabase envía el correo **automáticamente** (sirve para empezar; con límite de unos pocos por hora).
 - Para producción con muchos correos, conviene un SMTP propio (Resend o SendGrid, ambos con plan gratis).
 - ➡️ Acción ahora: **ninguna**. Más adelante, si quieres, creas una cuenta en **https://resend.com**
   y me das su **API key** *(SECRETO → va en Supabase)*.

@@ -22,24 +22,19 @@ Para instalarla como app en el celular necesita una **URL https**. Elige UNA opc
 
 ---
 
-## Opción B · GitHub Pages (URL permanente bajo tu cuenta `kunabox14`)
+## Opción B · GitHub Pages (URL permanente bajo tu cuenta `kunabox14`)  ✅ ya subido
 
-Ya dejé el proyecto listo como repositorio git (con un commit inicial). Solo falta subirlo.
+El código **ya está subido** a tu repo: https://github.com/kunabox14/origen_app (rama `main`).
+Solo falta activar Pages (1 clic):
 
-1. En tu PC, entra a **https://github.com/new** y crea un repo **público** llamado `origen-app`
-   (no marques "Add README").
-2. En la terminal, dentro de `C:\Users\HP\Desktop\ORIGEN APP`, ejecuta:
-   ```
-   git remote add origin https://github.com/kunabox14/origen-app.git
-   git push -u origin main
-   ```
-   (Te pedirá iniciar sesión en GitHub la primera vez.)
-3. En GitHub: repo → **Settings → Pages** → en "Branch" elige **main** y carpeta **/(root)** → **Save**.
+1. Entra a **https://github.com/kunabox14/origen_app/settings/pages**
+2. En **Build and deployment → Source** elige **Deploy from a branch**.
+3. En **Branch** elige **main** y carpeta **/ (root)** → **Save**.
 4. En 1–2 minutos tu app estará en:
-   **https://kunabox14.github.io/origen-app/**
-   (la app de repartidor en `…/origen-app/repartidor.html`)
+   **https://kunabox14.github.io/origen_app/**
+   (la app de repartidor en `…/origen_app/repartidor.html`)
 
-**Para actualizar después:** `git add -A && git commit -m "update" && git push`
+**Para actualizar después** (desde la carpeta del proyecto): `git add -A && git commit -m "update" && git push`
 
 ---
 

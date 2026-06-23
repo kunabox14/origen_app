@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Origen · Alimentación saludable recurrente</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+<!-- PWA: instalable en el celular -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A130D">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ORIGEN">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
+
+<!-- Fuentes oficiales: EB Garamond (titulares) + Hanken Grotesk (cuerpo) -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+<!-- Tailwind + sistema de diseño Organic Vitality -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "secondary-fixed-dim": "#7cdb81", "outline": "#737874", "deep-forest": "#0A130D",
+          "tertiary": "#040800", "surface-container": "#f1eee7", "earth-cream": "#F5F2EB",
+          "tertiary-fixed": "#c5f264", "tertiary-fixed-dim": "#a9d54a", "on-surface-variant": "#434844",
+          "leaf-green": "#5EBC66", "error": "#ba1a1a", "on-surface": "#1c1c18",
+          "on-tertiary-fixed": "#141f00", "surface-dim": "#dcdad3", "outline-variant": "#c3c8c2",
+          "inverse-on-surface": "#f3f0e9", "on-secondary-fixed": "#002106", "on-error-container": "#93000a",
+          "surface": "#fcf9f2", "surface-container-high": "#ebe8e1", "primary-fixed": "#d6e7da",
+          "on-tertiary": "#ffffff", "on-primary": "#ffffff", "on-primary-fixed": "#101e17",
+          "inverse-surface": "#31312c", "surface-container-highest": "#e5e2db", "surface-variant": "#e5e2db",
+          "secondary": "#006e24", "on-tertiary-container": "#6c9300", "surface-container-low": "#f6f3ec",
+          "surface-tint": "#536258", "error-container": "#ffdad6", "tertiary-container": "#172300",
+          "on-secondary": "#ffffff", "on-error": "#ffffff", "secondary-fixed": "#98f89b",
+          "on-background": "#1c1c18", "on-secondary-container": "#037327", "on-primary-fixed-variant": "#3b4a41",
+          "background": "#fcf9f2", "surface-container-lowest": "#ffffff", "inverse-primary": "#bacbbe",
+          "on-primary-container": "#7b8b7f", "on-secondary-fixed-variant": "#005319", "sprout-green": "#BBE85B",
+          "primary-container": "#14221a", "on-tertiary-fixed-variant": "#384e00", "primary": "#000804",
+          "surface-bright": "#fcf9f2", "secondary-container": "#95f598", "primary-fixed-dim": "#bacbbe"
+        },
+        borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+        spacing: { "margin-desktop": "40px", "base": "8px", "gutter": "24px", "margin-mobile": "16px", "container-max": "1200px" },
+        fontFamily: {
+          "headline-md": ["EB Garamond"], "label-sm": ["Hanken Grotesk"], "label-sm-mobile": ["Hanken Grotesk"],
+          "display-lg-mobile": ["EB Garamond"], "body-lg": ["Hanken Grotesk"], "label-md": ["Hanken Grotesk"],
+          "display-lg": ["EB Garamond"], "body-md": ["Hanken Grotesk"], "headline-sm": ["Hanken Grotesk"]
+        },
+        fontSize: {
+          "headline-md": ["32px", { "lineHeight": "40px", "fontWeight": "500" }],
+          "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+          "label-sm-mobile": ["11px", { "lineHeight": "14px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+          "display-lg-mobile": ["36px", { "lineHeight": "42px", "letterSpacing": "-0.01em", "fontWeight": "500" }],
+          "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+          "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+          "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "500" }],
+          "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+          "headline-sm": ["24px", { "lineHeight": "32px", "fontWeight": "600" }]
+        }
+      }
+    }
+  }
+</script>
+
+<style>
+  body { background-color: #F5F2EB; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .custom-shadow { box-shadow: 0 4px 20px 0 rgba(20, 34, 26, 0.05); }
+
+  /* Transiciones suaves y premium entre pantallas.
+     :not(.active) gana en especificidad a las utilidades flex/grid de Tailwind,
+     y al activarse se respeta el display natural (flex/block) de cada pantalla. */
+  .screen:not(.active) { display: none !important; }
+  .screen.active { animation: screenIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  @keyframes screenIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 1s ease-out forwards; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .vignette { background: radial-gradient(circle, rgba(245,242,235,0) 60%, rgba(245,242,235,0.8) 100%); }
+
+  /* Scanner */
+  .scanner-line { animation: scan 3s ease-in-out infinite; }
+  @keyframes scan { 0%,100% { top:0%; opacity:.2; } 50% { top:100%; opacity:1; } }
+  .pulse-slow { animation: pulse-slow 3s cubic-bezier(0.4,0,0.6,1) infinite; }
+  @keyframes pulse-slow { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.8; transform:scale(1.05);} }
+  .viewfinder-corner { width:40px; height:40px; border-color:#BBE85B; }
+
+  /* Confirmación */
+  @keyframes subtle-float { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-10px);} }
+  .animate-float { animation: subtle-float 4s ease-in-out infinite; }
+  .check-draw { stroke-dasharray:100; stroke-dashoffset:100; animation: draw 1s ease-out forwards; animation-delay:.4s; }
+  @keyframes draw { to { stroke-dashoffset:0; } }
+
+  /* Toast */
+  #toast { transition: opacity .35s ease, transform .35s ease; }
+
+  /* La app vive dentro de un "marco de teléfono" en pantallas anchas */
+  #phone { width: 100%; max-width: 440px; margin: 0 auto; position: relative; min-height: 100vh; min-height: 100dvh;
+           background: #F5F2EB; box-shadow: 0 30px 80px -20px rgba(10,19,13,0.25); }
+  @media (min-width: 480px) { #phone { min-height: 900px; margin: 24px auto; border-radius: 28px; overflow: hidden; } }
+</style>
+</head>
+
+<body class="font-body-md text-on-background">
+<div id="phone">
+
+<!-- ===================== WELCOME ===================== -->
+<section id="screen-welcome" class="screen min-h-screen flex flex-col items-center justify-between text-center" style="min-height:100dvh">
+  <header class="w-full h-16 flex justify-center items-center px-margin-mobile pt-10"></header>
+  <main class="flex-1 flex flex-col items-center justify-center w-full px-margin-mobile gap-10">
+    <div class="relative w-full max-w-xs aspect-square fade-in" style="animation-delay:.2s">
+      <div class="absolute inset-0 bg-leaf-green opacity-5 rounded-full blur-3xl -translate-y-4"></div>
+      <div class="relative z-10 w-full h-full rounded-[2.5rem] overflow-hidden shadow-sm border border-outline-variant/20">
+        <img class="w-full h-full object-cover" alt="Productos orgánicos Origen" onerror="imgFail(this)"
+             src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-ijd088YEn0r6Y0_j54AnOIbY01cyn5MqLzE48EbpvKZEdoF5WSH95avn3Af6R74fdwmhXT2jEOeTWqTb96e6CPeXFYR1Q2wF8FAxWh89KKyXwoK-T09OEUnqQQbN7rrm17j0FZFTSeKdrJ3H9L6Vf8r-rR0EsH2-e0oE1_QcqhSE2Cmidlt206TiAuJJyovGQ7LLTlxPGeIibn3HQuw_pFROcnyuoeOX8xcURpdNDqbaRCyhfkssiqQphe6uq-YQ3eZEhhBVoyI">
+        <div class="absolute inset-0 vignette pointer-events-none"></div>
+      </div>
+      <div class="absolute -bottom-4 -right-2 bg-sprout-green px-5 py-2.5 rounded-xl shadow-sm border border-leaf-green/10 flex items-center gap-2 rotate-2">
+        <span class="material-symbols-outlined text-deep-forest text-[20px]">verified</span>
+        <span class="font-label-md text-label-md text-deep-forest">100% Orgánico</span>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-5 fade-in" style="animation-delay:.4s">
+      <img src="assets/origen-logo.svg" alt="Origen" class="h-9 w-auto mx-auto mb-2">
+      <h2 class="font-display-lg text-display-lg-mobile text-primary leading-tight">
+        Comer mejor debería ser <span class="italic text-secondary">fácil.</span>
+      </h2>
+      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-sm mx-auto">
+        Llevamos la frescura desde el Origen a tu mesa, con la transparencia que tu salud merece.
+      </p>
+    </div>
+
+    <div class="flex flex-col gap-5 w-full max-w-xs fade-in" style="animation-delay:.6s">
+      <button data-nav="auth" class="group relative w-full bg-primary-container text-on-primary py-5 rounded-xl font-label-md text-label-md flex justify-center items-center gap-2 overflow-hidden hover:bg-deep-forest transition-all duration-300 active:scale-95">
+        <span class="relative z-10">Empezar</span>
+        <span class="material-symbols-outlined relative z-10 transition-transform group-hover:translate-x-1">arrow_forward</span>
+      </button>
+      <a data-nav="auth" class="cursor-pointer font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors underline underline-offset-8 decoration-outline-variant/30">
+        Ya tengo cuenta
+      </a>
+    </div>
+  </main>
+  <footer class="w-full py-8 flex flex-col items-center gap-4 fade-in" style="animation-delay:.8s">
+    <div class="flex gap-6 items-center opacity-40">
+      <div class="h-px w-12 bg-outline"></div>
+      <span class="font-label-sm text-label-sm tracking-widest uppercase">Garantía Origen</span>
+      <div class="h-px w-12 bg-outline"></div>
+    </div>
+  </footer>
+</section>
+
+<!-- ===================== REGISTER ===================== -->
+<section id="screen-register" class="screen min-h-screen" style="min-height:100dvh">
+  <main class="relative z-10 flex min-h-screen items-center justify-center px-margin-mobile py-12" style="min-height:100dvh">
+    <div class="w-full max-w-md">
+      <header class="w-full flex justify-center px-margin-mobile mb-10">
+        <img src="assets/origen-logo.svg" alt="Origen" class="h-8 w-auto object-contain">
+      </header>
+      <div class="bg-surface/80 backdrop-blur-md w-full p-8 rounded-xl border border-outline-variant/30 shadow-sm fade-in">
+        <div class="mb-8 flex items-center justify-between">
+          <div class="flex space-x-2 w-full max-w-[120px]">
+            <div class="h-1 flex-1 bg-leaf-green rounded-full"></div>
+            <div class="h-1 flex-1 bg-outline-variant rounded-full"></div>
+            <div class="h-1 flex-1 bg-outline-variant rounded-full"></div>
+          </div>
+          <span class="font-label-sm text-label-sm text-outline uppercase tracking-widest">Paso 1 de 3</span>
+        </div>
+        <div class="mb-8">
+          <h1 class="font-headline-md text-headline-md text-primary mb-2">Crea tu cuenta</h1>
+          <p class="font-body-md text-body-md text-on-surface-variant">Inicia tu viaje hacia una vida más saludable.</p>
+        </div>
+        <form class="space-y-6" onsubmit="return false;">
+          <div class="relative group">
+            <input class="peer block w-full px-4 py-4 text-on-surface bg-transparent border-outline-variant rounded-lg border focus:ring-0 focus:border-leaf-green transition-colors placeholder-transparent" id="r-nombre" placeholder=" " type="text">
+            <label class="absolute left-4 top-4 text-on-surface-variant transition-all duration-200 transform -translate-y-1 scale-75 origin-[0] bg-surface px-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-5 peer-focus:text-leaf-green" for="r-nombre">Nombre completo</label>
+          </div>
+          <div class="relative group">
+            <input class="peer block w-full px-4 py-4 text-on-surface bg-transparent border-outline-variant rounded-lg border focus:ring-0 focus:border-leaf-green transition-colors placeholder-transparent" id="r-email" placeholder=" " type="email">
+            <label class="absolute left-4 top-4 text-on-surface-variant transition-all duration-200 transform -translate-y-1 scale-75 origin-[0] bg-surface px-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-5 peer-focus:text-leaf-green" for="r-email">Correo electrónico</label>
+          </div>
+          <div class="relative group">
+            <input class="peer block w-full px-4 py-4 text-on-surface bg-transparent border-outline-variant rounded-lg border focus:ring-0 focus:border-leaf-green transition-colors placeholder-transparent" id="r-pass" placeholder=" " type="password">
+            <label class="absolute left-4 top-4 text-on-surface-variant transition-all duration-200 transform -translate-y-1 scale-75 origin-[0] bg-surface px-1 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-5 peer-focus:text-leaf-green" for="r-pass">Contraseña</label>
+          </div>
+          <div class="pt-2">
+            <button id="register-next" class="w-full bg-leaf-green hover:bg-secondary text-white font-label-md text-label-md py-4 rounded-full transition-all duration-300 transform hover:scale-[1.02] active:scale-95 shadow-md flex items-center justify-center gap-2">
+              <span>Siguiente</span><span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+          </div>
+          <div class="mt-6 flex items-start gap-3 opacity-80">
+            <span class="material-symbols-outlined text-leaf-green text-[20px] mt-0.5">verified_user</span>
+            <p class="font-label-sm text-label-sm text-on-surface-variant">Respetamos tu privacidad. Tus datos están cifrados y solo se utilizan para garantizar la trazabilidad de tus productos orgánicos.</p>
+          </div>
+        </form>
+        <div class="mt-8 text-center">
+          <p class="font-body-md text-body-md text-on-surface-variant">¿Ya tienes una cuenta?
+            <a data-nav="home" class="cursor-pointer text-secondary font-label-md hover:underline underline-offset-4 ml-1">Inicia sesión</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div id="register-overlay" class="fixed inset-0 bg-deep-forest/20 backdrop-blur-sm z-[100] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-500">
+    <div id="register-card" class="bg-surface p-10 rounded-2xl shadow-xl text-center max-w-sm mx-4 transform translate-y-8 transition-transform duration-500">
+      <div class="w-20 h-20 bg-secondary-container rounded-full flex items-center justify-center mx-auto mb-6">
+        <span class="material-symbols-outlined text-on-secondary-container text-4xl">check</span>
+      </div>
+      <h3 class="font-headline-sm text-headline-sm text-primary mb-2">¡Bienvenido a Origen!</h3>
+      <p class="text-on-surface-variant">Estamos preparando tu experiencia personalizada de alimentación saludable.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== AUTH (login / signup) ===================== -->
+<section id="screen-auth" class="screen flex flex-col items-center justify-center px-margin-mobile" style="min-height:100dvh">
+  <div class="w-full max-w-sm fade-in">
+    <img src="assets/origen-logo.svg" alt="Origen" class="h-9 w-auto mx-auto mb-8">
+    <h1 class="font-display-lg text-display-lg-mobile text-primary text-center leading-tight mb-2">Bienvenido</h1>
+    <p class="font-body-md text-on-surface-variant text-center mb-8">Inicia sesión o crea tu cuenta para empezar a comer mejor.</p>
+
+    <button data-google class="w-full bg-white border border-outline-variant text-on-surface font-label-md py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-surface-container-low transition-colors active:scale-[0.99]">
+      <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16 2 9.1 6.5 6.3 14.7z"/><path fill="#4CAF50" d="M24 46c5.5 0 10.5-2.1 14.3-5.6l-6.6-5.6C29.7 36.5 27 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.1 41.4 16 46 24 46z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.6c-.5.4 7.2-5.2 7.2-15.2 0-1.3-.1-2.5-.4-3.5z"/></svg>
+      Continuar con Google
+    </button>
+
+    <div class="flex items-center gap-4 my-6">
+      <div class="h-px flex-1 bg-outline-variant/50"></div>
+      <span class="font-label-sm text-on-surface-variant uppercase tracking-widest">o</span>
+      <div class="h-px flex-1 bg-outline-variant/50"></div>
+    </div>
+
+    <label class="font-label-sm text-on-surface-variant">Correo electrónico</label>
+    <input id="auth-email" type="email" placeholder="tucorreo@ejemplo.com" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+    <p id="auth-error" class="hidden text-error font-label-sm mt-2">Ingresa un correo válido.</p>
+    <button id="auth-email-continue" class="mt-4 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2">Continuar con correo <span class="material-symbols-outlined">arrow_forward</span></button>
+
+    <p class="text-center text-[11px] text-on-surface-variant/60 mt-8 px-4">Al continuar aceptas los Términos y la Política de Privacidad de Origen. Verificaremos tu identidad con un código enviado a tu correo.</p>
+  </div>
+</section>
+
+<!-- Modal: selector de cuenta Google (simulado) -->
+<div id="google-modal" class="hidden fixed inset-0 z-[130] flex items-center justify-center bg-deep-forest/40 backdrop-blur-sm px-6">
+  <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-xl">
+    <div class="p-6 border-b border-outline-variant/30">
+      <div class="flex items-center gap-2 mb-4">
+        <svg width="22" height="22" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16 2 9.1 6.5 6.3 14.7z"/><path fill="#4CAF50" d="M24 46c5.5 0 10.5-2.1 14.3-5.6l-6.6-5.6C29.7 36.5 27 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.1 41.4 16 46 24 46z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.6c-.5.4 7.2-5.2 7.2-15.2 0-1.3-.1-2.5-.4-3.5z"/></svg>
+        <span class="text-[#5f6368] text-sm">Iniciar sesión con Google</span>
+      </div>
+      <h2 class="text-[#202124] text-xl font-medium" style="font-family:Hanken Grotesk">Elige una cuenta</h2>
+      <p class="text-[#5f6368] text-sm">para continuar a <b>ORIGEN</b></p>
+    </div>
+    <div id="google-accounts" class="divide-y divide-outline-variant/20"></div>
+    <button data-gother class="w-full text-left px-6 py-4 flex items-center gap-4 hover:bg-surface-container-low transition-colors">
+      <span class="w-9 h-9 rounded-full border border-outline-variant flex items-center justify-center text-[#5f6368]"><span class="material-symbols-outlined text-[20px]">person</span></span>
+      <span class="text-[#3c4043]">Usar otra cuenta</span>
+    </button>
+    <div class="px-6 py-3 text-[11px] text-[#5f6368] bg-surface-container-low">Demo · selección simulada de cuenta Google.</div>
+  </div>
+</div>
+
+<!-- ===================== OTP (verificación por correo) ===================== -->
+<section id="screen-otp" class="screen flex flex-col items-center justify-center px-margin-mobile" style="min-height:100dvh">
+  <div class="w-full max-w-sm fade-in">
+    <button data-nav="auth" class="text-on-surface-variant flex items-center gap-1 mb-8 hover:text-secondary transition-colors"><span class="material-symbols-outlined">arrow_back</span> Volver</button>
+    <div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center mb-6"><span class="material-symbols-outlined text-on-secondary-container text-3xl">mark_email_read</span></div>
+    <h1 class="font-headline-md text-headline-md text-primary mb-2">Verifica tu identidad</h1>
+    <p class="font-body-md text-on-surface-variant mb-6">Enviamos un código de 6 dígitos a <b id="otp-email" class="text-primary"></b></p>
+
+    <div id="otp-demo" class="bg-sprout-green/20 border border-sprout-green/40 rounded-xl p-4 mb-6 flex items-center justify-between">
+      <div>
+        <p class="font-label-sm text-on-surface-variant uppercase tracking-wider">Código (demo)</p>
+        <p id="otp-demo-code" class="font-headline-sm text-headline-sm text-primary tracking-[0.3em]"></p>
+      </div>
+      <button id="otp-autofill" class="bg-secondary text-white font-label-sm px-3 py-2 rounded-lg active:scale-95 transition-transform">Usar código</button>
+    </div>
+
+    <input id="otp-input" inputmode="numeric" maxlength="6" placeholder="••••••" class="w-full h-16 text-center text-3xl tracking-[0.5em] font-semibold rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+    <p id="otp-error" class="hidden text-error font-label-sm mt-2">Código incorrecto. Inténtalo de nuevo.</p>
+    <button id="otp-verify" class="mt-5 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Verificar y entrar</button>
+    <button id="otp-resend" class="mt-4 w-full text-center font-label-md text-secondary hover:underline">Reenviar código</button>
+  </div>
+</section>
+
+<!-- ===================== HOME ===================== -->
+<section id="screen-home" class="screen pb-28">
+  <nav class="bg-background sticky top-0 w-full z-40 h-16 flex justify-between items-center px-margin-mobile border-b border-outline-variant/10">
+    <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
+    <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+    <button data-nav="basket" class="basket-btn relative text-secondary active:scale-95 transition-transform">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </nav>
+
+  <main class="px-margin-mobile space-y-8 pt-6">
+    <!-- Suscripción activa -->
+    <section>
+      <div class="relative overflow-hidden bg-primary-container rounded-xl p-6 text-on-primary shadow-sm group">
+        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-leaf-green opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+        <div class="relative z-10 space-y-4">
+          <div class="flex justify-between items-start">
+            <div>
+              <span id="home-sub-state" class="font-label-md text-label-md text-leaf-green uppercase tracking-wider">suscripción activa</span>
+              <h2 id="home-sub-next" class="font-headline-sm text-headline-sm mt-1">Próxima entrega: Viernes 24 de Junio</h2>
+            </div>
+            <span class="material-symbols-outlined text-leaf-green text-3xl">local_shipping</span>
+          </div>
+          <div class="pt-1">
+            <p class="font-label-sm text-label-sm text-leaf-green/80 uppercase tracking-wider mb-0.5">Tu canasta incluye</p>
+            <p id="home-sub-list" class="font-body-md text-on-primary-container leading-snug">—</p>
+          </div>
+          <div class="space-y-2 pt-2">
+            <div class="flex justify-between font-label-sm text-label-sm text-on-primary-container">
+              <span>Preparando tu pedido</span><span>80%</span>
+            </div>
+            <div class="w-full bg-outline/20 h-2 rounded-full overflow-hidden">
+              <div class="bg-leaf-green h-full w-[80%] rounded-full shadow-[0_0_8px_rgba(94,188,102,0.5)]"></div>
+            </div>
+          </div>
+          <div class="flex gap-4 pt-2">
+            <button data-nav="tracking" class="flex-1 bg-leaf-green text-primary-container font-label-md text-label-md py-3 rounded-lg hover:brightness-110 transition-all active:scale-[0.98]">Ver detalle</button>
+            <button data-nav="catalog" class="flex-1 border border-outline-variant text-on-primary font-label-md text-label-md py-3 rounded-lg hover:bg-white/5 transition-all active:scale-[0.98]">Actualizar pedido</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Métricas de impacto -->
+    <section class="grid grid-cols-2 gap-4">
+      <div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-2">
+        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mb-1">
+          <span class="material-symbols-outlined text-on-secondary-container text-xl">recycling</span>
+        </div>
+        <p class="font-headline-sm text-headline-sm text-secondary">12kg</p>
+        <p class="font-label-sm text-label-sm text-on-surface-variant">Plástico ahorrado</p>
+      </div>
+      <div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-2">
+        <div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center mb-1">
+          <span class="material-symbols-outlined text-on-tertiary-fixed text-xl">handshake</span>
+        </div>
+        <p class="font-headline-sm text-headline-sm text-primary">5</p>
+        <p class="font-label-sm text-label-sm text-on-surface-variant">Productores apoyados</p>
+      </div>
+    </section>
+
+    <!-- Recomendados -->
+    <section class="space-y-4">
+      <div class="flex justify-between items-end">
+        <h3 class="font-headline-sm text-headline-sm text-primary">Recomendados para ti</h3>
+        <a data-nav="catalog" class="cursor-pointer font-label-md text-label-md text-secondary hover:underline">Ver todo</a>
+      </div>
+      <div id="home-reco" class="flex overflow-x-auto no-scrollbar -mx-margin-mobile px-margin-mobile gap-gutter pb-4"></div>
+    </section>
+
+    <!-- Banner experiencia -->
+    <section class="bg-earth-cream rounded-xl p-8 flex flex-col items-center gap-6 border border-outline-variant/20 text-center">
+      <div class="flex-1 space-y-4">
+        <h3 class="font-headline-md text-headline-md text-primary leading-tight">Del campo a tu mesa, sin sobreprecio, ni escalas.</h3>
+        <p class="text-on-surface-variant font-body-md">Descubre la trazabilidad de cada producto escaneando su código QR único.</p>
+        <button data-nav="scanner" class="bg-primary text-on-primary px-6 py-3 rounded-full font-label-md hover:bg-secondary transition-colors">Probar Ahora</button>
+      </div>
+      <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-inner">
+        <span class="material-symbols-outlined text-5xl text-secondary">qr_code_2</span>
+      </div>
+    </section>
+
+    <!-- Acceso a planes / programación -->
+    <button data-nav="plans" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 flex items-center justify-between active:scale-[0.99] transition-transform">
+      <span class="flex items-center gap-3 text-primary"><span class="material-symbols-outlined text-secondary">event_repeat</span><span class="font-label-md">Planes y entregas programadas</span></span>
+      <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+    </button>
+
+    <!-- Cancelar suscripción (sección discreta al final) -->
+    <div class="pt-6 pb-2 text-center">
+      <button data-sub-cancel class="font-label-sm text-on-surface-variant/50 hover:text-error transition-colors underline underline-offset-4 decoration-outline-variant/40">Cancelar suscripción</button>
+    </div>
+  </main>
+</section>
+
+<!-- ===================== CATALOG ===================== -->
+<section id="screen-catalog" class="screen pb-28">
+  <nav class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
+    <div class="flex items-center gap-3">
+      <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
+      <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+    </div>
+    <button data-nav="basket" class="basket-btn relative text-secondary active:scale-95 transition-transform">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </nav>
+
+  <main class="pt-6 px-margin-mobile">
+    <header class="mb-8">
+      <div class="relative w-full mb-6 group">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors">search</span>
+        <input id="catalog-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar productos orgánicos..." type="text">
+      </div>
+      <div id="catalog-chips" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-margin-mobile px-margin-mobile"></div>
+    </header>
+    <section id="catalog-grid" class="grid grid-cols-2 gap-4"></section>
+  </main>
+</section>
+
+<!-- ===================== BASKET ===================== -->
+<section id="screen-basket" class="screen flex flex-col" style="min-height:100dvh">
+  <header class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
+    <div class="flex items-center gap-3">
+      <button data-nav="catalog" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+      <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+    </div>
+    <button class="basket-btn relative text-secondary">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </header>
+
+  <main class="flex-grow pt-6 pb-48 px-margin-mobile w-full">
+    <h1 class="font-headline-md text-headline-md text-primary mb-6">Tu canasta</h1>
+    <section id="basket-items" class="space-y-4 mb-10"></section>
+
+    <div id="basket-filled" class="hidden">
+      <section class="mb-8">
+        <div class="bg-secondary-container border border-on-secondary-fixed-variant/10 rounded-xl p-5 flex items-start gap-4">
+          <div class="bg-on-secondary-fixed-variant text-secondary-fixed rounded-full p-2 flex items-center justify-center">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">stars</span>
+          </div>
+          <div>
+            <h4 class="font-label-md text-label-md text-on-secondary-container uppercase tracking-wider">Beneficio Exclusivo</h4>
+            <p class="font-headline-sm text-headline-sm text-on-secondary-container">Ahorras <span id="basket-savings">Bs. 0</span> por ser suscriptor</p>
+            <p class="text-on-secondary-container/80 text-label-sm mt-1">Este descuento se aplica automáticamente a tu pedido actual.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-6 mb-10">
+        <h2 class="font-headline-sm text-headline-sm text-primary mb-6">Resumen del Pedido</h2>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md">Subtotal productos</span><span id="sum-subtotal" class="font-label-md">Bs. 0</span></div>
+          <div class="flex justify-between items-center text-secondary"><span class="font-body-md">Descuento Suscriptor (12%)</span><span id="sum-discount" class="font-label-md">- Bs. 0</span></div>
+          <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md">Tarifa de servicio (uso de la app)</span><span id="sum-service" class="font-label-md">Bs. 5</span></div>
+          <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md flex items-center gap-1">Costo de delivery <span id="sum-km" class="text-[11px] text-on-surface-variant/60"></span></span><span id="sum-delivery" class="font-label-md">Bs. 0</span></div>
+          <hr class="border-outline-variant/30 my-4">
+          <div class="flex justify-between items-center">
+            <span class="font-headline-sm text-headline-sm text-primary">Total</span>
+            <span id="sum-total" class="font-headline-sm text-headline-sm text-secondary">Bs. 0</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="flex items-center justify-center gap-2 text-on-surface-variant/60">
+        <span class="material-symbols-outlined text-sm">verified</span>
+        <span class="text-label-sm uppercase tracking-widest">Trazabilidad garantizada desde el ORIGEN</span>
+      </div>
+    </div>
+
+    <div id="basket-empty" class="hidden flex-col items-center text-center py-16">
+      <div class="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center mb-6">
+        <span class="material-symbols-outlined text-4xl text-outline-variant">shopping_basket</span>
+      </div>
+      <h2 class="font-headline-sm text-headline-sm text-primary mb-2">Tu canasta está vacía</h2>
+      <p class="text-on-surface-variant max-w-xs mb-8">Descubre productos orgánicos seleccionados directamente desde el origen.</p>
+      <button data-nav="catalog" class="bg-leaf-green text-white font-label-md py-3 px-8 rounded-full active:scale-95 transition-transform">Explorar catálogo</button>
+    </div>
+  </main>
+
+  <div id="basket-bar" class="hidden sticky bottom-0 left-0 w-full bg-surface-container-lowest custom-shadow px-margin-mobile py-6 z-40">
+    <div class="flex flex-col gap-3">
+      <button id="basket-confirm" class="w-full bg-leaf-green text-surface-container-lowest font-label-md text-label-md py-4 rounded-xl flex items-center justify-center gap-3 hover:opacity-90 active:scale-[0.98] transition-all">
+        Confirmar Pedido <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+      <p class="text-center text-[11px] text-on-surface-variant/50 px-8">Al confirmar, aceptas nuestros términos de entrega y política de suscripción orgánica.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SCANNER ===================== -->
+<section id="screen-scanner" class="screen overflow-hidden" style="min-height:100dvh">
+  <header class="bg-background w-full h-16 flex justify-between items-center px-margin-mobile">
+    <button class="text-secondary p-2"><span class="material-symbols-outlined">menu</span></button>
+    <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+    <button data-nav="basket" class="basket-btn relative text-secondary p-2">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute top-0 right-0 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </header>
+  <main class="relative w-full overflow-hidden" style="height:calc(100dvh - 144px)">
+    <div class="absolute inset-0 bg-primary-container h-[70%]">
+      <img class="w-full h-full object-cover opacity-60" alt="Productos orgánicos frescos" onerror="imgFail(this)"
+           src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsddSLxUi56oXetnVqh4scKBSktTMtCR9K4CrTRJPamLcNFw8uwE1AUVWGhujkV4CNT5jHYEwQboNvvPSYr9Bc5VAeP54op2dR-CAnK-_dBs1XMh3LnprQbgd75rIqSKpVQJNI0Zs8ckKtlXukj_cvubjSvMbM1QmMyjxvfMo1I4VYD6H1hiBS_aB4WKDH0XHjqZF1JCtpQJ-zg7AzhE2b6S1MMxj77TRQ8SVXdMWpy3iiMP8BMHH2BwlAEEmsE3O9AIOzkHdZBtk">
+      <div class="absolute inset-0 flex items-center justify-center">
+        <div class="relative w-64 h-64">
+          <div class="absolute top-0 left-0 viewfinder-corner border-t-4 border-l-4 rounded-tl-xl"></div>
+          <div class="absolute top-0 right-0 viewfinder-corner border-t-4 border-r-4 rounded-tr-xl"></div>
+          <div class="absolute bottom-0 left-0 viewfinder-corner border-b-4 border-l-4 rounded-bl-xl"></div>
+          <div class="absolute bottom-0 right-0 viewfinder-corner border-b-4 border-r-4 rounded-br-xl"></div>
+          <div class="absolute w-full h-[2px] bg-sprout-green shadow-[0_0_15px_#BBE85B] scanner-line"></div>
+        </div>
+      </div>
+      <div class="absolute top-8 left-0 w-full text-center px-8">
+        <p class="text-white font-label-md text-label-md tracking-wider uppercase drop-shadow-md">Apunta a la etiqueta para ver la trazabilidad</p>
+      </div>
+    </div>
+    <div class="absolute bottom-0 left-0 w-full h-[35%] bg-surface rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] px-margin-mobile py-8 z-40">
+      <div class="w-12 h-1.5 bg-outline-variant rounded-full mx-auto mb-8"></div>
+      <div class="flex flex-col items-center justify-center text-center">
+        <div id="scan-icon" class="w-16 h-16 rounded-full flex items-center justify-center mb-4 pulse-slow bg-surface-container text-outline">
+          <span class="material-symbols-outlined text-[32px]">qr_code_scanner</span>
+        </div>
+        <h2 id="scan-title" class="font-headline-sm text-headline-sm text-primary mb-2">Buscando código…</h2>
+        <p id="scan-sub" class="text-on-surface-variant font-body-md max-w-xs mx-auto">Mantén la cámara estable sobre la etiqueta del producto.</p>
+        <div class="flex space-x-2 mt-6">
+          <div class="w-2 h-2 rounded-full bg-leaf-green"></div>
+          <div class="w-2 h-2 rounded-full bg-outline-variant animate-pulse" style="animation-delay:.2s"></div>
+          <div class="w-2 h-2 rounded-full bg-outline-variant animate-pulse" style="animation-delay:.4s"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ===================== TRACKING ===================== -->
+<section id="screen-tracking" class="screen flex flex-col pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
+    <div class="flex items-center gap-3">
+      <button data-nav="home" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+      <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+    </div>
+    <button data-nav="basket" class="basket-btn relative text-secondary">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </header>
+
+  <main class="flex-grow">
+    <section class="relative h-72 w-full overflow-hidden bg-surface-container">
+      <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuCn0eVieuVRF-W8yt1B6IcRf0okcYGR7OA4NG5IBbQ07_dfq68QspEMFpFFjjVTG_C_N85Iv76nbgkXpeIhWLc_SVHljMpqK9YSFh1MFN4JTUQXrtQLZfe3wCXD8H7n3Gzhijs4pjjOkPP2ox9cIHeJEiJDXDPc-Q_3rrniK0-l-npNcVBHujmjAM_mhMp_NVDaA4vqXJjHkCdcd304X5AVNakbfN_ep_bPbU5I3n1bgrCB9bkrc2_pDDoFaWie3KJQyfqoiGtOWIs');"></div>
+      <div class="absolute inset-0 flex justify-between items-start p-margin-mobile pointer-events-none">
+        <div class="bg-surface/90 backdrop-blur-sm p-3 rounded-xl shadow-sm border border-outline-variant/30">
+          <p class="font-label-sm text-secondary uppercase tracking-widest mb-1">Productor</p>
+          <p class="font-body-md font-semibold">Ankaya Origen</p>
+        </div>
+        <div class="bg-surface/90 backdrop-blur-sm p-3 rounded-xl shadow-sm border border-outline-variant/30 text-right">
+          <p class="font-label-sm text-secondary uppercase tracking-widest mb-1">Tu Hogar</p>
+          <p class="font-body-md font-semibold">Edificio Los Pinos 123</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="relative z-20 -mt-6 px-margin-mobile">
+      <div class="bg-surface border border-outline-variant/30 rounded-2xl p-6 shadow-sm">
+        <div id="tracking-head" class="mb-6"></div>
+        <div id="tracking-timeline" class="flex flex-col mb-8"></div>
+
+        <div class="bg-earth-cream rounded-xl p-5 border border-sprout-green/20 relative overflow-hidden">
+          <div class="flex items-start gap-4 relative z-10">
+            <div class="w-16 h-16 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined text-secondary text-3xl">spa</span>
+            </div>
+            <div>
+              <p class="font-headline-sm text-[20px] text-primary italic">Ankaya Origen</p>
+              <p class="font-body-md text-on-secondary-fixed-variant italic">"Tu comida fue cosechada con amor"</p>
+              <div class="mt-2 flex items-center gap-1 text-secondary"><span class="material-symbols-outlined text-[14px]">verified</span><span class="font-label-sm">Certificación Orgánica</span></div>
+            </div>
+          </div>
+          <span class="material-symbols-outlined absolute -bottom-2 -right-2 text-6xl text-leaf-green/10 rotate-12">spa</span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4 mt-6">
+        <button data-soon="Abriendo chat con el repartidor…" class="w-full bg-primary-container text-white py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all"><span class="material-symbols-outlined">chat</span><span class="font-label-md">Contactar repartidor</span></button>
+        <button data-soon="Soporte Origen · próximamente" class="w-full border border-outline py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">help</span><span class="font-label-md">¿Necesitas ayuda?</span></button>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 mt-8">
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 flex items-center gap-4">
+          <div class="w-12 h-12 bg-sprout-green/20 rounded-full flex items-center justify-center text-secondary"><span class="material-symbols-outlined">inventory_2</span></div>
+          <div><p class="font-label-sm text-on-surface-variant">Canasta</p><p class="font-body-md font-semibold">12 productos saludables</p></div>
+        </div>
+        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 flex items-center gap-4">
+          <div class="w-12 h-12 bg-sprout-green/20 rounded-full flex items-center justify-center text-secondary"><span class="material-symbols-outlined">history</span></div>
+          <div><p class="font-label-sm text-on-surface-variant">Huella de Carbono</p><p class="font-body-md font-semibold">-2.4kg CO₂ reducido</p></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ===================== ORDER CONFIRMED ===================== -->
+<section id="screen-confirmed" class="screen flex flex-col" style="min-height:100dvh">
+  <header class="bg-background w-full h-16 flex justify-center items-center px-margin-mobile">
+    <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+  </header>
+  <main class="flex-grow flex flex-col items-center justify-center px-margin-mobile pt-8 pb-12 w-full text-center">
+    <div class="relative mb-10 flex flex-col items-center">
+      <div class="w-32 h-32 bg-sprout-green rounded-full flex items-center justify-center shadow-sm relative z-10 animate-float">
+        <svg fill="none" height="60%" viewBox="0 0 24 24" width="60%" xmlns="http://www.w3.org/2000/svg">
+          <path class="check-draw" d="M5 13L9 17L19 7" stroke="#006E24" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+        </svg>
+      </div>
+      <div class="absolute -top-4 -right-4 opacity-20"><span class="material-symbols-outlined text-leaf-green text-6xl">eco</span></div>
+      <div class="absolute -bottom-2 -left-6 opacity-20 -rotate-12"><span class="material-symbols-outlined text-secondary text-5xl">potted_plant</span></div>
+    </div>
+    <div class="max-w-lg mb-10">
+      <h2 class="font-headline-md text-headline-md text-primary mb-4">¡Todo listo!</h2>
+      <p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Tu pedido está en camino al Origen. Estamos preparando tus productos orgánicos con el cuidado que merecen.</p>
+    </div>
+    <div class="w-full max-w-md bg-surface-container-low border border-outline-variant rounded-xl p-8 mb-10 shadow-sm text-left">
+      <div class="space-y-6">
+        <div class="flex justify-between items-center border-b border-outline-variant pb-4">
+          <span class="font-label-md text-label-md text-on-surface-variant">Número de pedido</span>
+          <span id="confirm-order-id" class="font-label-md text-label-md text-primary font-bold">#ORG-82910</span>
+        </div>
+        <div class="flex items-start gap-4">
+          <span class="material-symbols-outlined text-secondary mt-1">local_shipping</span>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Ventana de entrega</span>
+            <span class="font-headline-sm text-headline-sm text-primary">Viernes 24 Junio</span>
+            <span class="font-body-md text-body-md text-on-surface-variant">09:00 — 11:00</span>
+          </div>
+        </div>
+        <div class="flex items-start gap-4">
+          <span class="material-symbols-outlined text-secondary mt-1">location_on</span>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Dirección de entrega</span>
+            <span class="font-body-md text-body-md text-primary">Av. Principal 123, Edificio Los Pinos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col gap-4 w-full max-w-md">
+      <button data-nav="tracking" class="bg-secondary text-white font-label-md text-label-md py-4 px-8 rounded-lg hover:opacity-90 transition-all active:scale-95 flex justify-center items-center gap-2">Ver Seguimiento <span class="material-symbols-outlined text-sm">arrow_forward</span></button>
+      <button data-nav="home" class="border border-deep-forest text-deep-forest font-label-md text-label-md py-4 px-8 rounded-lg hover:bg-surface-container-highest transition-all active:scale-95">Volver a Inicio</button>
+    </div>
+  </main>
+  <footer class="py-8 border-t border-outline-variant/30 flex flex-col items-center gap-3">
+    <div class="flex gap-8">
+      <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors cursor-pointer">Términos</a>
+      <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors cursor-pointer">Privacidad</a>
+      <a class="font-label-sm text-label-sm text-on-surface-variant hover:text-secondary transition-colors cursor-pointer">Soporte</a>
+    </div>
+    <p class="font-label-sm text-label-sm text-outline">© 2026 Origen. Todos los derechos reservados.</p>
+  </footer>
+</section>
+
+<!-- ===================== ACCOUNT ===================== -->
+<section id="screen-account" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
+    <div class="flex items-center gap-3">
+      <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
+      <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
+    </div>
+    <button data-nav="basket" class="basket-btn relative text-secondary">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </header>
+
+  <main class="px-margin-mobile pt-6 space-y-8">
+    <!-- Perfil -->
+    <section class="flex items-center gap-4">
+      <div class="w-16 h-16 rounded-full bg-primary-container flex items-center justify-center text-on-primary">
+        <span id="account-initials" class="font-headline-sm text-headline-sm">SC</span>
+      </div>
+      <div class="min-w-0">
+        <h1 id="account-name" class="font-headline-sm text-headline-sm text-primary">Hola</h1>
+        <p id="account-email" class="font-label-sm text-on-surface-variant truncate">—</p>
+      </div>
+    </section>
+
+    <!-- Suscripción -->
+    <section class="bg-primary-container rounded-xl p-6 text-on-primary relative overflow-hidden">
+      <div class="absolute top-0 right-0 -mr-12 -mt-12 w-40 h-40 bg-leaf-green opacity-10 rounded-full blur-3xl"></div>
+      <div class="relative z-10 space-y-4">
+        <div class="flex justify-between items-center">
+          <span class="font-label-md text-label-md text-leaf-green uppercase tracking-wider">Tu suscripción</span>
+          <span id="acc-sub-badge" class="bg-leaf-green/15 text-leaf-green font-label-sm px-3 py-1 rounded-full">Activa</span>
+        </div>
+        <h2 id="acc-sub-title" class="font-headline-sm text-headline-sm">Canasta quincenal · Valle Central</h2>
+        <p id="acc-sub-next" class="font-label-sm text-on-primary-container">Próxima entrega: Viernes 24 de Junio</p>
+        <div class="flex gap-3 pt-1">
+          <button data-nav="schedule" class="flex-1 bg-leaf-green text-primary-container font-label-md py-2.5 rounded-lg active:scale-[0.98] transition-transform">Gestionar</button>
+          <button id="acc-sub-toggle" data-sub-toggle class="flex-1 border border-outline-variant text-on-primary font-label-md py-2.5 rounded-lg active:scale-[0.98] transition-transform">Pausar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Rewards -->
+    <section class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-secondary">stars</span>
+          <h3 class="font-headline-sm text-headline-sm text-primary">Origen Rewards</h3>
+        </div>
+        <span class="font-headline-sm text-headline-sm text-secondary">1.250 pts</span>
+      </div>
+      <div class="w-full bg-outline-variant/40 h-2 rounded-full overflow-hidden">
+        <div class="bg-leaf-green h-full w-[62%] rounded-full"></div>
+      </div>
+      <p class="font-label-sm text-on-surface-variant">Te faltan 750 pts para tu próxima Yapa: envío gratis por 3 meses.</p>
+    </section>
+
+    <!-- Menú -->
+    <section class="bg-surface-container-low border border-outline-variant/30 rounded-xl overflow-hidden divide-y divide-outline-variant/20">
+      <button data-nav="tracking" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+        <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">local_shipping</span> Mis pedidos</span>
+        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+      </button>
+      <button data-soon="Comparte tu código y gana Bs. 30" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+        <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">redeem</span> Referidos · gana 20%</span>
+        <span class="bg-sprout-green text-deep-forest font-label-sm px-2 py-0.5 rounded-full">Nuevo</span>
+      </button>
+      <button data-soon="Tus favoritos · próximamente" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+        <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">favorite</span> Favoritos</span>
+        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+      </button>
+      <button data-soon="Configuración · próximamente" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+        <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">settings</span> Configuración</span>
+        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+      </button>
+    </section>
+
+    <button data-admin class="w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">
+      <span class="material-symbols-outlined text-leaf-green">admin_panel_settings</span> Panel de administrador
+    </button>
+
+    <button data-logout class="w-full text-center font-label-md text-on-surface-variant hover:text-error transition-colors py-2">Cerrar sesión</button>
+  </main>
+</section>
+
+<!-- ===================== PLANES DE SUSCRIPCIÓN ===================== -->
+<section id="screen-plans" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Planes de suscripción</h1>
+  </header>
+  <main class="px-margin-mobile pt-6 space-y-5">
+    <p class="font-body-md text-on-surface-variant">Elige cómo quieres recibir tus productos orgánicos. Sin permanencia, cancelable cuando quieras.</p>
+
+    <!-- Compra Suelta -->
+    <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6">
+      <div class="flex justify-between items-start">
+        <div><h2 class="font-headline-sm text-headline-sm text-primary">Compra Suelta</h2><p class="font-label-sm text-on-surface-variant">Paga solo lo que compras</p></div>
+        <span class="font-headline-sm text-headline-sm text-secondary">Gratis</span>
+      </div>
+      <ul class="mt-4 space-y-2 text-on-surface-variant font-body-md">
+        <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Catálogo completo</li>
+        <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Entrega a domicilio</li>
+        <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Acumula puntos</li>
+      </ul>
+      <button data-nav="catalog" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Comprar suelto</button>
+    </div>
+
+    <!-- Mensual (recomendado) -->
+    <div class="bg-primary-container text-on-primary rounded-2xl p-6 relative overflow-hidden">
+      <span class="absolute top-4 right-4 bg-sprout-green text-deep-forest text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full">Recomendado</span>
+      <div class="absolute top-0 right-0 -mr-12 -mt-12 w-40 h-40 bg-leaf-green opacity-10 rounded-full blur-3xl"></div>
+      <div class="relative z-10">
+        <h2 class="font-headline-sm text-headline-sm">Suscripción Mensual</h2>
+        <p class="font-display-lg text-display-lg-mobile mt-1">Bs. 99<span class="font-body-md text-on-primary-container">/mes</span></p>
+        <ul class="mt-4 space-y-2 text-on-primary-container font-body-md">
+          <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Descuento 12% en cada compra</li>
+          <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Envío preferencial</li>
+          <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Recordatorios inteligentes</li>
+          <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Puntos ×2 y acceso a Yapas</li>
+          <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Edición de caja antes de cada entrega</li>
+        </ul>
+        <button data-nav="schedule" class="mt-5 w-full bg-leaf-green text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Programar mi suscripción</button>
+      </div>
+    </div>
+
+    <!-- Para Regalar -->
+    <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6">
+      <div class="flex justify-between items-start">
+        <div><h2 class="font-headline-sm text-headline-sm text-primary">Para Regalar</h2><p class="font-label-sm text-on-surface-variant">Caja única personalizada</p></div>
+        <span class="material-symbols-outlined text-secondary text-3xl">redeem</span>
+      </div>
+      <ul class="mt-4 space-y-2 text-on-surface-variant font-body-md">
+        <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Selección personalizada</li>
+        <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Empaque especial</li>
+      </ul>
+      <button data-nav="catalog" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Armar regalo</button>
+    </div>
+
+    <div class="bg-sprout-green/15 border border-sprout-green/30 rounded-xl p-4 flex gap-3">
+      <span class="material-symbols-outlined text-secondary">redeem</span>
+      <p class="font-label-sm text-on-surface-variant"><b class="text-primary">50% en tu primera compra</b> pagando tu suscripción por adelantado. Refiere y gana Bs. 30 + 20% para tu amigo.</p>
+    </div>
+  </main>
+</section>
+
+<!-- ===================== PROGRAMAR ENTREGA RECURRENTE ===================== -->
+<section id="screen-schedule" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="plans" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Programar entregas</h1>
+  </header>
+  <main class="px-margin-mobile pt-6 space-y-6">
+    <div>
+      <h2 class="font-headline-sm text-headline-sm text-primary mb-1">¿Cada cuánto quieres recibir?</h2>
+      <p class="font-body-md text-on-surface-variant mb-4">Programa compras automáticas y olvídate de pedir cada vez.</p>
+      <div id="freq-options" class="space-y-3"></div>
+    </div>
+    <div id="custom-date-wrap" class="hidden">
+      <label class="font-label-sm text-on-surface-variant">Fecha de la próxima entrega</label>
+      <input id="sched-date" type="date" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+    </div>
+    <div class="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-5">
+      <p class="font-label-md text-on-surface-variant uppercase tracking-wider mb-2">Tu canasta recurrente</p>
+      <p id="sched-products" class="font-body-md text-primary leading-snug">—</p>
+      <button data-nav="catalog" class="mt-3 text-secondary font-label-md hover:underline">Editar productos</button>
+    </div>
+    <div class="bg-secondary-container rounded-2xl p-5 flex items-center gap-3">
+      <span class="material-symbols-outlined text-on-secondary-container">event_available</span>
+      <div><p class="font-label-sm text-on-secondary-container uppercase tracking-wider">Próxima entrega</p><p id="sched-next" class="font-headline-sm text-headline-sm text-on-secondary-container">—</p></div>
+    </div>
+    <button id="sched-activate" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Activar suscripción programada</button>
+  </main>
+</section>
+
+<!-- Modal: datos de tarjeta para cobro recurrente de suscripción -->
+<div id="billing-modal" class="hidden fixed inset-0 z-[140] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl p-6 max-h-[94vh] overflow-y-auto no-scrollbar">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="font-headline-sm text-headline-sm text-primary">Datos de pago</h2>
+      <button id="billing-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="bg-primary-container text-on-primary rounded-2xl p-5 mb-5">
+      <p class="font-label-md text-leaf-green uppercase tracking-wider">Suscripción Origen</p>
+      <p class="font-display-lg text-display-lg-mobile">Bs. 99<span class="font-body-md text-on-primary-container">/mes</span></p>
+      <p class="font-label-sm text-on-primary-container mt-1">Cobro automático cada mes. Sin permanencia, cancela cuando quieras.</p>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="font-label-sm text-on-surface-variant">Número de tarjeta</label>
+        <input id="bill-num" inputmode="numeric" maxlength="19" placeholder="4242 4242 4242 4242" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+      </div>
+      <div class="flex gap-3">
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Vence</label><input id="bill-exp" maxlength="5" placeholder="MM/AA" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none"></div>
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">CVV</label><input id="bill-cvv" inputmode="numeric" maxlength="4" placeholder="123" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none"></div>
+      </div>
+      <div>
+        <label class="font-label-sm text-on-surface-variant">Nombre en la tarjeta</label>
+        <input id="bill-name" placeholder="Sofía Castro" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+      </div>
+      <p id="bill-error" class="hidden text-error font-label-sm">Revisa los datos de la tarjeta.</p>
+      <button id="bill-confirm" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined">lock</span> Autorizar cobro de Bs. 99/mes</button>
+      <p class="text-center text-[11px] text-on-surface-variant/60 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[14px]">shield</span> Pago simulado y cifrado · no se realiza ningún cobro real.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de mensaje / confirmación reutilizable -->
+<div id="msg-modal" class="hidden fixed inset-0 z-[140] flex items-center justify-center bg-deep-forest/40 backdrop-blur-sm px-6">
+  <div class="bg-surface rounded-2xl p-8 max-w-sm w-full text-center shadow-xl">
+    <div id="msg-icon-wrap" class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-5"><span id="msg-icon" class="material-symbols-outlined text-on-secondary-container text-3xl">check_circle</span></div>
+    <h3 id="msg-title" class="font-headline-sm text-headline-sm text-primary mb-2"></h3>
+    <p id="msg-text" class="font-body-md text-on-surface-variant"></p>
+    <div id="msg-actions" class="flex gap-3 mt-6"></div>
+  </div>
+</div>
+
+<!-- ===================== CHECKOUT (pago simulado) ===================== -->
+<section id="screen-checkout" class="screen flex flex-col" style="min-height:100dvh">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="basket" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Pagar</h1>
+  </header>
+
+  <main class="flex-grow px-margin-mobile pt-6 pb-40 w-full space-y-6">
+    <div class="bg-primary-container text-on-primary rounded-2xl p-6 text-center">
+      <p class="font-label-md text-leaf-green uppercase tracking-wider mb-1">Total a pagar</p>
+      <p id="checkout-total" class="font-display-lg text-display-lg-mobile">Bs. 0</p>
+      <p id="checkout-breakdown" class="font-label-sm text-on-primary-container mt-1"></p>
+      <p class="font-label-sm text-on-primary-container/70 mt-0.5">Entrega: Viernes 24 Junio · 09:00 – 11:00</p>
+    </div>
+
+    <div>
+      <p class="font-label-md text-on-surface-variant uppercase tracking-wider mb-3">Método de pago</p>
+      <div id="pay-methods" class="grid grid-cols-2 gap-3"></div>
+    </div>
+
+    <!-- Panel QR -->
+    <div id="pay-panel-qr" class="hidden bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 text-center space-y-4">
+      <p class="font-body-md text-on-surface-variant">Escanea con tu app bancaria (QR Simple)</p>
+      <div id="checkout-qr" class="w-52 h-52 mx-auto bg-white rounded-xl p-3 border border-outline-variant/30"></div>
+      <div class="text-left bg-surface-container-low rounded-xl p-4 space-y-1">
+        <div class="flex justify-between"><span class="text-on-surface-variant font-label-sm">Comercio</span><span id="qr-comercio" class="font-label-md text-primary"></span></div>
+        <div class="flex justify-between"><span class="text-on-surface-variant font-label-sm">Monto</span><span id="qr-monto" class="font-label-md text-secondary"></span></div>
+      </div>
+      <button data-pay="qr" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-[0.98] transition-transform">He realizado el pago</button>
+    </div>
+
+    <!-- Panel Tarjeta -->
+    <div id="pay-panel-card" class="hidden bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-6 space-y-4">
+      <div>
+        <label class="font-label-sm text-on-surface-variant">Número de tarjeta</label>
+        <input id="card-num" inputmode="numeric" maxlength="19" placeholder="4242 4242 4242 4242" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+      </div>
+      <div class="flex gap-3">
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Vence</label><input id="card-exp" maxlength="5" placeholder="MM/AA" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none"></div>
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">CVV</label><input id="card-cvv" inputmode="numeric" maxlength="4" placeholder="123" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none"></div>
+      </div>
+      <div>
+        <label class="font-label-sm text-on-surface-variant">Nombre en la tarjeta</label>
+        <input id="card-name" placeholder="Sofía Castro" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+      </div>
+      <button data-pay="card" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-[0.98] transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined">lock</span> <span id="card-pay-label">Pagar</span></button>
+      <p class="text-center text-[11px] text-on-surface-variant/60">Pago simulado · no se realiza ningún cobro real. Usa cualquier dato de prueba.</p>
+    </div>
+  </main>
+
+  <!-- Overlay procesando pago -->
+  <div id="pay-processing" class="hidden fixed inset-0 bg-deep-forest/30 backdrop-blur-sm z-[100] flex items-center justify-center">
+    <div class="bg-surface rounded-2xl p-10 text-center shadow-xl mx-6">
+      <span class="material-symbols-outlined text-5xl text-leaf-green animate-spin">progress_activity</span>
+      <p class="font-headline-sm text-headline-sm text-primary mt-4">Procesando pago…</p>
+      <p class="text-on-surface-variant text-label-sm mt-1">Confirmando con la pasarela</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ADMIN · LOGIN ===================== -->
+<section id="screen-admin-login" class="screen flex flex-col items-center justify-center px-margin-mobile" style="min-height:100dvh">
+  <div class="w-full max-w-sm">
+    <button data-nav="account" class="text-on-surface-variant flex items-center gap-1 mb-8 hover:text-secondary transition-colors"><span class="material-symbols-outlined">arrow_back</span> Volver</button>
+    <div class="bg-surface border border-outline-variant/30 rounded-2xl p-8 shadow-sm">
+      <img src="assets/origen-logo.svg" alt="Origen" class="h-8 w-auto mx-auto mb-6">
+      <div class="flex items-center justify-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-secondary">admin_panel_settings</span>
+        <h1 class="font-headline-sm text-headline-sm text-primary">Acceso administrador</h1>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="font-label-sm text-on-surface-variant">Correo</label>
+          <input id="admin-email" type="email" placeholder="admin@origen.bo" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+        </div>
+        <div>
+          <label class="font-label-sm text-on-surface-variant">Contraseña</label>
+          <input id="admin-pass" type="password" placeholder="••••••••" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+        </div>
+        <p id="admin-error" class="hidden text-error font-label-sm">Credenciales incorrectas.</p>
+        <button id="admin-login-btn" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Ingresar</button>
+      </div>
+      <div class="mt-6 bg-surface-container-low rounded-lg p-3 text-center">
+        <p class="font-label-sm text-on-surface-variant">Demo · usuario: <b class="text-primary">admin@origen.bo</b> · clave: <b class="text-primary">origen2026</b></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ADMIN · PANEL ===================== -->
+<section id="screen-admin" class="screen flex flex-col" style="min-height:100dvh">
+  <header class="bg-primary-container text-on-primary sticky top-0 w-full z-40 flex items-center justify-between px-margin-mobile h-16">
+    <div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-leaf-green">admin_panel_settings</span>
+      <h1 class="font-headline-sm text-headline-sm">Panel ORIGEN</h1>
+    </div>
+    <button id="admin-logout" class="text-on-primary-container hover:text-white flex items-center gap-1 font-label-sm"><span class="material-symbols-outlined text-[20px]">logout</span> Salir</button>
+  </header>
+
+  <nav id="admin-tabs" class="bg-background sticky top-16 z-30 flex gap-1 px-2 py-2 border-b border-outline-variant/20 overflow-x-auto no-scrollbar"></nav>
+
+  <main class="flex-grow px-margin-mobile py-6 w-full">
+    <div id="admin-dashboard" class="admin-panel"></div>
+    <div id="admin-products" class="admin-panel hidden"></div>
+    <div id="admin-sub" class="admin-panel hidden"></div>
+    <div id="admin-users" class="admin-panel hidden"></div>
+    <div id="admin-orders" class="admin-panel hidden"></div>
+    <div id="admin-deliveries" class="admin-panel hidden"></div>
+    <div id="admin-pay" class="admin-panel hidden"></div>
+  </main>
+</section>
+
+<!-- Modal: formulario de producto -->
+<div id="product-modal" class="hidden fixed inset-0 z-[120] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 id="pm-title" class="font-headline-sm text-headline-sm text-primary">Nuevo producto</h2>
+      <button id="pm-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="space-y-4">
+      <div class="flex items-center gap-4">
+        <div class="w-24 h-24 rounded-xl overflow-hidden bg-earth-cream border border-outline-variant/30 flex-shrink-0">
+          <img id="pm-preview" class="w-full h-full object-contain" alt="preview" src="" onerror="imgFail(this)">
+        </div>
+        <label class="flex-1 cursor-pointer">
+          <span class="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container font-label-md px-4 py-2.5 rounded-lg"><span class="material-symbols-outlined text-[20px]">upload</span> Subir imagen</span>
+          <input id="pm-img-file" type="file" accept="image/*" class="hidden">
+          <p class="font-label-sm text-on-surface-variant mt-2">JPG o PNG. Se optimiza automáticamente.</p>
+        </label>
+      </div>
+      <div><label class="font-label-sm text-on-surface-variant">Nombre</label><input id="pm-name" class="mt-1 w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></div>
+      <div class="flex gap-3">
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Precio (Bs.)</label><input id="pm-price" type="number" min="0" step="1" class="mt-1 w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></div>
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Unidad</label><input id="pm-unit" placeholder="500g" class="mt-1 w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></div>
+      </div>
+      <div class="flex gap-3">
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Origen</label><input id="pm-origin" placeholder="Valle Central" class="mt-1 w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></div>
+        <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Categoría</label>
+          <select id="pm-cat" class="mt-1 w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Despensa</option><option>Superfoods</option><option>Snacks</option></select>
+        </div>
+      </div>
+      <div><label class="font-label-sm text-on-surface-variant">Etiqueta</label>
+        <select id="pm-tag" class="mt-1 w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Orgánico</option><option>Local</option><option>Superfood</option><option>Sin gluten</option></select>
+      </div>
+      <label class="flex items-center justify-between bg-surface-container-low rounded-lg px-4 py-3">
+        <span class="flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-secondary">autorenew</span> Incluir en la canasta de suscripción</span>
+        <input id="pm-insub" type="checkbox" class="w-5 h-5 accent-secondary">
+      </label>
+      <label class="flex items-center justify-between bg-surface-container-low rounded-lg px-4 py-3">
+        <span class="flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-secondary">visibility</span> Visible en el catálogo</span>
+        <input id="pm-active" type="checkbox" class="w-5 h-5 accent-secondary" checked>
+      </label>
+      <div class="flex gap-3 pt-2">
+        <button id="pm-delete" class="hidden flex-1 border border-error text-error font-label-md py-3.5 rounded-xl active:scale-95 transition-transform">Eliminar</button>
+        <button id="pm-save" class="flex-[2] bg-leaf-green text-white font-label-md py-3.5 rounded-xl active:scale-95 transition-transform">Guardar producto</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== BOTTOM NAV (persistente) ===================== -->
+<nav id="bottom-nav" class="hidden fixed bottom-0 left-0 right-0 w-full max-w-[440px] mx-auto z-50 justify-around items-center px-4 py-3 bg-earth-cream shadow-[0_-4px_20px_0_rgba(20,34,26,0.05)] rounded-t-xl">
+  <a data-nav="home" data-tab="home" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
+    <span class="material-symbols-outlined">home</span><span class="font-label-sm-mobile text-label-sm-mobile">Inicio</span>
+  </a>
+  <a data-nav="catalog" data-tab="catalog" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
+    <span class="material-symbols-outlined">potted_plant</span><span class="font-label-sm-mobile text-label-sm-mobile">Catálogo</span>
+  </a>
+  <a data-nav="scanner" data-tab="scanner" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
+    <span class="material-symbols-outlined">qr_code_scanner</span><span class="font-label-sm-mobile text-label-sm-mobile">Scanner</span>
+  </a>
+  <a data-nav="account" data-tab="account" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
+    <span class="material-symbols-outlined">person</span><span class="font-label-sm-mobile text-label-sm-mobile">Cuenta</span>
+  </a>
+</nav>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-28 left-1/2 -translate-x-1/2 z-[110] bg-primary-container text-on-primary px-5 py-3 rounded-full shadow-lg flex items-center gap-2 opacity-0 pointer-events-none">
+  <span class="material-symbols-outlined text-leaf-green text-[20px]">check_circle</span>
+  <span id="toast-msg" class="font-label-md text-label-md">Agregado a tu canasta</span>
+</div>
+
+</div><!-- /#phone -->
+
+<script>
+/* ============ Catálogo de productos ORIGEN ============ */
+const FALLBACK = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><rect width='240' height='240' fill='%23F5F2EB'/><circle cx='120' cy='102' r='34' fill='%235EBC66' opacity='0.16'/><path d='M104 102c0-14 12-26 26-26 0 14-12 26-26 26z' fill='%235EBC66' opacity='0.5'/><text x='50%25' y='160' font-family='Hanken Grotesk, sans-serif' font-size='14' fill='%23737874' text-anchor='middle'>Producto Origen</text></svg>";
+// Reemplaza imágenes que no cargan por un placeholder de marca (evita comillas en HTML inline).
+window.imgFail = el => { el.onerror = null; el.src = "assets/products/generic.svg"; };
+// Ilustraciones locales de marca (siempre cargan). El admin puede subir fotos reales.
+const IMG = {
+  honey: "assets/products/honey.svg",
+  quinoa: "assets/products/grain.svg",
+  oil: "assets/products/bottle.svg",
+  flour: "assets/products/grain.svg",
+  coffee: "assets/products/coffee.svg",
+  generic: "assets/products/generic.svg"
+};
+const SEED_PRODUCTS = [
+  { id:"miel",    name:"Miel de Abeja de Monte",        price:45, unit:"500g", origin:"Chiquitanía",   cat:"Despensa",    tag:"Orgánico", img:IMG.honey,  active:true, inSub:true },
+  { id:"quinoa",  name:"Quinoa Real Blanca",           price:32, unit:"1kg",  origin:"Altiplano Sur", cat:"Despensa",    tag:"Local",    img:IMG.quinoa, active:true, inSub:true },
+  { id:"cafe",    name:"Café de Altura",               price:55, unit:"250g", origin:"Yungas",        cat:"Despensa",    tag:"Orgánico", img:IMG.coffee, active:true, inSub:false },
+  { id:"aceite",  name:"Aceite de Coco Prensado en Frío", price:85, unit:"400ml", origin:"Trópico", cat:"Superfoods",  tag:"Orgánico", img:IMG.oil,   active:true, inSub:true },
+  { id:"harina",  name:"Harina de Almendras Integral", price:62, unit:"500g", origin:"Valle Central", cat:"Superfoods",  tag:"Orgánico", img:IMG.flour,  active:true, inSub:false },
+  { id:"mantequilla", name:"Mantequilla de Coco Orgánica", price:78, unit:"300g", origin:"Trópico", cat:"Superfoods", tag:"Orgánico", img:IMG.oil,  active:true, inSub:false },
+  { id:"harinacoco", name:"Harina de Coco Fina",       price:45, unit:"400g", origin:"Trópico",       cat:"Snacks",      tag:"Local",    img:IMG.flour,  active:true, inSub:false }
+];
+// Tienda de productos persistente — el panel admin escribe aquí y el catálogo la lee.
+let PRODUCTS = JSON.parse(localStorage.getItem("origen_products") || "null") || SEED_PRODUCTS.map(p => ({ ...p }));
+const saveProducts = () => localStorage.setItem("origen_products", JSON.stringify(PRODUCTS));
+if (!localStorage.getItem("origen_products")) saveProducts();
+// Migración: reemplaza imágenes externas rotas por ilustraciones locales de marca.
+(() => {
+  let changed = false;
+  PRODUCTS.forEach(p => {
+    if (typeof p.img === "string" && (p.img.includes("googleusercontent") || p.img.startsWith("data:image/svg"))) {
+      const seed = SEED_PRODUCTS.find(s => s.id === p.id);
+      p.img = seed ? seed.img : "assets/products/generic.svg";
+      changed = true;
+    }
+  });
+  if (changed) saveProducts();
+})();
+const findProduct = id => PRODUCTS.find(p => p.id === id);
+const activeProducts = () => PRODUCTS.filter(p => p.active !== false);
+const subProducts = () => PRODUCTS.filter(p => p.inSub && p.active !== false);
+const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
+
+/* ============ Pedidos + ajustes de pago (persistentes) ============ */
+let orders = JSON.parse(localStorage.getItem("origen_orders") || "[]");
+const saveOrders = () => localStorage.setItem("origen_orders", JSON.stringify(orders));
+const PAY_DEFAULT = { comercio: "ORIGEN · Ankaya S.R.L.", qr: true, card: true };
+let paySettings = Object.assign({}, PAY_DEFAULT, JSON.parse(localStorage.getItem("origen_paysettings") || "{}"));
+const savePaySettings = () => localStorage.setItem("origen_paysettings", JSON.stringify(paySettings));
+
+/* ============ Admin (sesión) ============ */
+const ADMIN = { email: "admin@origen.bo", pass: "origen2026" };
+const isAdmin = () => sessionStorage.getItem("origen_admin") === "1";
+
+/* ============ Usuarios / suscriptores ============ */
+const DEMO_GOOGLE = [
+  { name: "Sofía Castro", email: "sofia.castro@gmail.com" },
+  { name: "Diego Rojas", email: "diego.rojas@gmail.com" }
+];
+const SEED_USERS = [
+  { name: "Sofía Castro", email: "sofia.castro@gmail.com", provider: "google", plan: "Quincenal", status: "Activa", joined: "2026-01-12", address: "Av. Ballivián 1220, Calacoto", zone: "Zona Sur" },
+  { name: "Diego Rojas", email: "diego.rojas@gmail.com", provider: "email", plan: "Mensual", status: "Activa", joined: "2026-02-03", address: "C. 21 de Calacoto 8, Edif. Verde", zone: "Zona Sur" },
+  { name: "María Fernández", email: "maria.fz@gmail.com", provider: "google", plan: "Quincenal", status: "Activa", joined: "2026-03-18", address: "Av. Busch 540, Miraflores", zone: "Miraflores" },
+  { name: "Carlos Mamani", email: "carlos.mamani@gmail.com", provider: "email", plan: "Quincenal", status: "Pausada", joined: "2026-04-02", address: "C. Sagárnaga 210, Centro", zone: "Centro" }
+];
+let users = JSON.parse(localStorage.getItem("origen_users") || "null") || SEED_USERS.map(u => ({ ...u }));
+const saveUsers = () => localStorage.setItem("origen_users", JSON.stringify(users));
+if (!localStorage.getItem("origen_users")) saveUsers();
+
+const currentUser = () => JSON.parse(localStorage.getItem("origen_user") || "null");
+function setCurrentUser(u) {
+  // Alta/actualización en el registro de suscriptores
+  let full;
+  const existing = users.find(x => x.email === u.email);
+  if (existing) { Object.assign(existing, { name: u.name, provider: u.provider }); full = { ...existing }; }
+  else {
+    const nu = { name: u.name, email: u.email, provider: u.provider, plan: "Quincenal", status: "Activa", joined: new Date().toISOString().slice(0, 10), address: u.address || "Av. Ballivián 1220, Calacoto", zone: "Zona Sur" };
+    users.unshift(nu); full = { ...nu };
+  }
+  saveUsers();
+  // El usuario en sesión lleva su dirección/zona reales (para pedidos y entregas)
+  localStorage.setItem("origen_user", JSON.stringify(full));
+}
+function logout() { localStorage.removeItem("origen_user"); }
+const initials = name => (name || "U").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+
+/* ============ Auth: Google (simulado) + OTP por correo ============ */
+let pendingAuth = null, pendingOtp = null;
+function renderGoogleAccounts() {
+  document.getElementById("google-accounts").innerHTML = DEMO_GOOGLE.map((a, i) => `
+    <button data-gacct="${i}" class="w-full text-left px-6 py-3.5 flex items-center gap-4 hover:bg-surface-container-low transition-colors">
+      <span class="w-9 h-9 rounded-full bg-secondary text-white flex items-center justify-center font-label-md">${initials(a.name)}</span>
+      <span><span class="block text-[#3c4043] font-medium">${a.name}</span><span class="block text-[#5f6368] text-sm">${a.email}</span></span>
+    </button>`).join("");
+}
+function startOtp(auth) {
+  pendingAuth = auth;
+  pendingOtp = String(Math.floor(100000 + Math.random() * 900000));
+  navigate("otp");
+}
+function renderOtp() {
+  document.getElementById("otp-email").textContent = pendingAuth ? pendingAuth.email : "";
+  document.getElementById("otp-demo-code").textContent = pendingOtp || "";
+  document.getElementById("otp-input").value = "";
+  document.getElementById("otp-error").classList.add("hidden");
+}
+function openGoogle() { renderGoogleAccounts(); document.getElementById("google-modal").classList.remove("hidden"); }
+function closeGoogle() { document.getElementById("google-modal").classList.add("hidden"); }
+const nameFromEmail = e => e.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-google]")) { openGoogle(); return; }
+  const gacct = e.target.closest("[data-gacct]");
+  if (gacct) { const a = DEMO_GOOGLE[+gacct.dataset.gacct]; closeGoogle(); startOtp({ name: a.name, email: a.email, provider: "google" }); return; }
+  if (e.target.closest("[data-gother]")) { closeGoogle(); document.getElementById("auth-email").focus(); return; }
+  if (e.target.id === "google-modal") closeGoogle();
+});
+document.getElementById("auth-email-continue").addEventListener("click", () => {
+  const email = document.getElementById("auth-email").value.trim().toLowerCase();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { document.getElementById("auth-error").classList.remove("hidden"); return; }
+  document.getElementById("auth-error").classList.add("hidden");
+  startOtp({ name: nameFromEmail(email), email, provider: "email" });
+});
+document.getElementById("auth-email").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("auth-email-continue").click(); });
+document.getElementById("otp-autofill").addEventListener("click", () => { document.getElementById("otp-input").value = pendingOtp; });
+document.getElementById("otp-resend").addEventListener("click", () => { pendingOtp = String(Math.floor(100000 + Math.random() * 900000)); renderOtp(); showToast("Nuevo código enviado"); });
+document.getElementById("otp-verify").addEventListener("click", () => {
+  if (document.getElementById("otp-input").value.trim() === pendingOtp) {
+    setCurrentUser(pendingAuth);
+    pendingAuth = pendingOtp = null;
+    navigate("home");
+    showToast("Identidad verificada");
+  } else {
+    document.getElementById("otp-error").classList.remove("hidden");
+  }
+});
+document.getElementById("otp-input").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("otp-verify").click(); });
+
+/* ============ Seguimiento (dinámico + en vivo) ============ */
+const TRACK_STEPS = [
+  { key: "Nuevo", icon: "check", title: "Pedido confirmado", desc: "Tu pago fue procesado correctamente." },
+  { key: "Asignado", icon: "directions_bike", title: "Repartidor asignado", desc: "Un repartidor tomó tu pedido." },
+  { key: "Recogido", icon: "warehouse", title: "Recogido en almacén", desc: "Tu canasta salió de nuestro almacén." },
+  { key: "En camino", icon: "local_shipping", title: "En camino", desc: "Tu pedido va en ruta hacia tu dirección." },
+  { key: "Entregado", icon: "task_alt", title: "Entregado", desc: "¡Disfruta tus productos orgánicos!" }
+];
+function renderTracking() {
+  reloadOrders();
+  const o = latestOrder();
+  const head = document.getElementById("tracking-head");
+  const tl = document.getElementById("tracking-timeline");
+  if (!o) {
+    head.innerHTML = `<div class="text-center py-6"><h2 class="font-headline-sm text-headline-sm text-primary mb-1">Sin pedidos en curso</h2><p class="font-body-md text-on-surface-variant">Cuando hagas un pedido podrás seguirlo aquí en tiempo real.</p></div>`;
+    tl.innerHTML = "";
+    return;
+  }
+  const idx = Math.max(0, ORDER_FLOW.indexOf(o.status));
+  const chipColors = o.status === "Entregado" ? "bg-secondary-container text-on-secondary-container" : "bg-sprout-green/20 text-secondary border border-sprout-green/50";
+  head.innerHTML = `
+    <div class="flex items-center justify-between mb-2">
+      <div><h2 class="font-headline-sm text-headline-sm text-primary mb-1">Orden ${o.id}</h2>
+        <p class="font-body-md text-on-surface-variant">Entrega ${o.deliveryDate} · ${o.window}</p></div>
+      <div class="${chipColors} px-3 py-1 rounded-full"><span class="font-label-md">${o.status}</span></div>
+    </div>
+    <p class="font-label-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span>${o.customer.address}</p>`;
+  tl.innerHTML = TRACK_STEPS.map((s, i) => {
+    const done = i < idx, active = i === idx, last = i === TRACK_STEPS.length - 1;
+    const circle = done || active
+      ? `<div class="w-8 h-8 rounded-full ${active && !done ? "bg-secondary-container text-on-secondary-container border-2 border-leaf-green" : "bg-leaf-green text-white"} flex items-center justify-center"><span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">${done ? "check" : s.icon}</span></div>`
+      : `<div class="w-8 h-8 rounded-full bg-surface-container text-outline flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">${s.icon}</span></div>`;
+    const label = done ? `<span class="font-label-sm text-leaf-green font-bold">COMPLETADO</span>` : active ? `<span class="font-label-sm text-secondary font-bold">ACTUAL</span>` : `<span class="font-label-sm text-outline font-bold">PRÓXIMAMENTE</span>`;
+    return `<div class="flex gap-5 ${last ? "" : "pb-8"} ${i > idx ? "opacity-60" : ""}">
+      <div class="flex-shrink-0 z-10">${circle}</div>
+      <div class="flex flex-col">${label}<h3 class="font-body-md font-semibold text-primary">${s.title}</h3><p class="font-label-sm text-on-surface-variant">${s.desc}</p></div>
+    </div>`;
+  }).join("");
+}
+
+/* ============ Cuenta (datos del usuario) ============ */
+function renderAccount() {
+  const u = currentUser() || { name: "Invitado", email: "—" };
+  const el = document.getElementById("account-name"); if (el) el.textContent = "Hola, " + (u.name.split(" ")[0] || "Invitado");
+  const ie = document.getElementById("account-initials"); if (ie) ie.textContent = initials(u.name);
+  const em = document.getElementById("account-email"); if (em) em.textContent = u.email;
+  // Estado de la suscripción
+  const st = subStatus();
+  const badge = document.getElementById("acc-sub-badge");
+  const toggle = document.getElementById("acc-sub-toggle");
+  const next = document.getElementById("acc-sub-next");
+  if (badge) {
+    badge.textContent = st;
+    badge.className = "font-label-sm px-3 py-1 rounded-full " + (st === "Activa" ? "bg-leaf-green/15 text-leaf-green" : st === "Pausada" ? "bg-tertiary-fixed/30 text-tertiary-fixed" : "bg-error/20 text-error-container");
+  }
+  if (toggle) toggle.textContent = st === "Pausada" ? "Reanudar" : "Pausar";
+  if (next) next.textContent = st === "Activa" ? ("Próxima entrega: " + schedNextLabel()) : st === "Pausada" ? "Servicio en pausa" : "Suscripción cancelada";
+  const title = document.getElementById("acc-sub-title");
+  if (title) {
+    const b = getBilling(); const sched = getSchedule(); const f = FREQS.find(x => x.id === sched.freq) || FREQS[1];
+    title.textContent = (b && st !== "Cancelada") ? ("Plan mensual · Bs. 99/mes · " + billingLabel()) : ("Canasta " + f.label.toLowerCase());
+  }
+}
+
+/* ============ Suscripción: estado, pausa, cancelación ============ */
+const subStatus = () => localStorage.getItem("origen_sub_status") || "Activa";
+function setSubStatus(s) {
+  localStorage.setItem("origen_sub_status", s);
+  const u = currentUser(); if (u) { const r = users.find(x => x.email === u.email); if (r) { r.status = s; saveUsers(); } }
+}
+function togglePause() {
+  if (subStatus() === "Pausada") {
+    setSubStatus("Activa");
+    showMessage({ icon: "play_circle", title: "Suscripción reactivada", text: "Tu servicio de compra programada está activo de nuevo. Próxima entrega: " + schedNextLabel() + ".", confirmLabel: "Entendido" });
+  } else {
+    setSubStatus("Pausada");
+    showMessage({ icon: "pause_circle", title: "Servicio en pausa", text: "Tu servicio de compra programada quedó en pausa. No se generarán entregas automáticas hasta que lo reactives.", confirmLabel: "Entendido" });
+  }
+  renderAccount();
+}
+function cancelSubscription() {
+  showMessage({
+    icon: "cancel", danger: true, title: "¿Cancelar suscripción?",
+    text: "Dejarás de recibir tus entregas programadas. Puedes volver a suscribirte cuando quieras, sin permanencia.",
+    confirmLabel: "Sí, cancelar", cancel: true,
+    onConfirm: () => {
+      setSubStatus("Cancelada");
+      localStorage.removeItem("origen_billing"); // se detiene el cobro recurrente
+      showMessage({ icon: "check_circle", title: "Suscripción cancelada", text: "Tu suscripción y el cobro recurrente de Bs. 99/mes fueron cancelados. Gracias por haber sido parte de Origen.", confirmLabel: "Entendido" });
+      renderAccount();
+    }
+  });
+}
+
+/* ============ Programación de entregas recurrentes ============ */
+const FREQS = [
+  { id: "semanal", label: "Cada semana", days: 7, desc: "Ideal para frescos y frutas" },
+  { id: "quincenal", label: "Cada 15 días", days: 15, desc: "La más popular" },
+  { id: "mensual", label: "Cada mes", days: 30, desc: "Para despensa y superfoods" },
+  { id: "personalizada", label: "Fecha personalizada", days: 0, desc: "Tú eliges el día" }
+];
+const getSchedule = () => JSON.parse(localStorage.getItem("origen_schedule") || "null") || { freq: "quincenal", date: null };
+function schedNextDate(sched) {
+  sched = sched || getSchedule();
+  if (sched.freq === "personalizada" && sched.date) return new Date(sched.date + "T00:00:00");
+  const f = FREQS.find(x => x.id === sched.freq) || FREQS[1];
+  const d = new Date(); d.setDate(d.getDate() + (f.days || 15)); return d;
+}
+const schedNextLabel = () => schedNextDate().toLocaleDateString("es-BO", { weekday: "long", day: "numeric", month: "long" });
+let schedFreq = getSchedule().freq;
+function renderSchedule() {
+  const sched = getSchedule(); schedFreq = sched.freq;
+  document.getElementById("freq-options").innerHTML = FREQS.map(f => {
+    const on = f.id === schedFreq;
+    return `<button data-freq="${f.id}" class="w-full text-left rounded-xl p-4 border flex items-center justify-between transition-colors ${on ? "border-secondary bg-secondary-container" : "border-outline-variant bg-surface-container-lowest"}">
+      <span><span class="block font-body-md font-semibold ${on ? "text-on-secondary-container" : "text-primary"}">${f.label}</span><span class="block font-label-sm ${on ? "text-on-secondary-container/80" : "text-on-surface-variant"}">${f.desc}</span></span>
+      <span class="material-symbols-outlined ${on ? "text-secondary" : "text-outline-variant"}">${on ? "radio_button_checked" : "radio_button_unchecked"}</span>
+    </button>`;
+  }).join("");
+  document.getElementById("custom-date-wrap").classList.toggle("hidden", schedFreq !== "personalizada");
+  if (sched.date) document.getElementById("sched-date").value = sched.date;
+  const subs = subProducts();
+  document.getElementById("sched-products").textContent = subs.length ? subs.map(p => p.name).join(" · ") : "Aún no defines productos. Edítalos desde el catálogo.";
+  document.getElementById("sched-next").textContent = schedNextLabel();
+}
+
+/* ============ Modal de mensaje / confirmación ============ */
+function showMessage({ icon = "check_circle", title, text, confirmLabel = "Entendido", cancel = false, danger = false, onConfirm }) {
+  document.getElementById("msg-icon").textContent = icon;
+  document.getElementById("msg-icon-wrap").className = "w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5 " + (danger ? "bg-error/15" : "bg-secondary-container");
+  document.getElementById("msg-icon").classList.toggle("text-error", danger);
+  document.getElementById("msg-icon").classList.toggle("text-on-secondary-container", !danger);
+  document.getElementById("msg-title").textContent = title;
+  document.getElementById("msg-text").textContent = text;
+  const actions = document.getElementById("msg-actions");
+  actions.innerHTML = "";
+  if (cancel) {
+    const no = document.createElement("button");
+    no.className = "flex-1 border border-outline-variant text-on-surface font-label-md py-3 rounded-xl active:scale-95 transition-transform";
+    no.textContent = "No, volver";
+    no.onclick = closeMessage;
+    actions.appendChild(no);
+  }
+  const ok = document.createElement("button");
+  ok.className = "flex-1 font-label-md py-3 rounded-xl active:scale-95 transition-transform " + (danger ? "bg-error text-on-error" : "bg-leaf-green text-white");
+  ok.textContent = confirmLabel;
+  ok.onclick = () => { closeMessage(); if (onConfirm) onConfirm(); };
+  actions.appendChild(ok);
+  document.getElementById("msg-modal").classList.remove("hidden");
+}
+function closeMessage() { document.getElementById("msg-modal").classList.add("hidden"); }
+
+/* ============ Carrito (persistente) ============ */
+const DISCOUNT = 0.12;
+const SERVICE_FEE = 5; // tarifa fija de uso de la app (Bs)
+// Distancia estimada por zona (km) → costo de delivery 7–18 Bs (18 si excede 4 km)
+const ZONE_KM = { "Zona Sur": 2.8, "Calacoto": 2.8, "Miraflores": 5.2, "Centro": 4.3, "Sopocachi": 3.6 };
+const deliveryKmFor = () => { const u = currentUser(); const z = u && u.zone; return ZONE_KM[z] != null ? ZONE_KM[z] : 3.0; };
+const deliveryFeeForKm = km => km > 4 ? 18 : Math.min(18, Math.max(7, Math.round(7 + km * 2.75)));
+function cartTotals() {
+  const sub = cartSubtotal(), disc = sub * DISCOUNT;
+  const km = deliveryKmFor();
+  const delivery = cart.length ? deliveryFeeForKm(km) : 0;
+  const service = cart.length ? SERVICE_FEE : 0;
+  return { sub, disc, service, delivery, km, total: sub - disc + service + delivery };
+}
+let cart = JSON.parse(localStorage.getItem("origen_cart") || "[]");
+const saveCart = () => localStorage.setItem("origen_cart", JSON.stringify(cart));
+const cartCount = () => cart.reduce((s, i) => s + i.qty, 0);
+const cartSubtotal = () => cart.reduce((s, i) => { const p = findProduct(i.id); return s + (p ? p.price * i.qty : 0); }, 0);
+// Si el admin borró un producto que estaba en el carrito, lo quitamos.
+function pruneCart() { const before = cart.length; cart = cart.filter(i => findProduct(i.id)); if (cart.length !== before) { saveCart(); syncCart(); } }
+
+function addToCart(id) {
+  const line = cart.find(i => i.id === id);
+  if (line) line.qty++; else cart.push({ id, qty: 1 });
+  saveCart(); syncCart(); showToast("Agregado a tu canasta");
+}
+function changeQty(id, delta) {
+  const line = cart.find(i => i.id === id);
+  if (!line) return;
+  line.qty += delta;
+  if (line.qty <= 0) cart = cart.filter(i => i.id !== id);
+  saveCart(); syncCart(); renderBasket();
+}
+function removeFromCart(id) { cart = cart.filter(i => i.id !== id); saveCart(); syncCart(); renderBasket(); }
+
+function syncCart() {
+  const n = cartCount();
+  document.querySelectorAll(".cart-badge").forEach(b => {
+    b.textContent = n;
+    b.classList.toggle("hidden", n === 0);
+  });
+}
+
+/* ============ Toast ============ */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  document.getElementById("toast-msg").textContent = msg;
+  t.classList.remove("opacity-0");
+  t.style.transform = "translate(-50%, 0)";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.add("opacity-0"); t.style.transform = "translate(-50%, 8px)"; }, 1800);
+}
+
+/* ============ Render: tarjeta de producto ============ */
+function productCardCatalog(p) {
+  return `
+  <div class="product-card bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col group">
+    <div class="aspect-square relative overflow-hidden bg-earth-cream">
+      <img alt="${p.name}" class="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" src="${p.img}" onerror="imgFail(this)">
+      <div class="absolute top-2 left-2 flex flex-col gap-1">
+        <span class="bg-sprout-green text-deep-forest px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Suscríbete -12%</span>
+      </div>
+    </div>
+    <div class="p-4 flex flex-col flex-grow">
+      <h3 class="font-headline-sm text-[16px] text-on-surface mb-1 leading-tight">${p.name}</h3>
+      <p class="font-label-sm text-on-surface-variant mb-1">${p.unit} • ${p.origin}</p>
+      <p class="text-secondary font-label-md mt-auto">${bs(p.price)}</p>
+      <button data-add="${p.id}" class="mt-3 w-full bg-secondary text-on-secondary h-10 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+        <span class="material-symbols-outlined text-[20px]">add</span><span class="font-label-md">Añadir</span>
+      </button>
+    </div>
+  </div>`;
+}
+function productCardReco(p) {
+  return `
+  <article class="min-w-[240px] flex-shrink-0 group">
+    <div class="bg-white rounded-xl overflow-hidden border border-outline-variant/20 shadow-sm transition-all duration-300 hover:shadow-md">
+      <div class="aspect-square bg-surface-container overflow-hidden relative">
+        <img alt="${p.name}" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="${p.img}" onerror="imgFail(this)">
+        <div class="absolute top-3 left-3 flex gap-2">
+          <span class="bg-sprout-green text-on-tertiary-fixed font-label-sm text-label-sm px-2 py-1 rounded-full">${p.tag}</span>
+        </div>
+      </div>
+      <div class="p-4 space-y-2">
+        <h4 class="font-body-lg text-body-lg font-semibold text-primary">${p.name}</h4>
+        <p class="font-label-sm text-label-sm text-secondary">${p.unit} • ${p.origin}</p>
+        <div class="flex items-center justify-between pt-2">
+          <span class="font-headline-sm text-headline-sm text-primary">${bs(p.price)}</span>
+          <button data-add="${p.id}" class="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-white hover:scale-110 active:scale-95 transition-transform">
+            <span class="material-symbols-outlined text-sm">add</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+/* ============ Render catálogo + home ============ */
+let activeCat = "Todos";
+function renderCatalog() {
+  const cats = ["Todos", "Despensa", "Superfoods", "Snacks"];
+  document.getElementById("catalog-chips").innerHTML = cats.map(c => {
+    const on = c === activeCat;
+    return `<button data-cat="${c}" class="flex-none px-5 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary shadow-sm" : "bg-surface-container-high text-on-surface-variant hover:bg-outline-variant"}">${c}</button>`;
+  }).join("");
+  const q = (document.getElementById("catalog-search").value || "").toLowerCase();
+  const list = activeProducts().filter(p => (activeCat === "Todos" || p.cat === activeCat) && p.name.toLowerCase().includes(q));
+  const grid = document.getElementById("catalog-grid");
+  grid.innerHTML = list.length ? list.map(productCardCatalog).join("")
+    : `<p class="col-span-2 text-center text-on-surface-variant py-12">No encontramos productos para tu búsqueda.</p>`;
+}
+function renderHome() {
+  const act = activeProducts();
+  document.getElementById("home-reco").innerHTML = act.length
+    ? act.slice(0, 6).map(productCardReco).join("")
+    : `<p class="text-on-surface-variant py-6">Aún no hay productos publicados.</p>`;
+  // Estado de la suscripción en la tarjeta principal
+  const st = subStatus();
+  const stEl = document.getElementById("home-sub-state");
+  const nextEl = document.getElementById("home-sub-next");
+  if (stEl) stEl.textContent = "suscripción " + st.toLowerCase();
+  if (nextEl) nextEl.textContent = st === "Activa" ? ("Próxima entrega: " + schedNextLabel()) : st === "Pausada" ? "Servicio de compra programada en pausa" : "Suscripción cancelada";
+  // Lista de la canasta de suscripción (definida por el admin)
+  const subEl = document.getElementById("home-sub-list");
+  if (subEl) {
+    const items = subProducts();
+    subEl.textContent = items.length ? items.map(p => p.name).join(" · ") : "Personaliza tu canasta desde el catálogo.";
+  }
+}
+
+/* ============ Render canasta ============ */
+function basketRow(line) {
+  const p = findProduct(line.id);
+  return `
+  <div class="bg-surface-container-lowest p-4 rounded-xl border border-outline-variant/30 custom-shadow flex items-center gap-4">
+    <div class="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-earth-cream">
+      <img alt="${p.name}" class="w-full h-full object-contain p-1" src="${p.img}" onerror="imgFail(this)">
+    </div>
+    <div class="flex-grow">
+      <div class="flex justify-between items-start">
+        <h3 class="font-headline-sm text-headline-sm text-primary leading-tight">${p.name}</h3>
+        <span class="font-label-md text-label-md text-secondary whitespace-nowrap ml-2">${bs(p.price)}</span>
+      </div>
+      <p class="text-on-surface-variant text-label-sm font-label-sm mb-3">${p.unit} • Origen: ${p.origin}</p>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3 bg-surface-container rounded-full px-3 py-1 border border-outline-variant/20">
+          <button data-dec="${p.id}" class="text-secondary active:scale-90 transition-transform"><span class="material-symbols-outlined text-[18px]">remove</span></button>
+          <span class="font-label-md text-label-md w-6 text-center">${line.qty}</span>
+          <button data-inc="${p.id}" class="text-secondary active:scale-90 transition-transform"><span class="material-symbols-outlined text-[18px]">add</span></button>
+        </div>
+        <button data-del="${p.id}" class="text-on-surface-variant/60 hover:text-error transition-colors"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+      </div>
+    </div>
+  </div>`;
+}
+function renderBasket() {
+  pruneCart();
+  const items = document.getElementById("basket-items");
+  const filled = document.getElementById("basket-filled");
+  const empty = document.getElementById("basket-empty");
+  const bar = document.getElementById("basket-bar");
+  if (!cart.length) {
+    items.innerHTML = "";
+    filled.classList.add("hidden");
+    bar.classList.add("hidden");
+    empty.classList.remove("hidden"); empty.classList.add("flex");
+    return;
+  }
+  empty.classList.add("hidden"); empty.classList.remove("flex");
+  filled.classList.remove("hidden");
+  bar.classList.remove("hidden");
+  items.innerHTML = cart.map(basketRow).join("");
+  const t = cartTotals();
+  document.getElementById("sum-subtotal").textContent = bs(t.sub);
+  document.getElementById("sum-discount").textContent = "- " + bs(t.disc);
+  document.getElementById("sum-service").textContent = bs(t.service);
+  document.getElementById("sum-delivery").textContent = bs(t.delivery);
+  document.getElementById("sum-km").textContent = "(~" + t.km.toFixed(1).replace(".0", "") + " km)";
+  document.getElementById("sum-total").textContent = bs(t.total);
+  document.getElementById("basket-savings").textContent = bs(t.disc);
+}
+
+/* ============ Router ============ */
+const TABS = ["home", "catalog", "scanner", "account"];
+const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin-login", "admin", "plans", "schedule"];
+let current = "welcome";
+function navigate(screen) {
+  const target = document.getElementById("screen-" + screen);
+  if (!target) return;
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  target.classList.add("active");
+  current = screen;
+  window.scrollTo(0, 0);
+  if (target.querySelector("main")) target.querySelector("main").scrollTop = 0;
+
+  // Bottom nav visible salvo en welcome/register
+  const nav = document.getElementById("bottom-nav");
+  nav.classList.toggle("hidden", NO_NAV.includes(screen));
+  nav.classList.toggle("flex", !NO_NAV.includes(screen));
+
+  // Estado activo de tabs
+  document.querySelectorAll(".nav-tab").forEach(t => {
+    const on = t.dataset.tab === screen;
+    t.classList.toggle("bg-secondary-container", on);
+    t.classList.toggle("text-on-secondary-container", on);
+    t.classList.toggle("rounded-full", on);
+    t.classList.toggle("scale-90", on);
+    t.classList.toggle("text-on-surface-variant", !on);
+    const icon = t.querySelector(".material-symbols-outlined");
+    icon.style.fontVariationSettings = on ? "'FILL' 1" : "'FILL' 0";
+  });
+
+  if (screen === "home") renderHome();
+  if (screen === "catalog") renderCatalog();
+  if (screen === "basket") renderBasket();
+  if (screen === "scanner") runScanner();
+  if (screen === "account") renderAccount();
+  if (screen === "tracking") renderTracking();
+  if (screen === "schedule") renderSchedule();
+  if (screen === "auth") { document.getElementById("auth-error").classList.add("hidden"); renderGoogleAccounts(); }
+  if (screen === "otp") renderOtp();
+  if (screen === "checkout") renderCheckout();
+  if (screen === "admin-login") { document.getElementById("admin-error").classList.add("hidden"); }
+  if (screen === "admin") renderAdmin();
+  if (screen === "confirmed") document.getElementById("confirm-order-id").textContent = lastOrderId || ("#ORG-" + Math.floor(10000 + Math.random() * 89999));
+}
+
+/* ============ Scanner simulado ============ */
+let scanTimer;
+function runScanner() {
+  const icon = document.getElementById("scan-icon");
+  const title = document.getElementById("scan-title");
+  const sub = document.getElementById("scan-sub");
+  icon.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 pulse-slow bg-surface-container text-outline";
+  icon.innerHTML = '<span class="material-symbols-outlined text-[32px]">qr_code_scanner</span>';
+  title.textContent = "Buscando código…";
+  title.classList.remove("text-secondary");
+  sub.textContent = "Mantén la cámara estable sobre la etiqueta del producto.";
+  clearTimeout(scanTimer);
+  scanTimer = setTimeout(() => {
+    if (current !== "scanner") return;
+    icon.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 pulse-slow bg-leaf-green text-white";
+    icon.innerHTML = '<span class="material-symbols-outlined text-[32px]" style="font-variation-settings:\'FILL\' 1;">check_circle</span>';
+    title.textContent = "¡Código Encontrado!";
+    title.classList.add("text-secondary");
+    sub.textContent = "Café de Altura · Yungas — cosechado el 12 de junio por Ankaya Origen.";
+  }, 2600);
+}
+
+/* ============ Eventos ============ */
+document.addEventListener("click", e => {
+  const nav = e.target.closest("[data-nav]");
+  if (nav) { e.preventDefault(); navigate(nav.dataset.nav); return; }
+
+  const cat = e.target.closest("[data-cat]");
+  if (cat) { activeCat = cat.dataset.cat; renderCatalog(); return; }
+
+  const add = e.target.closest("[data-add]");
+  if (add) { addToCart(add.dataset.add); return; }
+
+  const inc = e.target.closest("[data-inc]");
+  if (inc) { changeQty(inc.dataset.inc, 1); return; }
+  const dec = e.target.closest("[data-dec]");
+  if (dec) { changeQty(dec.dataset.dec, -1); return; }
+  const del = e.target.closest("[data-del]");
+  if (del) { removeFromCart(del.dataset.del); return; }
+});
+
+document.getElementById("catalog-search").addEventListener("input", renderCatalog);
+
+// Registro → bienvenida → home
+document.getElementById("register-next").addEventListener("click", () => {
+  const o = document.getElementById("register-overlay");
+  const c = document.getElementById("register-card");
+  o.classList.remove("opacity-0", "pointer-events-none");
+  c.classList.remove("translate-y-8");
+  setTimeout(() => {
+    o.classList.add("opacity-0", "pointer-events-none");
+    c.classList.add("translate-y-8");
+    navigate("home");
+  }, 1900);
+});
+
+// Acceso al panel admin desde Cuenta + cerrar sesión + suscripción
+document.addEventListener("click", e => {
+  // Botones de menú (hamburguesa) y placeholders: dan feedback en vez de quedar inertes
+  const btn = e.target.closest("button");
+  if (btn && btn.querySelector(".material-symbols-outlined")?.textContent.trim() === "menu") { showToast("Menú · próximamente"); return; }
+  const soon = e.target.closest("[data-soon]");
+  if (soon) { showToast(soon.dataset.soon || "Disponible próximamente"); return; }
+  if (e.target.closest("[data-admin]")) navigate(isAdmin() ? "admin" : "admin-login");
+  if (e.target.closest("[data-logout]")) { logout(); navigate("welcome"); }
+  if (e.target.closest("[data-sub-toggle]")) togglePause();
+  if (e.target.closest("[data-sub-cancel]")) cancelSubscription();
+  const fq = e.target.closest("[data-freq]");
+  if (fq) {
+    const sched = getSchedule(); sched.freq = fq.dataset.freq;
+    localStorage.setItem("origen_schedule", JSON.stringify(sched));
+    renderSchedule();
+  }
+  if (e.target.id === "msg-modal") closeMessage();
+});
+// Programar suscripción
+document.getElementById("sched-date").addEventListener("change", e => {
+  const sched = getSchedule(); sched.date = e.target.value; localStorage.setItem("origen_schedule", JSON.stringify(sched)); renderSchedule();
+});
+document.getElementById("sched-activate").addEventListener("click", () => {
+  const sched = getSchedule();
+  if (sched.freq === "personalizada" && !sched.date) { showMessage({ icon: "event", title: "Elige una fecha", text: "Selecciona la fecha de tu próxima entrega para activar la suscripción personalizada.", confirmLabel: "Entendido" }); return; }
+  // El plan mensual (Bs. 99) requiere tarjeta para el cobro recurrente
+  if (!getBilling()) { openBilling(finalizeSubscription); return; }
+  finalizeSubscription();
+});
+function finalizeSubscription() {
+  setSubStatus("Activa");
+  const sched = getSchedule();
+  const f = FREQS.find(x => x.id === sched.freq) || FREQS[1];
+  showMessage({
+    icon: "event_available", title: "¡Suscripción activada!",
+    text: "Recibirás tu canasta " + f.label.toLowerCase() + ". Próxima entrega: " + schedNextLabel() + ". Cobro recurrente de Bs. 99/mes a tu " + billingLabel() + ". Puedes pausar o cancelar cuando quieras.",
+    confirmLabel: "Listo", onConfirm: () => navigate("account")
+  });
+}
+
+/* ============ Cobro recurrente (tarjeta de suscripción) ============ */
+const getBilling = () => JSON.parse(localStorage.getItem("origen_billing") || "null");
+const saveBilling = b => localStorage.setItem("origen_billing", JSON.stringify(b));
+const billingLabel = () => { const b = getBilling(); return b ? (b.brand + " ••" + b.last4) : "tarjeta"; };
+function cardBrand(num) { num = num.replace(/\s/g, ""); if (/^4/.test(num)) return "Visa"; if (/^5[1-5]/.test(num) || /^2[2-7]/.test(num)) return "Mastercard"; if (/^3[47]/.test(num)) return "Amex"; return "Tarjeta"; }
+let billingSuccess = null;
+function openBilling(onSuccess) { billingSuccess = onSuccess; document.getElementById("bill-error").classList.add("hidden"); document.getElementById("billing-modal").classList.remove("hidden"); }
+function closeBilling() { document.getElementById("billing-modal").classList.add("hidden"); }
+document.getElementById("billing-close").addEventListener("click", closeBilling);
+document.getElementById("billing-modal").addEventListener("click", e => { if (e.target.id === "billing-modal") closeBilling(); });
+document.getElementById("bill-num").addEventListener("input", e => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim(); });
+document.getElementById("bill-exp").addEventListener("input", e => { let v = e.target.value.replace(/\D/g, "").slice(0, 4); if (v.length > 2) v = v.slice(0, 2) + "/" + v.slice(2); e.target.value = v; });
+document.getElementById("bill-confirm").addEventListener("click", () => {
+  const num = document.getElementById("bill-num").value.replace(/\s/g, "");
+  const exp = document.getElementById("bill-exp").value;
+  const cvv = document.getElementById("bill-cvv").value;
+  const name = document.getElementById("bill-name").value.trim();
+  if (num.length < 13 || !/^\d{2}\/\d{2}$/.test(exp) || cvv.length < 3 || !name) { document.getElementById("bill-error").classList.remove("hidden"); return; }
+  saveBilling({ last4: num.slice(-4), brand: cardBrand(num), name, amount: 99, cycle: "mensual", since: new Date().toISOString().slice(0, 10), nextCharge: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10) });
+  document.getElementById("bill-num").value = ""; document.getElementById("bill-cvv").value = "";
+  closeBilling();
+  showToast("Tarjeta autorizada · Bs. 99/mes");
+  if (billingSuccess) billingSuccess();
+});
+
+// Confirmar pedido → checkout (pago)
+document.getElementById("basket-confirm").addEventListener("click", () => navigate("checkout"));
+
+/* ============ Checkout (pago simulado) ============ */
+let lastOrderId = null;
+let payMethod = "qr";
+function renderCheckout() {
+  pruneCart();
+  if (!cart.length) { navigate("catalog"); return; }
+  const t = cartTotals(), total = t.total;
+  document.getElementById("checkout-total").textContent = bs(total);
+  document.getElementById("checkout-breakdown").innerHTML =
+    `Productos ${bs(t.sub - t.disc)} · Servicio ${bs(t.service)} · Delivery ${bs(t.delivery)} (~${t.km.toFixed(1).replace(".0", "")} km)`;
+  // Métodos según ajustes del admin
+  const methods = [];
+  if (paySettings.qr) methods.push({ id: "qr", icon: "qr_code_2", label: "QR Simple" });
+  if (paySettings.card) methods.push({ id: "card", icon: "credit_card", label: "Tarjeta" });
+  if (!methods.length) methods.push({ id: "qr", icon: "qr_code_2", label: "QR Simple" });
+  if (!methods.find(m => m.id === payMethod)) payMethod = methods[0].id;
+  document.getElementById("pay-methods").innerHTML = methods.map(m => {
+    const on = m.id === payMethod;
+    return `<button data-method="${m.id}" class="flex items-center justify-center gap-2 py-4 rounded-xl border font-label-md transition-all ${on ? "border-secondary bg-secondary-container text-on-secondary-container" : "border-outline-variant bg-surface-container-lowest text-on-surface-variant"}"><span class="material-symbols-outlined">${m.icon}</span>${m.label}</button>`;
+  }).join("");
+  document.getElementById("pay-panel-qr").classList.toggle("hidden", payMethod !== "qr");
+  document.getElementById("pay-panel-card").classList.toggle("hidden", payMethod !== "card");
+  document.getElementById("qr-comercio").textContent = paySettings.comercio;
+  document.getElementById("qr-monto").textContent = bs(total);
+  document.getElementById("card-pay-label").textContent = "Pagar " + bs(total);
+  document.getElementById("checkout-qr").innerHTML = fakeQR();
+}
+// QR decorativo (simulado, no escaneable) en estilo de marca
+function fakeQR() {
+  const n = 21, seed = Date.now();
+  let cells = "";
+  const finder = (x, y) => (x < 7 && y < 7) || (x >= n - 7 && y < 7) || (x < 7 && y >= n - 7);
+  let r = seed;
+  const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    let on = finder(x, y) ? ((x % 6 === 0 || y % 6 === 0 || (x > 1 && x < 5 && y > 1 && y < 5) || (x > n - 6 && x < n - 2 && y > 1 && y < 5) || (x > 1 && x < 5 && y > n - 6 && y < n - 2))) : rnd() > 0.55;
+    if (on) cells += `<rect x="${x}" y="${y}" width="1" height="1" fill="#0A130D"/>`;
+  }
+  return `<svg viewBox="0 0 ${n} ${n}" class="w-full h-full" shape-rendering="crispEdges">${cells}</svg>`;
+}
+function createOrder(method) {
+  pruneCart();
+  const t = cartTotals(), total = t.total;
+  const id = "#ORG-" + Math.floor(10000 + Math.random() * 89999);
+  const u = currentUser() || { name: "Cliente Origen", email: "cliente@origen.bo", address: "Av. Principal 123, Edificio Los Pinos", zone: "Zona Sur" };
+  orders.unshift({
+    id, date: new Date().toISOString(), method,
+    items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
+    total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
+    status: "Nuevo", assignedTo: null,
+    customer: { name: u.name, email: u.email, address: u.address || "Av. Principal 123, Edificio Los Pinos", zone: u.zone || "Zona Sur" },
+    deliveryDate: new Date().toISOString().slice(0, 10),
+    window: "09:00 – 11:00",
+    history: [{ status: "Nuevo", at: new Date().toISOString() }]
+  });
+  saveOrders();
+  lastOrderId = id;
+  cart = []; saveCart(); syncCart();
+  return id;
+}
+// Estados del ciclo de entrega (compartido con la app de repartidor)
+const ORDER_FLOW = ["Nuevo", "Asignado", "Recogido", "En camino", "Entregado"];
+const latestOrder = () => orders[0] || null;
+// Recarga pedidos desde localStorage (para sincronizar entre apps)
+function reloadOrders() { orders = JSON.parse(localStorage.getItem("origen_orders") || "[]"); }
+// Cuando la app de repartidor actualiza un pedido en otra pestaña/dispositivo (mismo navegador)
+window.addEventListener("storage", e => {
+  if (e.key === "origen_orders") {
+    reloadOrders();
+    if (current === "tracking") renderTracking();
+    if (current === "admin") renderAdmin();
+  }
+});
+document.addEventListener("click", e => {
+  const m = e.target.closest("[data-method]");
+  if (m) { payMethod = m.dataset.method; renderCheckout(); return; }
+  const pay = e.target.closest("[data-pay]");
+  if (pay) {
+    const proc = document.getElementById("pay-processing");
+    proc.classList.remove("hidden");
+    setTimeout(() => { createOrder(pay.dataset.pay); proc.classList.add("hidden"); navigate("confirmed"); }, 1700);
+  }
+});
+// Formateo suave de la tarjeta
+document.getElementById("card-num").addEventListener("input", e => {
+  e.target.value = e.target.value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+});
+document.getElementById("card-exp").addEventListener("input", e => {
+  let v = e.target.value.replace(/\D/g, "").slice(0, 4);
+  if (v.length > 2) v = v.slice(0, 2) + "/" + v.slice(2);
+  e.target.value = v;
+});
+
+/* ============ ADMIN ============ */
+document.getElementById("admin-login-btn").addEventListener("click", () => {
+  const email = document.getElementById("admin-email").value.trim().toLowerCase();
+  const pass = document.getElementById("admin-pass").value;
+  if (email === ADMIN.email && pass === ADMIN.pass) {
+    sessionStorage.setItem("origen_admin", "1");
+    document.getElementById("admin-pass").value = "";
+    navigate("admin");
+  } else {
+    document.getElementById("admin-error").classList.remove("hidden");
+  }
+});
+document.getElementById("admin-pass").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("admin-login-btn").click(); });
+document.getElementById("admin-logout").addEventListener("click", () => { sessionStorage.removeItem("origen_admin"); navigate("account"); });
+
+const ADMIN_TABS = [
+  { id: "dashboard", label: "Resumen", icon: "dashboard" },
+  { id: "products", label: "Productos", icon: "inventory_2" },
+  { id: "sub", label: "Suscripción", icon: "autorenew" },
+  { id: "users", label: "Suscriptores", icon: "group" },
+  { id: "orders", label: "Pedidos", icon: "receipt_long" },
+  { id: "deliveries", label: "Entregas", icon: "local_shipping" },
+  { id: "pay", label: "Pagos", icon: "payments" }
+];
+let adminTab = "dashboard";
+function renderAdmin() {
+  if (!isAdmin()) { navigate("admin-login"); return; }
+  document.getElementById("admin-tabs").innerHTML = ADMIN_TABS.map(t => {
+    const on = t.id === adminTab;
+    return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
+  }).join("");
+  ["dashboard", "products", "sub", "users", "orders", "deliveries", "pay"].forEach(id =>
+    document.getElementById("admin-" + id).classList.toggle("hidden", id !== adminTab));
+  if (adminTab === "dashboard") renderAdminDashboard();
+  if (adminTab === "products") renderAdminProducts();
+  if (adminTab === "sub") renderAdminSub();
+  if (adminTab === "users") renderAdminUsers();
+  if (adminTab === "orders") renderAdminOrders();
+  if (adminTab === "deliveries") renderAdminDeliveries();
+  if (adminTab === "pay") renderAdminPay();
+}
+document.addEventListener("click", e => {
+  const t = e.target.closest("[data-atab]");
+  if (t) { adminTab = t.dataset.atab; renderAdmin(); }
+});
+
+function statCard(icon, value, label, tint) {
+  return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5">
+    <div class="w-10 h-10 rounded-full ${tint} flex items-center justify-center mb-3"><span class="material-symbols-outlined">${icon}</span></div>
+    <p class="font-headline-md text-headline-md text-primary leading-none">${value}</p>
+    <p class="font-label-sm text-on-surface-variant mt-1">${label}</p></div>`;
+}
+function renderAdminDashboard() {
+  const ingresos = orders.reduce((s, o) => s + o.total, 0);
+  document.getElementById("admin-dashboard").innerHTML = `
+    <div class="grid grid-cols-2 gap-3">
+      ${statCard("inventory_2", activeProducts().length, "Productos activos", "bg-secondary-container text-on-secondary-container")}
+      ${statCard("autorenew", subProducts().length, "En suscripción", "bg-tertiary-fixed text-on-tertiary-fixed")}
+      ${statCard("receipt_long", orders.length, "Pedidos", "bg-secondary-container text-on-secondary-container")}
+      ${statCard("payments", bs(ingresos), "Ingresos (sim.)", "bg-sprout-green/40 text-deep-forest")}
+    </div>
+    <div class="mt-6 bg-primary-container text-on-primary rounded-2xl p-6">
+      <p class="font-label-md text-leaf-green uppercase tracking-wider mb-1">Canasta de suscripción</p>
+      <p class="font-body-md text-on-primary-container">${subProducts().length ? subProducts().map(p => p.name).join(" · ") : "Sin productos asignados todavía."}</p>
+    </div>
+    <button data-atab="products" class="mt-6 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-[0.99] transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined">add</span> Agregar producto</button>
+    <a href="repartidor.html" target="_blank" class="mt-3 w-full border border-primary-container text-primary-container font-label-md py-4 rounded-xl active:scale-[0.99] transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined">delivery_dining</span> Abrir app de repartidor</a>`;
+}
+function adminProductRow(p) {
+  return `<button data-edit="${p.id}" class="w-full text-left bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 flex items-center gap-3 active:scale-[0.99] transition-transform">
+    <div class="w-14 h-14 rounded-lg overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.img}" onerror="imgFail(this)" class="w-full h-full object-contain"></div>
+    <div class="flex-grow min-w-0">
+      <p class="font-body-md font-semibold text-primary truncate">${p.name}</p>
+      <p class="font-label-sm text-on-surface-variant">${bs(p.price)} · ${p.cat}</p>
+    </div>
+    <div class="flex flex-col items-end gap-1">
+      ${p.inSub ? '<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Suscripción</span>' : ''}
+      ${p.active === false ? '<span class="bg-error-container text-on-error-container text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Oculto</span>' : ''}
+      <span class="material-symbols-outlined text-outline-variant">edit</span>
+    </div>
+  </button>`;
+}
+function renderAdminProducts() {
+  document.getElementById("admin-products").innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-headline-sm text-headline-sm text-primary">Productos (${PRODUCTS.length})</h2>
+      <button id="add-product-btn" class="bg-leaf-green text-white font-label-md px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nuevo</button>
+    </div>
+    <div class="space-y-3">${PRODUCTS.map(adminProductRow).join("")}</div>`;
+  document.getElementById("add-product-btn").addEventListener("click", () => openProductModal(null));
+}
+function renderAdminSub() {
+  document.getElementById("admin-sub").innerHTML = `
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Canasta de suscripción</h2>
+    <p class="font-body-md text-on-surface-variant mb-5">Activa los productos que se entregan en cada ciclo de suscripción.</p>
+    <div class="space-y-2">${PRODUCTS.map(p => `
+      <label class="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3">
+        <div class="w-12 h-12 rounded-lg overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.img}" onerror="imgFail(this)" class="w-full h-full object-contain"></div>
+        <div class="flex-grow min-w-0"><p class="font-body-md font-semibold text-primary truncate">${p.name}</p><p class="font-label-sm text-on-surface-variant">${bs(p.price)}</p></div>
+        <input type="checkbox" data-subtoggle="${p.id}" ${p.inSub ? "checked" : ""} class="w-6 h-6 accent-secondary flex-shrink-0">
+      </label>`).join("")}</div>`;
+  document.querySelectorAll("[data-subtoggle]").forEach(cb => cb.addEventListener("change", () => {
+    const p = findProduct(cb.dataset.subtoggle); p.inSub = cb.checked; saveProducts(); showToast("Canasta actualizada");
+  }));
+}
+function renderAdminOrders() {
+  const el = document.getElementById("admin-orders");
+  if (!orders.length) { el.innerHTML = `<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">receipt_long</span><p class="mt-3">Aún no hay pedidos.</p></div>`; return; }
+  el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Pedidos (${orders.length})</h2>
+    <div class="space-y-3">${orders.map(o => `
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="font-body-md font-bold text-primary">${o.id}</span>
+          <span class="bg-secondary-container text-on-secondary-container text-label-sm font-label-md px-2 py-0.5 rounded-full">${o.status}</span>
+        </div>
+        <p class="font-label-sm text-on-surface-variant mb-2">${new Date(o.date).toLocaleString("es-BO")} · ${o.method === "qr" ? "QR Simple" : "Tarjeta"}</p>
+        <p class="font-label-sm text-on-surface-variant">${o.items.map(i => i.qty + "× " + i.name).join(", ")}</p>
+        <p class="font-headline-sm text-[18px] text-secondary mt-2">${bs(o.total)}</p>
+      </div>`).join("")}</div>`;
+}
+function renderAdminUsers() {
+  const active = users.filter(u => u.status === "Activa").length;
+  document.getElementById("admin-users").innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-headline-sm text-headline-sm text-primary">Suscriptores (${users.length})</h2>
+      <span class="bg-secondary-container text-on-secondary-container font-label-sm px-3 py-1 rounded-full">${active} activas</span>
+    </div>
+    <div class="space-y-3">${users.map(u => `
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4 flex items-center gap-3">
+        <div class="w-11 h-11 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md flex-shrink-0">${initials(u.name)}</div>
+        <div class="flex-grow min-w-0">
+          <p class="font-body-md font-semibold text-primary truncate">${u.name}</p>
+          <p class="font-label-sm text-on-surface-variant truncate">${u.email}</p>
+          <p class="font-label-sm text-on-surface-variant/70 truncate">${u.zone} · desde ${u.joined}</p>
+        </div>
+        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+          <span class="bg-sprout-green/30 text-deep-forest text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">${u.plan}</span>
+          <span class="${u.status === "Activa" ? "bg-secondary-container text-on-secondary-container" : "bg-error-container text-on-error-container"} text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">${u.status}</span>
+        </div>
+      </div>`).join("")}</div>`;
+}
+
+let delDate = new Date().toISOString().slice(0, 10);
+function renderAdminDeliveries() {
+  reloadOrders();
+  const list = orders.filter(o => o.deliveryDate === delDate);
+  const byStatus = ORDER_FLOW.map(s => ({ s, n: list.filter(o => o.status === s).length })).filter(x => x.n);
+  document.getElementById("admin-deliveries").innerHTML = `
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Entregas del día</h2>
+    <p class="font-body-md text-on-surface-variant mb-4">Pedidos programados para entrega en la fecha seleccionada.</p>
+    <div class="flex items-center gap-3 mb-4">
+      <input id="del-date" type="date" value="${delDate}" class="h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary">
+      <button id="del-csv" class="flex items-center gap-1 bg-leaf-green text-white font-label-md px-4 py-2.5 rounded-lg active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">download</span>CSV</button>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-5">
+      ${statCard("local_shipping", list.length, "Entregas", "bg-secondary-container text-on-secondary-container")}
+      ${statCard("check_circle", list.filter(o => o.status === "Entregado").length, "Completadas", "bg-sprout-green/40 text-deep-forest")}
+    </div>
+    ${byStatus.length ? `<div class="flex flex-wrap gap-2 mb-4">${byStatus.map(x => `<span class="bg-surface-container-high text-on-surface-variant font-label-sm px-3 py-1 rounded-full">${x.s}: ${x.n}</span>`).join("")}</div>` : ""}
+    ${list.length ? `<div class="space-y-3">${list.map(o => `
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-start mb-1">
+          <span class="font-body-md font-bold text-primary">${o.id}</span>
+          <span class="bg-sprout-green/20 text-secondary text-label-sm font-label-md px-2 py-0.5 rounded-full">${o.status}</span>
+        </div>
+        <p class="font-body-md text-on-surface">${o.customer.name}</p>
+        <p class="font-label-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">location_on</span>${o.customer.address} · ${o.customer.zone}</p>
+        <p class="font-label-sm text-on-surface-variant mt-1">${o.items.reduce((s, i) => s + i.qty, 0)} productos · ${o.window} · ${o.assignedTo ? "Repartidor: " + o.assignedTo : "Sin asignar"}</p>
+      </div>`).join("")}</div>`
+      : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">event_busy</span><p class="mt-3">No hay entregas para esta fecha.</p></div>`}`;
+  document.getElementById("del-date").addEventListener("change", e => { delDate = e.target.value; renderAdminDeliveries(); });
+  document.getElementById("del-csv").addEventListener("click", () => exportDeliveriesCSV(list));
+}
+function exportDeliveriesCSV(list) {
+  const rows = [["Pedido", "Cliente", "Correo", "Direccion", "Zona", "Productos", "Ventana", "Estado", "Repartidor", "Total Bs"]];
+  list.forEach(o => rows.push([o.id, o.customer.name, o.customer.email, o.customer.address, o.customer.zone, o.items.reduce((s, i) => s + i.qty, 0), o.window, o.status, o.assignedTo || "Sin asignar", o.total.toFixed(2)]));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "entregas-origen-" + delDate + ".csv";
+  a.click();
+  showToast("Reporte descargado");
+}
+
+function renderAdminPay() {
+  document.getElementById("admin-pay").innerHTML = `
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Métodos de pago</h2>
+    <p class="font-body-md text-on-surface-variant mb-5">Configura qué métodos ve el cliente en el checkout. <span class="text-secondary">Modo simulado.</span></p>
+    <div class="space-y-3">
+      <div><label class="font-label-sm text-on-surface-variant">Nombre del comercio</label>
+        <input id="pay-comercio" value="${paySettings.comercio.replace(/"/g, "&quot;")}" class="mt-1 w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></div>
+      <label class="flex items-center justify-between bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-4 py-4">
+        <span class="flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-secondary">qr_code_2</span> QR Simple (bancos Bolivia)</span>
+        <input id="pay-qr" type="checkbox" ${paySettings.qr ? "checked" : ""} class="w-6 h-6 accent-secondary">
+      </label>
+      <label class="flex items-center justify-between bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-4 py-4">
+        <span class="flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-secondary">credit_card</span> Tarjeta de crédito/débito</span>
+        <input id="pay-card" type="checkbox" ${paySettings.card ? "checked" : ""} class="w-6 h-6 accent-secondary">
+      </label>
+    </div>
+    <div class="mt-5 bg-surface-container-low rounded-xl p-4 flex gap-3">
+      <span class="material-symbols-outlined text-secondary">info</span>
+      <p class="font-label-sm text-on-surface-variant">Para cobros reales en Bolivia se integra una pasarela local (QR Simple / BCB) o Stripe en mercados compatibles. La estructura ya queda lista para conectarla.</p>
+    </div>`;
+  const upd = () => {
+    paySettings.comercio = document.getElementById("pay-comercio").value || PAY_DEFAULT.comercio;
+    paySettings.qr = document.getElementById("pay-qr").checked;
+    paySettings.card = document.getElementById("pay-card").checked;
+    savePaySettings();
+  };
+  document.getElementById("pay-comercio").addEventListener("input", upd);
+  document.getElementById("pay-qr").addEventListener("change", () => { upd(); showToast("Pagos actualizados"); });
+  document.getElementById("pay-card").addEventListener("change", () => { upd(); showToast("Pagos actualizados"); });
+}
+
+/* ====== Modal de producto (crear / editar) ====== */
+let editingId = null, pendingImg = "";
+function openProductModal(id) {
+  editingId = id;
+  const p = id ? findProduct(id) : null;
+  pendingImg = p ? p.img : "assets/products/generic.svg";
+  document.getElementById("pm-title").textContent = p ? "Editar producto" : "Nuevo producto";
+  document.getElementById("pm-preview").src = pendingImg;
+  document.getElementById("pm-name").value = p ? p.name : "";
+  document.getElementById("pm-price").value = p ? p.price : "";
+  document.getElementById("pm-unit").value = p ? p.unit : "";
+  document.getElementById("pm-origin").value = p ? p.origin : "";
+  document.getElementById("pm-cat").value = p ? p.cat : "Despensa";
+  document.getElementById("pm-tag").value = p ? p.tag : "Orgánico";
+  document.getElementById("pm-insub").checked = p ? !!p.inSub : false;
+  document.getElementById("pm-active").checked = p ? p.active !== false : true;
+  document.getElementById("pm-delete").classList.toggle("hidden", !p);
+  document.getElementById("product-modal").classList.remove("hidden");
+}
+function closeProductModal() { document.getElementById("product-modal").classList.add("hidden"); }
+document.getElementById("pm-close").addEventListener("click", closeProductModal);
+document.getElementById("product-modal").addEventListener("click", e => { if (e.target.id === "product-modal") closeProductModal(); });
+document.addEventListener("click", e => { const ed = e.target.closest("[data-edit]"); if (ed) openProductModal(ed.dataset.edit); });
+
+// Subida de imagen con redimensionado (para no saturar localStorage)
+document.getElementById("pm-img-file").addEventListener("change", e => {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const max = 600, scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      pendingImg = c.toDataURL("image/jpeg", 0.82);
+      document.getElementById("pm-preview").src = pendingImg;
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById("pm-save").addEventListener("click", () => {
+  const name = document.getElementById("pm-name").value.trim();
+  const price = parseFloat(document.getElementById("pm-price").value);
+  if (!name || isNaN(price)) { showToast("Completa nombre y precio"); return; }
+  const data = {
+    name, price,
+    unit: document.getElementById("pm-unit").value.trim() || "1u",
+    origin: document.getElementById("pm-origin").value.trim() || "Bolivia",
+    cat: document.getElementById("pm-cat").value,
+    tag: document.getElementById("pm-tag").value,
+    inSub: document.getElementById("pm-insub").checked,
+    active: document.getElementById("pm-active").checked,
+    img: pendingImg
+  };
+  if (editingId) { Object.assign(findProduct(editingId), data); }
+  else { data.id = "p" + Date.now().toString(36); PRODUCTS.push(data); }
+  saveProducts();
+  closeProductModal();
+  renderAdmin();
+  showToast(editingId ? "Producto actualizado" : "Producto publicado");
+});
+document.getElementById("pm-delete").addEventListener("click", () => {
+  if (!editingId) return;
+  PRODUCTS = PRODUCTS.filter(p => p.id !== editingId);
+  saveProducts(); pruneCart();
+  closeProductModal(); renderAdmin();
+  showToast("Producto eliminado");
+});
+
+/* ============ PWA ============ */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+
+/* ============ Init ============ */
+syncCart();
+navigate(currentUser() ? "home" : "welcome");
+</script>
+</body>
+</html>

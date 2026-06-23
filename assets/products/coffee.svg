@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Café">
+  <rect width="200" height="200" fill="#F5F2EB"/>
+  <path d="M70 56 h60 l-4 8 v82 q0 8-8 8 H82 q-8 0-8-8 V64 Z" fill="#3a2a1a"/>
+  <path d="M70 56 h60 l-4 8 H74 Z" fill="#2a1d11"/>
+  <rect x="80" y="86" width="40" height="44" rx="6" fill="#F5F2EB"/>
+  <text x="100" y="104" font-family="EB Garamond, serif" font-size="13" fill="#3a2a1a" text-anchor="middle">Café</text>
+  <text x="100" y="122" font-family="Hanken Grotesk, sans-serif" font-size="9" fill="#5EBC66" text-anchor="middle">YUNGAS</text>
+  <circle cx="150" cy="152" r="15" fill="#BBE85B"/>
+  <path d="M143 152c0-6 5-10 10-10 0 6-4 10-10 10z" fill="#5EBC66"/>
+</svg>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Origen · Repartidor</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A130D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  tailwind.config = { darkMode: "class", theme: { extend: {
+    colors: { "deep-forest": "#0A130D", "earth-cream": "#F5F2EB", "on-surface-variant": "#434844", "leaf-green": "#5EBC66",
+      "outline-variant": "#c3c8c2", "surface": "#fcf9f2", "surface-container-high": "#ebe8e1", "secondary": "#006e24",
+      "surface-container-low": "#f6f3ec", "background": "#fcf9f2", "surface-container-lowest": "#ffffff",
+      "sprout-green": "#BBE85B", "primary-container": "#14221a", "primary": "#000804", "on-primary": "#ffffff",
+      "on-surface": "#1c1c18", "secondary-container": "#95f598", "on-secondary-container": "#037327", "outline": "#737874",
+      "error": "#ba1a1a", "error-container": "#ffdad6", "on-error-container": "#93000a", "on-secondary": "#ffffff" },
+    fontFamily: { "headline": ["EB Garamond"], "body": ["Hanken Grotesk"] }
+  } } }
+</script>
+<style>
+  body { background:#F5F2EB; -webkit-tap-highlight-color: transparent; font-family:"Hanken Grotesk"; }
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+  .no-scrollbar::-webkit-scrollbar{display:none;} .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+  #phone { width:100%; max-width:440px; margin:0 auto; min-height:100vh; min-height:100dvh; background:#F5F2EB; box-shadow:0 30px 80px -20px rgba(10,19,13,.25); }
+  @media (min-width:480px){ #phone{ min-height:900px; margin:24px auto; border-radius:28px; overflow:hidden; } }
+  .scr:not(.on){display:none !important;}
+</style>
+</head>
+<body class="text-on-surface">
+<div id="phone">
+
+  <!-- LOGIN repartidor -->
+  <section id="rider-login" class="scr on flex flex-col items-center justify-center px-5" style="min-height:100dvh">
+    <div class="w-full max-w-sm">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <img src="assets/origen-logo.svg" class="h-8" alt="Origen">
+        <span class="bg-primary-container text-leaf-green text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">Repartidor</span>
+      </div>
+      <h1 class="font-headline text-3xl text-primary text-center mt-6 mb-2">Hola, repartidor</h1>
+      <p class="text-on-surface-variant text-center mb-8">Inicia sesión para ver los pedidos asignados a tu ruta.</p>
+      <label class="text-sm text-on-surface-variant">Selecciona tu perfil (demo)</label>
+      <div id="rider-list" class="grid gap-2 mt-2 mb-6"></div>
+      <p class="text-center text-xs text-on-surface-variant/60">Demo · perfiles de repartidor simulados.</p>
+    </div>
+  </section>
+
+  <!-- APP repartidor -->
+  <section id="rider-app" class="scr pb-24">
+    <header class="bg-primary-container text-on-primary sticky top-0 z-40 flex items-center justify-between px-5 h-16">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-leaf-green">delivery_dining</span>
+        <div><p class="font-headline text-lg leading-none">Origen Repartidor</p><p id="rider-name" class="text-xs text-leaf-green"></p></div>
+      </div>
+      <button id="rider-logout" class="text-on-primary/70 hover:text-white flex items-center gap-1 text-sm"><span class="material-symbols-outlined text-[20px]">logout</span></button>
+    </header>
+
+    <div class="bg-sprout-green/20 border-b border-sprout-green/30 px-5 py-3 flex items-center gap-2">
+      <span class="material-symbols-outlined text-secondary">warehouse</span>
+      <p class="text-sm text-on-surface">Almacén Origen · Av. Costanera 450, La Paz</p>
+    </div>
+
+    <nav id="rider-tabs" class="bg-background sticky top-16 z-30 flex gap-1 px-2 py-2 border-b border-outline-variant/20"></nav>
+
+    <main class="px-5 py-5">
+      <div id="rider-content"></div>
+    </main>
+  </section>
+
+</div>
+
+<!-- Toast -->
+<div id="rtoast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-primary-container text-on-primary px-5 py-3 rounded-full shadow-lg flex items-center gap-2 opacity-0 pointer-events-none transition-opacity">
+  <span class="material-symbols-outlined text-leaf-green text-[20px]">check_circle</span><span id="rtoast-msg" class="text-sm font-semibold"></span>
+</div>
+
+<script>
+const RIDERS = ["Luis Quispe", "Ana Choque", "Pedro Vargas"];
+const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
+const FLOW = ["Nuevo", "Asignado", "Recogido", "En camino", "Entregado"];
+
+let rider = sessionStorage.getItem("origen_rider") || null;
+const loadOrders = () => JSON.parse(localStorage.getItem("origen_orders") || "[]");
+const saveOrders = o => localStorage.setItem("origen_orders", JSON.stringify(o));
+
+let toastT;
+function toast(m){ const t=document.getElementById("rtoast"); document.getElementById("rtoast-msg").textContent=m; t.classList.remove("opacity-0"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.add("opacity-0"),1600); }
+
+function show(id){ document.querySelectorAll(".scr").forEach(s=>s.classList.remove("on")); document.getElementById(id).classList.add("on"); }
+
+// LOGIN
+function renderLogin(){
+  document.getElementById("rider-list").innerHTML = RIDERS.map(r=>`
+    <button data-rider="${r}" class="text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3 hover:border-secondary transition-colors">
+      <span class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-semibold">${r.split(" ").map(w=>w[0]).join("")}</span>
+      <div><p class="font-semibold text-primary">${r}</p><p class="text-sm text-on-surface-variant">Repartidor · Zona Sur</p></div>
+    </button>`).join("");
+}
+document.addEventListener("click", e=>{
+  const r = e.target.closest("[data-rider]");
+  if(r){ rider=r.dataset.rider; sessionStorage.setItem("origen_rider",rider); enterApp(); }
+});
+document.getElementById("rider-logout").addEventListener("click", ()=>{ sessionStorage.removeItem("origen_rider"); rider=null; show("rider-login"); renderLogin(); });
+
+// APP
+const TABS=[{id:"new",label:"Nuevos",icon:"fiber_new"},{id:"mine",label:"Mi ruta",icon:"local_shipping"},{id:"done",label:"Entregados",icon:"check_circle"},{id:"earn",label:"Ganancias",icon:"payments"}];
+let tab="new";
+const feeOf = o => o.deliveryFee != null ? o.deliveryFee : 0;
+function enterApp(){ document.getElementById("rider-name").textContent=rider; show("rider-app"); requestNotify(); renderApp(); }
+function renderApp(){
+  const all = loadOrders();
+  const newCount = all.filter(o=>o.status==="Nuevo").length;
+  document.getElementById("rider-tabs").innerHTML = TABS.map(t=>{
+    const on=t.id===tab;
+    const badge = (t.id==="new" && newCount) ? `<span class="ml-1 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center">${newCount}</span>` : "";
+    return `<button data-rtab="${t.id}" class="flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-full text-[13px] font-semibold transition-colors ${on?"bg-secondary text-on-secondary":"bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}${badge}</button>`;
+  }).join("");
+  const c=document.getElementById("rider-content");
+  if(tab==="earn"){ c.innerHTML = renderEarn(all); return; }
+  let list=[];
+  if(tab==="new") list = all.filter(o=>o.status==="Nuevo");
+  if(tab==="mine") list = all.filter(o=>o.assignedTo===rider && o.status!=="Entregado" && o.status!=="Nuevo");
+  if(tab==="done") list = all.filter(o=>o.assignedTo===rider && o.status==="Entregado");
+  if(!list.length){ c.innerHTML=`<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inbox</span><p class="mt-3">${tab==="new"?"No hay pedidos nuevos por ahora.":tab==="mine"?"No tienes entregas en curso.":"Aún no has entregado pedidos."}</p></div>`; return; }
+  c.innerHTML = list.map(orderCard).join("");
+}
+// Ganancias del repartidor: suma de tarifas de delivery
+function renderEarn(all){
+  const mine = all.filter(o=>o.assignedTo===rider && o.status==="Entregado");
+  const totalAll = mine.reduce((s,o)=>s+feeOf(o),0);
+  const card = mine.filter(o=>o.method==="card");
+  const cardTotal = card.reduce((s,o)=>s+feeOf(o),0);
+  const cashTotal = totalAll - cardTotal;
+  return `
+    <div class="bg-primary-container text-on-primary rounded-2xl p-6 mb-4">
+      <p class="text-leaf-green text-xs font-bold uppercase tracking-wider mb-1">Total ganado en delivery</p>
+      <p class="text-4xl font-headline">${bs(totalAll)}</p>
+      <p class="text-on-primary-container text-sm mt-1">${mine.length} entregas completadas</p>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Cobrado en efectivo/QR</p><p class="text-2xl font-bold text-primary mt-1">${bs(cashTotal)}</p></div>
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Por cobrar (tarjeta)</p><p class="text-2xl font-bold text-secondary mt-1">${bs(cardTotal)}</p></div>
+    </div>
+    <div class="bg-secondary-container rounded-2xl p-5 mb-4">
+      <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-on-secondary-container">account_balance</span><h3 class="font-bold text-on-secondary-container">Pago a fin de mes</h3></div>
+      <p class="text-sm text-on-secondary-container/90">Los pedidos pagados con <b>tarjeta</b> los cobra Origen. A fin de mes solicita el depósito de <b>${bs(cardTotal)}</b> a tu cuenta.</p>
+      <button id="rider-payout" class="mt-3 w-full bg-secondary text-on-secondary font-semibold py-3 rounded-xl active:scale-[0.98] transition-transform ${cardTotal? "" : "opacity-50 pointer-events-none"}">Solicitar pago de ${bs(cardTotal)}</button>
+    </div>
+    <div class="bg-sprout-green/15 border border-sprout-green/30 rounded-xl p-4 flex gap-3">
+      <span class="material-symbols-outlined text-secondary">receipt_long</span>
+      <p class="text-sm text-on-surface-variant"><b class="text-primary">Importante:</b> todo lo que generes como repartidor dentro de Origen debes <b>facturarlo a Origen</b> (Ankaya Origen S.R.L.).</p>
+    </div>
+    ${mine.length?`<div class="mt-4 space-y-2">${mine.map(o=>`<div class="flex justify-between items-center bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-4 py-3"><div><span class="font-semibold text-primary">${o.id}</span><span class="text-xs text-on-surface-variant block">${o.method==="card"?"Tarjeta":"QR/Efectivo"} · ${o.customer.zone}</span></div><span class="font-semibold text-secondary">${bs(feeOf(o))}</span></div>`).join("")}</div>`:""}
+  `;
+}
+document.addEventListener("click", e=>{
+  const t=e.target.closest("[data-rtab]"); if(t){ tab=t.dataset.rtab; renderApp(); return; }
+  const act=e.target.closest("[data-advance]"); if(act){ advance(act.dataset.advance); return; }
+  if(e.target.closest("#rider-payout")){
+    const all=loadOrders();
+    const total=all.filter(o=>o.assignedTo===rider && o.status==="Entregado" && o.method==="card").reduce((s,o)=>s+feeOf(o),0);
+    toast("Solicitud enviada: "+bs(total));
+  }
+});
+function stepInfo(status){
+  // botón según el estado actual
+  if(status==="Nuevo") return {next:"Asignado", label:"Aceptar pedido", icon:"check"};
+  if(status==="Asignado") return {next:"Recogido", label:"Recogido en almacén", icon:"warehouse"};
+  if(status==="Recogido") return {next:"En camino", label:"Iniciar entrega", icon:"local_shipping"};
+  if(status==="En camino") return {next:"Entregado", label:"Marcar entregado", icon:"task_alt"};
+  return null;
+}
+function orderCard(o){
+  const s=stepInfo(o.status);
+  const items=o.items.reduce((a,i)=>a+i.qty,0);
+  return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-3">
+    <div class="flex justify-between items-start mb-2">
+      <span class="font-bold text-primary">${o.id}</span>
+      <span class="bg-sprout-green/20 text-secondary text-xs font-semibold px-2 py-0.5 rounded-full">${o.status}</span>
+    </div>
+    <p class="font-semibold text-primary">${o.customer.name}</p>
+    <p class="text-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">location_on</span>${o.customer.address}</p>
+    <p class="text-sm text-on-surface-variant flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[15px]">map</span>${o.customer.zone} · ${o.window}</p>
+    <div class="flex items-center justify-between mt-3 pt-3 border-t border-outline-variant/20">
+      <span class="text-sm text-on-surface-variant">${items} productos · ${o.method==="card"?"Tarjeta":"QR/Efectivo"}</span>
+      <span class="text-sm text-on-surface-variant">Pedido ${bs(o.total)}</span>
+    </div>
+    <div class="flex items-center justify-between mt-2 bg-sprout-green/15 rounded-lg px-3 py-2">
+      <span class="text-sm font-semibold text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">payments</span>Tu pago por delivery</span>
+      <span class="font-bold text-primary">${bs(feeOf(o))}<span class="text-xs font-normal text-on-surface-variant"> · ~${(o.deliveryKm||0).toFixed(1).replace(".0","")} km</span></span>
+    </div>
+    ${s ? `<button data-advance="${o.id}" class="mt-3 w-full bg-leaf-green text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined text-[20px]">${s.icon}</span>${s.label}</button>`
+      : `<div class="mt-3 w-full bg-secondary-container text-on-secondary-container font-semibold py-3 rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">check_circle</span>Entregado</div>`}
+  </div>`;
+}
+function advance(id){
+  const all=loadOrders();
+  const o=all.find(x=>x.id===id); if(!o) return;
+  const s=stepInfo(o.status); if(!s) return;
+  o.status=s.next;
+  if(s.next==="Asignado") o.assignedTo=rider;
+  (o.history=o.history||[]).push({status:s.next, at:new Date().toISOString(), by:rider});
+  saveOrders(all);           // dispara 'storage' en la app de cliente → seguimiento en vivo
+  if(o.status==="Asignado") tab="mine";
+  renderApp();
+  toast(s.next==="Asignado"?"Pedido aceptado":"Estado: "+s.next);
+}
+
+// ===== Notificaciones de nuevos pedidos =====
+let seenNew = new Set();
+function requestNotify(){
+  if("Notification" in window && Notification.permission==="default"){ try{ Notification.requestPermission(); }catch(e){} }
+  seenNew = new Set(loadOrders().filter(o=>o.status==="Nuevo").map(o=>o.id));
+}
+function notifyOrder(o){
+  toast("🔔 Nuevo pedido "+o.id);
+  try{
+    if("Notification" in window && Notification.permission==="granted"){
+      new Notification("Nuevo pedido Origen "+o.id, { body: o.customer.name+" · "+o.customer.zone+" · Delivery "+bs(feeOf(o)), icon:"assets/icon-192.png" });
+    }
+  }catch(e){}
+}
+function checkNew(){
+  const fresh = loadOrders().filter(o=>o.status==="Nuevo" && !seenNew.has(o.id));
+  fresh.forEach(o=>{ seenNew.add(o.id); notifyOrder(o); });
+  if(fresh.length) renderApp();
+}
+// El cliente crea un pedido en otra pestaña → 'storage' dispara la notificación en vivo
+window.addEventListener("storage", e=>{ if(e.key==="origen_orders" && rider){ checkNew(); renderApp(); } });
+// Respaldo: sondeo periódico (cubre casos donde 'storage' no dispara)
+setInterval(()=>{ if(rider) checkNew(); }, 4000);
+
+// PWA
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+
+// init
+renderLogin();
+if(rider) enterApp(); else show("rider-login");
+</script>
+</body>
+</html>

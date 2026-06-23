@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Producto Origen">
+  <rect width="200" height="200" fill="#F5F2EB"/>
+  <path d="M62 74 l38-18 38 18 v52 l-38 18 -38-18 Z" fill="#e5e2db"/>
+  <path d="M62 74 l38 18 38-18 -38-18 Z" fill="#ebe8e1"/>
+  <path d="M100 92 v52 l38-18 V74 Z" fill="#dcdad3"/>
+  <circle cx="100" cy="110" r="20" fill="#BBE85B" opacity="0.55"/>
+  <path d="M88 110c0-7 6-12 12-12 0 7-5 12-12 12z" fill="#5EBC66"/>
+  <text x="100" y="170" font-family="Hanken Grotesk, sans-serif" font-size="12" fill="#737874" text-anchor="middle">Producto Origen</text>
+</svg>

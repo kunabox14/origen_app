@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Miel">
+  <rect width="200" height="200" fill="#F5F2EB"/>
+  <rect x="74" y="40" width="52" height="14" rx="4" fill="#0A130D"/>
+  <rect x="80" y="54" width="40" height="10" fill="#14221a"/>
+  <path d="M70 70 q0-6 8-6 h44 q8 0 8 6 v70 q0 14-14 14 H84 q-14 0-14-14 Z" fill="#e9a72b"/>
+  <path d="M70 70 q0-6 8-6 h44 q8 0 8 6 v70 q0 14-14 14 H84 q-14 0-14-14 Z" fill="url(#g)" opacity="0.25"/>
+  <rect x="78" y="92" width="44" height="34" rx="6" fill="#F5F2EB"/>
+  <text x="100" y="114" font-family="EB Garamond, serif" font-size="15" fill="#0A130D" text-anchor="middle">Miel</text>
+  <circle cx="150" cy="150" r="16" fill="#BBE85B"/>
+  <path d="M142 150c0-6 5-11 11-11 0 6-5 11-11 11z" fill="#5EBC66"/>
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#a86b00"/></linearGradient></defs>
+</svg>

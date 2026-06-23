@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Granos">
+  <rect width="200" height="200" fill="#F5F2EB"/>
+  <path d="M64 66 l8-14 h56 l8 14 v74 q0 10-10 10 H74 q-10 0-10-10 Z" fill="#d8c9a8"/>
+  <path d="M64 66 l8-14 h56 l8 14 Z" fill="#c7b48c"/>
+  <rect x="78" y="92" width="44" height="40" rx="6" fill="#0A130D"/>
+  <text x="100" y="117" font-family="Hanken Grotesk, sans-serif" font-weight="700" font-size="12" fill="#BBE85B" text-anchor="middle">ORIGEN</text>
+  <g fill="#5EBC66">
+    <ellipse cx="86" cy="150" rx="4" ry="6"/><ellipse cx="100" cy="156" rx="4" ry="6"/><ellipse cx="114" cy="150" rx="4" ry="6"/>
+  </g>
+  <circle cx="150" cy="150" r="16" fill="#BBE85B"/>
+  <path d="M142 150c0-6 5-11 11-11 0 6-5 11-11 11z" fill="#5EBC66"/>
+</svg>

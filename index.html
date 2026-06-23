@@ -15,6 +15,10 @@
 <meta name="apple-mobile-web-app-title" content="ORIGEN">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
 
+<!-- Supabase (backend real) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+
 <!-- Fuentes oficiales: EB Garamond (titulares) + Hanken Grotesk (cuerpo) -->
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
@@ -1138,7 +1142,7 @@ function setCurrentUser(u) {
   // El usuario en sesión lleva su dirección/zona reales (para pedidos y entregas)
   localStorage.setItem("origen_user", JSON.stringify(full));
 }
-function logout() { localStorage.removeItem("origen_user"); }
+function logout() { localStorage.removeItem("origen_user"); if (window.ORIGEN_SB) window.ORIGEN_SB.auth.signOut(); }
 const initials = name => (name || "U").split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
 
 /* ============ Auth: Google (simulado) + OTP por correo ============ */
@@ -1150,23 +1154,46 @@ function renderGoogleAccounts() {
       <span><span class="block text-[#3c4043] font-medium">${a.name}</span><span class="block text-[#5f6368] text-sm">${a.email}</span></span>
     </button>`).join("");
 }
-function startOtp(auth) {
+const sb = window.ORIGEN_SB; // cliente Supabase (null = modo local/simulado)
+const nameFromEmail = e => e.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const userFromSb = u => ({
+  name: (u.user_metadata && (u.user_metadata.full_name || u.user_metadata.name)) || nameFromEmail(u.email || "usuario@origen.bo"),
+  email: u.email, provider: (u.app_metadata && u.app_metadata.provider) || "email"
+});
+
+async function startOtp(auth) {
   pendingAuth = auth;
-  pendingOtp = String(Math.floor(100000 + Math.random() * 900000));
-  navigate("otp");
+  if (sb) {
+    const btn = document.getElementById("auth-email-continue");
+    btn.disabled = true; const prev = btn.innerHTML; btn.textContent = "Enviando código…";
+    const { error } = await sb.auth.signInWithOtp({ email: auth.email, options: { shouldCreateUser: true } });
+    btn.disabled = false; btn.innerHTML = prev;
+    if (error) { showMessage({ icon: "error", danger: true, title: "No pudimos enviar el código", text: error.message, confirmLabel: "Entendido" }); return; }
+    navigate("otp");
+  } else {
+    pendingOtp = String(Math.floor(100000 + Math.random() * 900000));
+    navigate("otp");
+  }
 }
 function renderOtp() {
   document.getElementById("otp-email").textContent = pendingAuth ? pendingAuth.email : "";
-  document.getElementById("otp-demo-code").textContent = pendingOtp || "";
   document.getElementById("otp-input").value = "";
   document.getElementById("otp-error").classList.add("hidden");
+  const demo = document.getElementById("otp-demo");
+  if (sb) { demo.classList.add("hidden"); }                 // modo real: el código llega al correo
+  else { demo.classList.remove("hidden"); document.getElementById("otp-demo-code").textContent = pendingOtp || ""; }
 }
 function openGoogle() { renderGoogleAccounts(); document.getElementById("google-modal").classList.remove("hidden"); }
 function closeGoogle() { document.getElementById("google-modal").classList.add("hidden"); }
-const nameFromEmail = e => e.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
 document.addEventListener("click", e => {
-  if (e.target.closest("[data-google]")) { openGoogle(); return; }
+  if (e.target.closest("[data-google]")) {
+    if (sb) {
+      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } })
+        .then(({ error }) => { if (error) showMessage({ icon: "info", title: "Falta activar Google", text: "Habilita el proveedor Google en Supabase (Authentication → Providers) para usar este acceso. Mientras tanto puedes entrar con tu correo.", confirmLabel: "Entendido" }); });
+    } else { openGoogle(); }
+    return;
+  }
   const gacct = e.target.closest("[data-gacct]");
   if (gacct) { const a = DEMO_GOOGLE[+gacct.dataset.gacct]; closeGoogle(); startOtp({ name: a.name, email: a.email, provider: "google" }); return; }
   if (e.target.closest("[data-gother]")) { closeGoogle(); document.getElementById("auth-email").focus(); return; }
@@ -1180,15 +1207,22 @@ document.getElementById("auth-email-continue").addEventListener("click", () => {
 });
 document.getElementById("auth-email").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("auth-email-continue").click(); });
 document.getElementById("otp-autofill").addEventListener("click", () => { document.getElementById("otp-input").value = pendingOtp; });
-document.getElementById("otp-resend").addEventListener("click", () => { pendingOtp = String(Math.floor(100000 + Math.random() * 900000)); renderOtp(); showToast("Nuevo código enviado"); });
-document.getElementById("otp-verify").addEventListener("click", () => {
-  if (document.getElementById("otp-input").value.trim() === pendingOtp) {
-    setCurrentUser(pendingAuth);
-    pendingAuth = pendingOtp = null;
-    navigate("home");
-    showToast("Identidad verificada");
+document.getElementById("otp-resend").addEventListener("click", async () => {
+  if (sb && pendingAuth) { const { error } = await sb.auth.signInWithOtp({ email: pendingAuth.email, options: { shouldCreateUser: true } }); showToast(error ? "Error al reenviar" : "Código reenviado a tu correo"); }
+  else { pendingOtp = String(Math.floor(100000 + Math.random() * 900000)); renderOtp(); showToast("Nuevo código enviado"); }
+});
+document.getElementById("otp-verify").addEventListener("click", async () => {
+  const code = document.getElementById("otp-input").value.trim();
+  if (sb) {
+    const btn = document.getElementById("otp-verify"); btn.disabled = true;
+    const { data, error } = await sb.auth.verifyOtp({ email: pendingAuth.email, token: code, type: "email" });
+    btn.disabled = false;
+    if (error || !data || !data.user) { document.getElementById("otp-error").classList.remove("hidden"); return; }
+    setCurrentUser(userFromSb(data.user)); pendingAuth = null;
+    navigate("home"); showToast("Identidad verificada");
   } else {
-    document.getElementById("otp-error").classList.remove("hidden");
+    if (code === pendingOtp) { setCurrentUser(pendingAuth); pendingAuth = pendingOtp = null; navigate("home"); showToast("Identidad verificada"); }
+    else { document.getElementById("otp-error").classList.remove("hidden"); }
   }
 });
 document.getElementById("otp-input").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("otp-verify").click(); });
@@ -2085,7 +2119,23 @@ if ("serviceWorker" in navigator) {
 
 /* ============ Init ============ */
 syncCart();
-navigate(currentUser() ? "home" : "welcome");
+(async () => {
+  if (sb) {
+    try {
+      const { data } = await sb.auth.getSession();
+      if (data && data.session) setCurrentUser(userFromSb(data.session.user));
+      // Vuelta del login con Google (OAuth) u otro cambio de sesión
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          setCurrentUser(userFromSb(session.user));
+          if (["welcome", "auth", "otp"].includes(current)) navigate("home");
+        }
+        if (event === "SIGNED_OUT") { localStorage.removeItem("origen_user"); }
+      });
+    } catch (e) { /* sin conexión → modo local */ }
+  }
+  navigate(currentUser() ? "home" : "welcome");
+})();
 </script>
 </body>
 </html>

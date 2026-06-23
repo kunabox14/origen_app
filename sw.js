@@ -1,10 +1,11 @@
 // Service Worker ORIGEN — cache del shell para que la app funcione offline (PWA instalable).
-const CACHE = "origen-v3";
+const CACHE = "origen-v4";
 const CORE = [
   "./",
   "./index.html",
   "./repartidor.html",
   "./manifest.json",
+  "./supabase-config.js",
   "./assets/favicon.svg",
   "./assets/origen-logo.svg",
   "./assets/origen-logo-light.svg",

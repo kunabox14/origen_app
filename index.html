@@ -278,7 +278,7 @@
     <button data-nav="auth" class="text-on-surface-variant flex items-center gap-1 mb-8 hover:text-secondary transition-colors"><span class="material-symbols-outlined">arrow_back</span> Volver</button>
     <div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center mb-6"><span class="material-symbols-outlined text-on-secondary-container text-3xl">mark_email_read</span></div>
     <h1 class="font-headline-md text-headline-md text-primary mb-2">Verifica tu identidad</h1>
-    <p class="font-body-md text-on-surface-variant mb-6">Enviamos un código de 6 dígitos a <b id="otp-email" class="text-primary"></b></p>
+    <p id="otp-sub" class="font-body-md text-on-surface-variant mb-6">Enviamos un código de 6 dígitos a <b id="otp-email" class="text-primary"></b></p>
 
     <div id="otp-demo" class="bg-sprout-green/20 border border-sprout-green/40 rounded-xl p-4 mb-6 flex items-center justify-between">
       <div>
@@ -288,10 +288,12 @@
       <button id="otp-autofill" class="bg-secondary text-white font-label-sm px-3 py-2 rounded-lg active:scale-95 transition-transform">Usar código</button>
     </div>
 
-    <input id="otp-input" inputmode="numeric" maxlength="6" placeholder="••••••" class="w-full h-16 text-center text-3xl tracking-[0.5em] font-semibold rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
-    <p id="otp-error" class="hidden text-error font-label-sm mt-2">Código incorrecto. Inténtalo de nuevo.</p>
-    <button id="otp-verify" class="mt-5 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Verificar y entrar</button>
-    <button id="otp-resend" class="mt-4 w-full text-center font-label-md text-secondary hover:underline">Reenviar código</button>
+    <div id="otp-codebox">
+      <input id="otp-input" inputmode="numeric" maxlength="6" placeholder="••••••" class="w-full h-16 text-center text-3xl tracking-[0.5em] font-semibold rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
+      <p id="otp-error" class="hidden text-error font-label-sm mt-2">Código incorrecto. Inténtalo de nuevo.</p>
+      <button id="otp-verify" class="mt-5 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Verificar y entrar</button>
+    </div>
+    <button id="otp-resend" class="mt-4 w-full text-center font-label-md text-secondary hover:underline">Reenviar correo</button>
   </div>
 </section>
 
@@ -1176,12 +1178,23 @@ async function startOtp(auth) {
   }
 }
 function renderOtp() {
-  document.getElementById("otp-email").textContent = pendingAuth ? pendingAuth.email : "";
+  const email = pendingAuth ? pendingAuth.email : "";
   document.getElementById("otp-input").value = "";
   document.getElementById("otp-error").classList.add("hidden");
   const demo = document.getElementById("otp-demo");
-  if (sb) { demo.classList.add("hidden"); }                 // modo real: el código llega al correo
-  else { demo.classList.remove("hidden"); document.getElementById("otp-demo-code").textContent = pendingOtp || ""; }
+  const sub = document.getElementById("otp-sub");
+  const codeBox = document.getElementById("otp-codebox");
+  if (sb) {
+    // Con el correo por defecto de Supabase llega un ENLACE; con SMTP propio, un código.
+    sub.innerHTML = 'Te enviamos un correo a <b class="text-primary">' + email + '</b>. Ábrelo <b>en este dispositivo</b> y toca <b>Iniciar sesión</b> para entrar.';
+    demo.classList.add("hidden");
+    if (codeBox) codeBox.classList.add("hidden");           // oculta el campo de código (se usa el enlace)
+  } else {
+    sub.innerHTML = 'Enviamos un código de 6 dígitos a <b class="text-primary">' + email + '</b>';
+    demo.classList.remove("hidden");
+    if (codeBox) codeBox.classList.remove("hidden");
+    document.getElementById("otp-demo-code").textContent = pendingOtp || "";
+  }
 }
 function openGoogle() { renderGoogleAccounts(); document.getElementById("google-modal").classList.remove("hidden"); }
 function closeGoogle() { document.getElementById("google-modal").classList.add("hidden"); }

@@ -145,11 +145,11 @@
     </div>
 
     <div class="flex flex-col gap-5 w-full max-w-xs fade-in" style="animation-delay:.6s">
-      <button data-nav="auth" class="group relative w-full bg-primary-container text-on-primary py-5 rounded-xl font-label-md text-label-md flex justify-center items-center gap-2 overflow-hidden hover:bg-deep-forest transition-all duration-300 active:scale-95">
+      <button data-nav="auth" data-authmode="signup" class="group relative w-full bg-primary-container text-on-primary py-5 rounded-xl font-label-md text-label-md flex justify-center items-center gap-2 overflow-hidden hover:bg-deep-forest transition-all duration-300 active:scale-95">
         <span class="relative z-10">Empezar</span>
         <span class="material-symbols-outlined relative z-10 transition-transform group-hover:translate-x-1">arrow_forward</span>
       </button>
-      <a data-nav="auth" class="cursor-pointer font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors underline underline-offset-8 decoration-outline-variant/30">
+      <a data-nav="auth" data-authmode="login" class="cursor-pointer font-label-md text-label-md text-on-surface-variant hover:text-secondary transition-colors underline underline-offset-8 decoration-outline-variant/30">
         Ya tengo cuenta
       </a>
     </div>
@@ -228,9 +228,17 @@
 <!-- ===================== AUTH (login / signup) ===================== -->
 <section id="screen-auth" class="screen flex flex-col items-center justify-center px-margin-mobile" style="min-height:100dvh">
   <div class="w-full max-w-sm fade-in">
-    <img src="assets/origen-logo.svg" alt="Origen" class="h-9 w-auto mx-auto mb-8">
-    <h1 class="font-display-lg text-display-lg-mobile text-primary text-center leading-tight mb-2">Bienvenido</h1>
-    <p class="font-body-md text-on-surface-variant text-center mb-8">Inicia sesión o crea tu cuenta para empezar a comer mejor.</p>
+    <button data-nav="welcome" class="text-on-surface-variant flex items-center gap-1 mb-6 hover:text-secondary transition-colors"><span class="material-symbols-outlined">arrow_back</span> Volver</button>
+    <img src="assets/origen-logo.svg" alt="Origen" class="h-9 w-auto mx-auto mb-6">
+
+    <!-- Pestañas: Crear cuenta / Ya tengo cuenta -->
+    <div class="flex bg-surface-container-high rounded-full p-1 mb-6">
+      <button data-authmode="signup" class="auth-tab flex-1 py-2.5 rounded-full font-label-md transition-colors">Crear cuenta</button>
+      <button data-authmode="login" class="auth-tab flex-1 py-2.5 rounded-full font-label-md transition-colors">Ya tengo cuenta</button>
+    </div>
+
+    <h1 id="auth-title" class="font-headline-md text-headline-md text-primary text-center leading-tight mb-1">Crea tu cuenta</h1>
+    <p id="auth-subtitle" class="font-body-md text-on-surface-variant text-center mb-6">Regístrate para empezar a comer mejor.</p>
 
     <button data-google class="w-full bg-white border border-outline-variant text-on-surface font-label-md py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-surface-container-low transition-colors active:scale-[0.99]">
       <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22 22-9.8 22-22c0-1.3-.1-2.5-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 4.1 29.6 2 24 2 16 2 9.1 6.5 6.3 14.7z"/><path fill="#4CAF50" d="M24 46c5.5 0 10.5-2.1 14.3-5.6l-6.6-5.6C29.7 36.5 27 37.5 24 37.5c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.1 41.4 16 46 24 46z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.2-4.1 5.6l6.6 5.6c-.5.4 7.2-5.2 7.2-15.2 0-1.3-.1-2.5-.4-3.5z"/></svg>
@@ -246,7 +254,7 @@
     <label class="font-label-sm text-on-surface-variant">Correo electrónico</label>
     <input id="auth-email" type="email" placeholder="tucorreo@ejemplo.com" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
     <p id="auth-error" class="hidden text-error font-label-sm mt-2">Ingresa un correo válido.</p>
-    <button id="auth-email-continue" class="mt-4 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2">Continuar con correo <span class="material-symbols-outlined">arrow_forward</span></button>
+    <button id="auth-email-continue" class="mt-4 w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"><span id="auth-email-label">Crear cuenta con correo</span> <span class="material-symbols-outlined">arrow_forward</span></button>
 
     <p class="text-center text-[11px] text-on-surface-variant/60 mt-8 px-4">Al continuar aceptas los Términos y la Política de Privacidad de Origen. Verificaremos tu identidad con un código enviado a tu correo.</p>
   </div>
@@ -683,29 +691,29 @@
           <span class="material-symbols-outlined text-secondary">stars</span>
           <h3 class="font-headline-sm text-headline-sm text-primary">Origen Rewards</h3>
         </div>
-        <span class="font-headline-sm text-headline-sm text-secondary">1.250 pts</span>
+        <span id="acc-points" class="font-headline-sm text-headline-sm text-secondary">0 pts</span>
       </div>
       <div class="w-full bg-outline-variant/40 h-2 rounded-full overflow-hidden">
-        <div class="bg-leaf-green h-full w-[62%] rounded-full"></div>
+        <div id="acc-points-bar" class="bg-leaf-green h-full rounded-full" style="width:0%"></div>
       </div>
-      <p class="font-label-sm text-on-surface-variant">Te faltan 750 pts para tu próxima Yapa: envío gratis por 3 meses.</p>
+      <p id="acc-points-hint" class="font-label-sm text-on-surface-variant">Acumula 1 punto por cada producto que compres y canjéalos por Yapas.</p>
     </section>
 
     <!-- Menú -->
     <section class="bg-surface-container-low border border-outline-variant/30 rounded-xl overflow-hidden divide-y divide-outline-variant/20">
-      <button data-nav="tracking" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+      <button data-nav="orders" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
         <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">local_shipping</span> Mis pedidos</span>
         <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
       </button>
-      <button data-soon="Comparte tu código y gana Bs. 30" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+      <button data-nav="referrals" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
         <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">redeem</span> Referidos · gana 20%</span>
         <span class="bg-sprout-green text-deep-forest font-label-sm px-2 py-0.5 rounded-full">Nuevo</span>
       </button>
-      <button data-soon="Tus favoritos · próximamente" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+      <button data-nav="favorites" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
         <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">favorite</span> Favoritos</span>
         <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
       </button>
-      <button data-soon="Configuración · próximamente" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+      <button data-nav="settings" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
         <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">settings</span> Configuración</span>
         <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
       </button>
@@ -716,6 +724,86 @@
     </button>
 
     <button data-logout class="w-full text-center font-label-md text-on-surface-variant hover:text-error transition-colors py-2">Cerrar sesión</button>
+  </main>
+</section>
+
+<!-- ===================== MIS PEDIDOS ===================== -->
+<section id="screen-orders" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Mis pedidos</h1>
+  </header>
+  <main id="orders-list" class="px-margin-mobile pt-6 space-y-4"></main>
+</section>
+
+<!-- ===================== FAVORITOS ===================== -->
+<section id="screen-favorites" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Favoritos</h1>
+  </header>
+  <main class="px-margin-mobile pt-6">
+    <p class="font-body-md text-on-surface-variant mb-4">Tus productos más comprados.</p>
+    <section id="favorites-grid" class="grid grid-cols-2 gap-4"></section>
+  </main>
+</section>
+
+<!-- ===================== REFERIDOS ===================== -->
+<section id="screen-referrals" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Referidos</h1>
+  </header>
+  <main class="px-margin-mobile pt-6 space-y-6">
+    <div class="bg-primary-container text-on-primary rounded-2xl p-6 text-center relative overflow-hidden">
+      <div class="absolute top-0 right-0 -mr-12 -mt-12 w-40 h-40 bg-leaf-green opacity-10 rounded-full blur-3xl"></div>
+      <div class="relative z-10">
+        <span class="material-symbols-outlined text-leaf-green text-4xl">redeem</span>
+        <h2 class="font-headline-sm text-headline-sm mt-2">Invita y ganen los dos</h2>
+        <p class="font-body-md text-on-primary-container mt-1">Tu amigo recibe <b class="text-leaf-green">Bs. 30</b> en su primera compra. Tú ganas un <b class="text-leaf-green">cupón 20%</b>.</p>
+      </div>
+    </div>
+    <div>
+      <label class="font-label-sm text-on-surface-variant">Tu link de invitación</label>
+      <div class="mt-1 flex gap-2">
+        <input id="ref-link" readonly class="flex-1 h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low text-on-surface text-sm outline-none">
+        <button id="ref-copy" class="bg-leaf-green text-white font-label-md px-4 rounded-lg active:scale-95 transition-transform"><span class="material-symbols-outlined">content_copy</span></button>
+      </div>
+    </div>
+    <button id="ref-share" class="w-full bg-secondary text-on-secondary font-label-md py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined">share</span> Compartir invitación</button>
+    <div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-5">
+      <p class="font-label-md text-on-surface-variant uppercase tracking-wider mb-1">Tus referidos</p>
+      <p class="font-headline-md text-headline-md text-primary"><span id="ref-count">0</span> amigos invitados</p>
+    </div>
+  </main>
+</section>
+
+<!-- ===================== CONFIGURACIÓN ===================== -->
+<section id="screen-settings" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Configuración</h1>
+  </header>
+  <main class="px-margin-mobile pt-6 space-y-6">
+    <div class="bg-surface-container-low border border-outline-variant/30 rounded-xl divide-y divide-outline-variant/20">
+      <label class="flex items-center justify-between px-5 py-4"><span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">notifications</span> Notificaciones push</span><input type="checkbox" data-setting="notifications" class="w-5 h-5 accent-secondary"></label>
+      <label class="flex items-center justify-between px-5 py-4"><span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">campaign</span> Ofertas y novedades</span><input type="checkbox" data-setting="promos" class="w-5 h-5 accent-secondary"></label>
+      <div class="flex items-center justify-between px-5 py-4"><span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">translate</span> Idioma</span>
+        <select data-setting="lang" class="bg-surface-container-high rounded-lg px-3 py-1.5 text-on-surface outline-none"><option value="es">Español</option><option value="en">English</option></select></div>
+    </div>
+    <div>
+      <label class="font-label-sm text-on-surface-variant">Dirección favorita</label>
+      <input data-setting="address" placeholder="Av. Ballivián 1220, Calacoto" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+    </div>
+    <div>
+      <label class="font-label-sm text-on-surface-variant">Mensaje de regalo predeterminado</label>
+      <input data-setting="giftmsg" placeholder="Con cariño, de parte de…" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+    </div>
+    <button data-nav="plans" class="w-full flex items-center justify-between bg-surface-container-low border border-outline-variant/30 rounded-xl px-5 py-4 active:scale-[0.99] transition-transform">
+      <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">credit_card</span> Métodos de pago y tarjetas</span>
+      <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+    </button>
+    <p id="settings-saved" class="text-center font-label-sm text-secondary opacity-0 transition-opacity">Cambios guardados ✓</p>
   </main>
 </section>
 
@@ -1151,14 +1239,36 @@ const userFromSb = u => ({
   email: u.email, provider: (u.app_metadata && u.app_metadata.provider) || "email"
 });
 
+let authMode = "signup"; // "signup" | "login"
+function renderAuth() {
+  const login = authMode === "login";
+  document.querySelectorAll(".auth-tab").forEach(t => {
+    const on = t.dataset.authmode === authMode;
+    t.classList.toggle("bg-surface", on);
+    t.classList.toggle("text-primary", on);
+    t.classList.toggle("shadow-sm", on);
+    t.classList.toggle("text-on-surface-variant", !on);
+  });
+  document.getElementById("auth-title").textContent = login ? "Bienvenido de vuelta" : "Crea tu cuenta";
+  document.getElementById("auth-subtitle").textContent = login ? "Inicia sesión con tu cuenta de Origen." : "Regístrate para empezar a comer mejor.";
+  document.getElementById("auth-email-label").textContent = login ? "Iniciar sesión con correo" : "Crear cuenta con correo";
+  document.getElementById("auth-error").classList.add("hidden");
+}
 async function startOtp(auth) {
   pendingAuth = auth;
   if (sb) {
     const btn = document.getElementById("auth-email-continue");
-    btn.disabled = true; const prev = btn.innerHTML; btn.textContent = "Enviando código…";
-    const { error } = await sb.auth.signInWithOtp({ email: auth.email, options: { shouldCreateUser: true } });
+    btn.disabled = true; const prev = btn.innerHTML; btn.textContent = "Enviando…";
+    const { error } = await sb.auth.signInWithOtp({ email: auth.email, options: { shouldCreateUser: authMode !== "login" } });
     btn.disabled = false; btn.innerHTML = prev;
-    if (error) { showMessage({ icon: "error", danger: true, title: "No pudimos enviar el código", text: error.message, confirmLabel: "Entendido" }); return; }
+    if (error) {
+      if (authMode === "login" && /otp_disabled|not allowed|signup/i.test(error.code + error.message)) {
+        showMessage({ icon: "person_off", title: "No encontramos esa cuenta", text: "No existe una cuenta con ese correo. Crea una cuenta para continuar.", confirmLabel: "Crear cuenta", onConfirm: () => { authMode = "signup"; renderAuth(); } });
+      } else {
+        showMessage({ icon: "error", danger: true, title: "No pudimos enviar el código", text: error.message, confirmLabel: "Entendido" });
+      }
+      return;
+    }
     navigate("otp");
   } else {
     pendingOtp = String(Math.floor(100000 + Math.random() * 900000));
@@ -1277,6 +1387,12 @@ function renderAccount() {
   const ie = document.getElementById("account-initials"); if (ie) ie.textContent = initials(u.name);
   const em = document.getElementById("account-email"); if (em) em.textContent = u.email;
   const adminBtn = document.getElementById("account-admin-btn"); if (adminBtn) adminBtn.classList.toggle("hidden", !isAdmin());
+  // Origen Rewards: 1 punto por unidad comprada
+  const points = userOrders().reduce((s, o) => s + o.items.reduce((a, i) => a + i.qty, 0), 0);
+  const goal = 500;
+  const ptsEl = document.getElementById("acc-points"); if (ptsEl) ptsEl.textContent = points.toLocaleString("es-BO") + " pts";
+  const bar = document.getElementById("acc-points-bar"); if (bar) bar.style.width = Math.min(100, (points % goal) / goal * 100) + "%";
+  const hint = document.getElementById("acc-points-hint"); if (hint) hint.textContent = (goal - (points % goal)) + " pts para tu próxima Yapa canjeable.";
   // Estado de la suscripción
   const st = subStatus();
   const badge = document.getElementById("acc-sub-badge");
@@ -1298,6 +1414,71 @@ function renderAccount() {
     title.textContent = !hasSub ? "Suscríbete y ahorra 12% en cada compra" : (b ? ("Plan mensual · Bs. 99/mes · " + billingLabel()) : ("Canasta " + f.label.toLowerCase()));
   }
 }
+
+/* ============ Cuenta: Mis pedidos / Favoritos / Referidos / Configuración ============ */
+function renderOrders() {
+  const el = document.getElementById("orders-list");
+  const mine = userOrders();
+  if (!mine.length) { el.innerHTML = `<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">receipt_long</span><p class="mt-3">Aún no tienes pedidos.</p><button data-nav="catalog" class="mt-4 bg-leaf-green text-white font-label-md py-2.5 px-6 rounded-full">Explorar catálogo</button></div>`; return; }
+  el.innerHTML = mine.map(o => `
+    <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+      <div class="flex justify-between items-center mb-1"><span class="font-body-md font-bold text-primary">${o.id}</span><span class="bg-secondary-container text-on-secondary-container text-label-sm font-label-md px-2 py-0.5 rounded-full">${o.status}</span></div>
+      <p class="font-label-sm text-on-surface-variant">${o.deliveryDate || ""} · ${o.items.reduce((s, i) => s + i.qty, 0)} productos</p>
+      <p class="font-label-sm text-on-surface-variant truncate">${o.items.map(i => i.qty + "× " + i.name).join(", ")}</p>
+      ${o.discount ? `<p class="font-label-sm text-secondary mt-1">Ahorraste ${bs(o.discount)} como suscriptor</p>` : ""}
+      <p class="font-label-sm text-on-surface-variant">Repartidor: ${o.assignedTo || "Por asignar"}</p>
+      <div class="flex justify-between items-center mt-3 pt-3 border-t border-outline-variant/20">
+        <span class="font-headline-sm text-[18px] text-secondary">${bs(o.total)}</span>
+        <button data-nav="tracking" class="text-secondary font-label-md hover:underline">Ver seguimiento</button>
+      </div>
+    </div>`).join("");
+}
+function renderFavorites() {
+  const grid = document.getElementById("favorites-grid");
+  const counts = {};
+  userOrders().forEach(o => o.items.forEach(i => { counts[i.id] = (counts[i.id] || 0) + i.qty; }));
+  const favs = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([id]) => findProduct(id)).filter(Boolean);
+  grid.innerHTML = favs.length ? favs.map(productCardCatalog).join("") : `<p class="col-span-2 text-center text-on-surface-variant py-12">Compra productos y aquí verás tus favoritos.</p>`;
+}
+function refCode() {
+  let c = localStorage.getItem("origen_refcode");
+  if (!c) { const u = currentUser(); const base = (u && u.name ? u.name.split(" ")[0] : "ORIGEN").toUpperCase().replace(/[^A-Z]/g, "") || "ORIGEN"; c = base.slice(0, 6) + Math.floor(100 + Math.random() * 900); localStorage.setItem("origen_refcode", c); }
+  return c;
+}
+const refLink = () => "https://kunabox14.github.io/origen_app/?ref=" + refCode();
+function renderReferrals() {
+  document.getElementById("ref-link").value = refLink();
+  document.getElementById("ref-count").textContent = JSON.parse(localStorage.getItem("origen_referrals") || "[]").length;
+}
+const getSettings = () => JSON.parse(localStorage.getItem("origen_settings") || "{}");
+function renderSettings() {
+  const s = getSettings();
+  document.querySelectorAll("[data-setting]").forEach(el => {
+    const k = el.dataset.setting;
+    if (el.type === "checkbox") el.checked = !!s[k];
+    else el.value = (s[k] != null ? s[k] : (k === "address" && currentUser() ? (currentUser().address || "") : ""));
+  });
+}
+// Guardar configuración al cambiar
+document.addEventListener("change", e => {
+  const st = e.target.closest("[data-setting]");
+  if (!st) return;
+  const s = getSettings();
+  s[st.dataset.setting] = st.type === "checkbox" ? st.checked : st.value;
+  localStorage.setItem("origen_settings", JSON.stringify(s));
+  const saved = document.getElementById("settings-saved");
+  if (saved) { saved.style.opacity = "1"; setTimeout(() => saved.style.opacity = "0", 1500); }
+});
+// Referidos: copiar / compartir
+document.getElementById("ref-copy").addEventListener("click", () => {
+  const inp = document.getElementById("ref-link");
+  navigator.clipboard ? navigator.clipboard.writeText(inp.value).then(() => showToast("Link copiado")) : (inp.select(), document.execCommand("copy"), showToast("Link copiado"));
+});
+document.getElementById("ref-share").addEventListener("click", () => {
+  const txt = "Únete a Origen y recibe Bs. 30 en tu primera compra de orgánicos: " + refLink();
+  if (navigator.share) navigator.share({ title: "Origen", text: txt }).catch(() => {});
+  else { navigator.clipboard && navigator.clipboard.writeText(txt); showToast("Invitación copiada"); }
+});
 
 /* ============ Suscripción: estado, pausa, cancelación ============ */
 // Ninguna suscripción se activa sola: solo pasa a "Activa" tras pago confirmado.
@@ -1625,7 +1806,7 @@ function renderBasket() {
 
 /* ============ Router ============ */
 const TABS = ["home", "catalog", "scanner", "account"];
-const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule"];
+const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings"];
 let current = "welcome";
 function navigate(screen) {
   const target = document.getElementById("screen-" + screen);
@@ -1660,7 +1841,11 @@ function navigate(screen) {
   if (screen === "account") renderAccount();
   if (screen === "tracking") renderTracking();
   if (screen === "schedule") renderSchedule();
-  if (screen === "auth") { document.getElementById("auth-error").classList.add("hidden"); renderGoogleAccounts(); }
+  if (screen === "orders") renderOrders();
+  if (screen === "favorites") renderFavorites();
+  if (screen === "referrals") renderReferrals();
+  if (screen === "settings") renderSettings();
+  if (screen === "auth") { renderAuth(); renderGoogleAccounts(); }
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();
   if (screen === "admin") renderAdmin();
@@ -1692,7 +1877,9 @@ function runScanner() {
 /* ============ Eventos ============ */
 document.addEventListener("click", e => {
   const nav = e.target.closest("[data-nav]");
-  if (nav) { e.preventDefault(); navigate(nav.dataset.nav); return; }
+  if (nav) { e.preventDefault(); if (nav.dataset.authmode) authMode = nav.dataset.authmode; navigate(nav.dataset.nav); return; }
+  const atab = e.target.closest("[data-authmode]:not([data-nav])");
+  if (atab) { authMode = atab.dataset.authmode; renderAuth(); return; }
 
   const cat = e.target.closest("[data-cat]");
   if (cat) { activeCat = cat.dataset.cat; renderCatalog(); return; }
@@ -2276,6 +2463,9 @@ syncCart();
   await hydrateOrders();
   await hydrateUsers();
   setupRealtime();
+  // Captura de referido (?ref=CODE) → se guarda para acreditar el beneficio
+  const refBy = new URLSearchParams(location.search).get("ref");
+  if (refBy && !localStorage.getItem("origen_referred_by")) localStorage.setItem("origen_referred_by", refBy);
   // Regreso desde el checkout de Stripe (?sub=ok) → activa la suscripción
   const subReturn = new URLSearchParams(location.search).get("sub") === "ok" && localStorage.getItem("origen_pending_sub");
   if (subReturn) {

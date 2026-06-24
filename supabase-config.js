@@ -7,7 +7,7 @@ window.ORIGEN_SB_CONFIG = {
   // Pon en true SOLO cuando hayas activado el proveedor Google en Supabase
   // (Authentication → Providers → Google). Mientras esté en false, el botón
   // de Google guía a entrar por correo y no muestra el error de Supabase.
-  googleEnabled: false
+  googleEnabled: true
 };
 
 // Inicializa el cliente si la librería cargó. Si no hay red/config, queda null

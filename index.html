@@ -1104,6 +1104,37 @@ const activeProducts = () => PRODUCTS.filter(p => p.active !== false);
 const subProducts = () => PRODUCTS.filter(p => p.inSub && p.active !== false);
 const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
 
+/* ============ NUBE: productos en Supabase ============ */
+const SBX = () => window.ORIGEN_SB;
+const isUuid = s => typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}/.test(s);
+const mapDbProduct = r => ({ id: r.id, name: r.name, price: Number(r.price), unit: r.unit || "", origin: r.origin || "", cat: r.category || "Despensa", tag: r.tag || "Orgánico", img: r.image_url || "assets/products/generic.svg", active: r.active !== false, inSub: !!r.in_sub });
+const toDbProduct = p => ({ name: p.name, price: p.price, unit: p.unit, origin: p.origin, category: p.cat, tag: p.tag, image_url: p.img, active: p.active, in_sub: p.inSub });
+async function cloudSeedIfEmpty() {
+  if (!SBX()) return;
+  try {
+    const { data, error } = await SBX().from("products").select("id").limit(1);
+    if (!error && data && data.length === 0) {
+      await SBX().from("products").insert(SEED_PRODUCTS.map(toDbProduct)); // auto-poblado en la nube
+    }
+  } catch (e) {}
+}
+async function hydrateProducts() {
+  if (!SBX()) return false;
+  try {
+    const { data, error } = await SBX().from("products").select("*").order("created_at");
+    if (!error && data && data.length) { PRODUCTS = data.map(mapDbProduct); saveProducts(); return true; }
+  } catch (e) {}
+  return false;
+}
+async function cloudSaveProduct(p) {
+  if (!SBX()) return;
+  try {
+    if (isUuid(p.id)) { await SBX().from("products").update(toDbProduct(p)).eq("id", p.id); }
+    else { const { data } = await SBX().from("products").insert(toDbProduct(p)).select().single(); if (data) p.id = data.id; }
+  } catch (e) {}
+}
+async function cloudDeleteProduct(id) { if (SBX() && isUuid(id)) { try { await SBX().from("products").delete().eq("id", id); } catch (e) {} } }
+
 /* ============ Pedidos + ajustes de pago (persistentes) ============ */
 let orders = JSON.parse(localStorage.getItem("origen_orders") || "[]");
 const saveOrders = () => localStorage.setItem("origen_orders", JSON.stringify(orders));
@@ -1792,7 +1823,7 @@ function createOrder(method) {
   const t = cartTotals(), total = t.total;
   const id = "#ORG-" + Math.floor(10000 + Math.random() * 89999);
   const u = currentUser() || { name: "Cliente Origen", email: "cliente@origen.bo", address: "Av. Principal 123, Edificio Los Pinos", zone: "Zona Sur" };
-  orders.unshift({
+  const order = {
     id, date: new Date().toISOString(), method,
     items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
     total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
@@ -1801,11 +1832,66 @@ function createOrder(method) {
     deliveryDate: new Date().toISOString().slice(0, 10),
     window: "09:00 – 11:00",
     history: [{ status: "Nuevo", at: new Date().toISOString() }]
-  });
+  };
+  orders.unshift(order);
   saveOrders();
   lastOrderId = id;
   cart = []; saveCart(); syncCart();
+  cloudCreateOrder(order); // a la nube → el repartidor lo recibe en su dispositivo
   return id;
+}
+/* ============ NUBE: pedidos en Supabase ============ */
+const mapDbOrder = (r, items) => ({
+  id: r.code, dbId: r.id, date: r.created_at, method: r.method, status: r.status,
+  items: (items || []).map(i => ({ id: i.product_id, name: i.name, qty: i.qty, price: Number(i.price) })),
+  total: Number(r.total), subtotal: Number(r.subtotal || 0), discount: Number(r.discount || 0),
+  serviceFee: Number(r.service_fee || 0), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0),
+  assignedTo: r.assigned_rider || null,
+  customer: { name: r.customer_name || "Cliente", email: r.customer_email || "", address: r.address || "", zone: r.zone || "Zona Sur" },
+  deliveryDate: r.delivery_date, window: r.window || "09:00 – 11:00", history: []
+});
+async function cloudCreateOrder(o) {
+  if (!SBX()) return;
+  try {
+    let userId = null; try { const { data } = await SBX().auth.getUser(); userId = data && data.user ? data.user.id : null; } catch (e) {}
+    const row = { code: o.id, user_id: userId, status: o.status, method: o.method, subtotal: o.subtotal, discount: o.discount, service_fee: o.serviceFee, delivery_fee: o.deliveryFee, delivery_km: o.deliveryKm, total: o.total, delivery_date: o.deliveryDate, "window": o.window, address: o.customer.address, zone: o.customer.zone, customer_name: o.customer.name, customer_email: o.customer.email };
+    const { data, error } = await SBX().from("orders").insert(row).select().single();
+    if (!error && data) {
+      o.dbId = data.id;
+      await SBX().from("order_items").insert(o.items.map(i => ({ order_id: data.id, product_id: isUuid(i.id) ? i.id : null, name: i.name, qty: i.qty, price: i.price })));
+    }
+  } catch (e) {}
+}
+async function hydrateOrders() {
+  if (!SBX()) return false;
+  try {
+    const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
+    if (!error && data) { orders = data.map(r => mapDbOrder(r, r.order_items)); saveOrders(); return true; }
+  } catch (e) {}
+  return false;
+}
+async function hydrateUsers() {
+  if (!SBX()) return false;
+  try {
+    const { data, error } = await SBX().from("profiles").select("*").order("created_at", { ascending: false });
+    if (!error && data && data.length) {
+      users = data.map(p => ({ name: p.name || (p.email ? p.email.split("@")[0] : "Usuario"), email: p.email, provider: p.role || "customer", plan: "Quincenal", status: "Activa", joined: (p.created_at || "").slice(0, 10), address: p.address || "Por confirmar", zone: p.zone || "Zona Sur" }));
+      saveUsers(); return true;
+    }
+  } catch (e) {}
+  return false;
+}
+let realtimeSet = false;
+function setupRealtime() {
+  if (!SBX() || realtimeSet) return; realtimeSet = true;
+  SBX().channel("origen-products").on("postgres_changes", { event: "*", schema: "public", table: "products" }, async () => {
+    await hydrateProducts();
+    if (current === "catalog") renderCatalog(); if (current === "home") renderHome(); if (current === "admin") renderAdmin();
+  }).subscribe();
+  SBX().channel("origen-orders").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, async () => {
+    await hydrateOrders();
+    if (current === "tracking") renderTracking(); if (current === "admin") renderAdmin();
+  }).subscribe();
 }
 // Estados del ciclo de entrega (compartido con la app de repartidor)
 const ORDER_FLOW = ["Nuevo", "Asignado", "Recogido", "En camino", "Entregado"];
@@ -1942,7 +2028,7 @@ function renderAdminSub() {
         <input type="checkbox" data-subtoggle="${p.id}" ${p.inSub ? "checked" : ""} class="w-6 h-6 accent-secondary flex-shrink-0">
       </label>`).join("")}</div>`;
   document.querySelectorAll("[data-subtoggle]").forEach(cb => cb.addEventListener("change", () => {
-    const p = findProduct(cb.dataset.subtoggle); p.inSub = cb.checked; saveProducts(); showToast("Canasta actualizada");
+    const p = findProduct(cb.dataset.subtoggle); p.inSub = cb.checked; saveProducts(); cloudSaveProduct(p); showToast("Canasta actualizada");
   }));
 }
 function renderAdminOrders() {
@@ -2112,19 +2198,23 @@ document.getElementById("pm-save").addEventListener("click", () => {
     active: document.getElementById("pm-active").checked,
     img: pendingImg
   };
-  if (editingId) { Object.assign(findProduct(editingId), data); }
-  else { data.id = "p" + Date.now().toString(36); PRODUCTS.push(data); }
+  let prod;
+  if (editingId) { prod = findProduct(editingId); Object.assign(prod, data); }
+  else { prod = { id: "p" + Date.now().toString(36), ...data }; PRODUCTS.push(prod); }
   saveProducts();
   closeProductModal();
   renderAdmin();
   showToast(editingId ? "Producto actualizado" : "Producto publicado");
+  cloudSaveProduct(prod).then(saveProducts); // escribe en la nube y fija el id real
 });
 document.getElementById("pm-delete").addEventListener("click", () => {
   if (!editingId) return;
-  PRODUCTS = PRODUCTS.filter(p => p.id !== editingId);
+  const id = editingId;
+  PRODUCTS = PRODUCTS.filter(p => p.id !== id);
   saveProducts(); pruneCart();
   closeProductModal(); renderAdmin();
   showToast("Producto eliminado");
+  cloudDeleteProduct(id);
 });
 
 /* ============ PWA ============ */
@@ -2149,6 +2239,12 @@ syncCart();
       });
     } catch (e) { /* sin conexión → modo local */ }
   }
+  // Datos desde la nube (con respaldo local si falla)
+  await cloudSeedIfEmpty();
+  await hydrateProducts();
+  await hydrateOrders();
+  await hydrateUsers();
+  setupRealtime();
   navigate(currentUser() ? "home" : "welcome");
 })();
 </script>

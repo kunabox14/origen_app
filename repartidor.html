@@ -87,8 +87,21 @@ const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
 const FLOW = ["Nuevo", "Asignado", "Recogido", "En camino", "Entregado"];
 
 let rider = sessionStorage.getItem("origen_rider") || null;
-const loadOrders = () => JSON.parse(localStorage.getItem("origen_orders") || "[]");
+// NUBE (Supabase): el repartidor lee/escribe pedidos en la nube; localStorage es respaldo.
+const SBX = () => window.ORIGEN_SB;
+let CLOUD_ORDERS = null; // null = aún no cargado de la nube → usa localStorage
+const mapOrder = r => ({
+  id: r.code, dbId: r.id, status: r.status, method: r.method, assignedTo: r.assigned_rider || null,
+  customer: { name: r.customer_name || "Cliente", address: r.address || "", zone: r.zone || "Zona Sur" },
+  window: r.window || "09:00 – 11:00", items: (r.order_items || []).map(i => ({ name: i.name, qty: i.qty })),
+  total: Number(r.total), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0)
+});
+const loadOrders = () => CLOUD_ORDERS !== null ? CLOUD_ORDERS : JSON.parse(localStorage.getItem("origen_orders") || "[]");
 const saveOrders = o => localStorage.setItem("origen_orders", JSON.stringify(o));
+async function hydrateRiderOrders() {
+  if (!SBX()) return;
+  try { const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false }); if (!error && data) CLOUD_ORDERS = data.map(mapOrder); } catch (e) {}
+}
 
 let toastT;
 function toast(m){ const t=document.getElementById("rtoast"); document.getElementById("rtoast-msg").textContent=m; t.classList.remove("opacity-0"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.add("opacity-0"),1600); }
@@ -113,7 +126,18 @@ document.getElementById("rider-logout").addEventListener("click", ()=>{ sessionS
 const TABS=[{id:"new",label:"Nuevos",icon:"fiber_new"},{id:"mine",label:"Mi ruta",icon:"local_shipping"},{id:"done",label:"Entregados",icon:"check_circle"},{id:"earn",label:"Ganancias",icon:"payments"}];
 let tab="new";
 const feeOf = o => o.deliveryFee != null ? o.deliveryFee : 0;
-function enterApp(){ document.getElementById("rider-name").textContent=rider; show("rider-app"); requestNotify(); renderApp(); }
+async function enterApp(){
+  document.getElementById("rider-name").textContent=rider; show("rider-app");
+  await hydrateRiderOrders();           // pedidos desde la nube
+  requestNotify(); renderApp(); setupRiderRealtime();
+}
+let riderRealtimeSet=false;
+function setupRiderRealtime(){
+  if(!SBX() || riderRealtimeSet) return; riderRealtimeSet=true;
+  SBX().channel("rider-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, async ()=>{
+    await hydrateRiderOrders(); checkNew(); renderApp();
+  }).subscribe();
+}
 function renderApp(){
   const all = loadOrders();
   const newCount = all.filter(o=>o.status==="Nuevo").length;
@@ -200,15 +224,22 @@ function orderCard(o){
       : `<div class="mt-3 w-full bg-secondary-container text-on-secondary-container font-semibold py-3 rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">check_circle</span>Entregado</div>`}
   </div>`;
 }
-function advance(id){
+async function advance(id){
   const all=loadOrders();
   const o=all.find(x=>x.id===id); if(!o) return;
   const s=stepInfo(o.status); if(!s) return;
-  o.status=s.next;
-  if(s.next==="Asignado") o.assignedTo=rider;
-  (o.history=o.history||[]).push({status:s.next, at:new Date().toISOString(), by:rider});
-  saveOrders(all);           // dispara 'storage' en la app de cliente → seguimiento en vivo
-  if(o.status==="Asignado") tab="mine";
+  if(SBX() && CLOUD_ORDERS!==null && o.dbId){
+    // Actualiza en la nube → el cliente lo ve en su teléfono en vivo
+    const upd={status:s.next}; if(s.next==="Asignado") upd.assigned_rider=rider;
+    try{ await SBX().from("orders").update(upd).eq("id",o.dbId); }catch(e){}
+    try{ await SBX().from("order_events").insert({order_id:o.dbId,status:s.next,by_name:rider}); }catch(e){}
+    await hydrateRiderOrders();
+  } else {
+    o.status=s.next; if(s.next==="Asignado") o.assignedTo=rider;
+    (o.history=o.history||[]).push({status:s.next, at:new Date().toISOString(), by:rider});
+    saveOrders(all);         // respaldo local (dispara 'storage' en el cliente del mismo navegador)
+  }
+  if(s.next==="Asignado") tab="mine";
   renderApp();
   toast(s.next==="Asignado"?"Pedido aceptado":"Estado: "+s.next);
 }

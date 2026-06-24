@@ -309,55 +309,30 @@
   </nav>
 
   <main class="px-margin-mobile space-y-8 pt-6">
-    <!-- Suscripción activa -->
-    <section>
-      <div class="relative overflow-hidden bg-primary-container rounded-xl p-6 text-on-primary shadow-sm group">
-        <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-leaf-green opacity-10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
-        <div class="relative z-10 space-y-4">
-          <div class="flex justify-between items-start">
-            <div>
-              <span id="home-sub-state" class="font-label-md text-label-md text-leaf-green uppercase tracking-wider">suscripción activa</span>
-              <h2 id="home-sub-next" class="font-headline-sm text-headline-sm mt-1">Próxima entrega: Viernes 24 de Junio</h2>
-            </div>
-            <span class="material-symbols-outlined text-leaf-green text-3xl">local_shipping</span>
-          </div>
-          <div class="pt-1">
-            <p class="font-label-sm text-label-sm text-leaf-green/80 uppercase tracking-wider mb-0.5">Tu canasta incluye</p>
-            <p id="home-sub-list" class="font-body-md text-on-primary-container leading-snug">—</p>
-          </div>
-          <div class="space-y-2 pt-2">
-            <div class="flex justify-between font-label-sm text-label-sm text-on-primary-container">
-              <span>Preparando tu pedido</span><span>80%</span>
-            </div>
-            <div class="w-full bg-outline/20 h-2 rounded-full overflow-hidden">
-              <div class="bg-leaf-green h-full w-[80%] rounded-full shadow-[0_0_8px_rgba(94,188,102,0.5)]"></div>
-            </div>
-          </div>
-          <div class="flex gap-4 pt-2">
-            <button data-nav="tracking" class="flex-1 bg-leaf-green text-primary-container font-label-md text-label-md py-3 rounded-lg hover:brightness-110 transition-all active:scale-[0.98]">Ver detalle</button>
-            <button data-nav="catalog" class="flex-1 border border-outline-variant text-on-primary font-label-md text-label-md py-3 rounded-lg hover:bg-white/5 transition-all active:scale-[0.98]">Actualizar pedido</button>
-          </div>
-        </div>
+    <!-- Suscripción (Suscribirme / Activa / Pausada) -->
+    <section id="home-sub-card"></section>
+
+    <!-- Métricas de impacto (reales, según tus compras) -->
+    <section class="grid grid-cols-3 gap-3">
+      <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-1">
+        <div class="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary-container text-lg">recycling</span></div>
+        <p id="home-plastic" class="font-headline-sm text-[18px] text-secondary">0</p>
+        <p class="font-label-sm text-[11px] text-on-surface-variant leading-tight">Plástico ahorrado</p>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-1">
+        <div class="w-9 h-9 rounded-full bg-tertiary-fixed flex items-center justify-center"><span class="material-symbols-outlined text-on-tertiary-fixed text-lg">eco</span></div>
+        <p id="home-carbon" class="font-headline-sm text-[18px] text-primary">0</p>
+        <p class="font-label-sm text-[11px] text-on-surface-variant leading-tight">CO₂ evitado</p>
+      </div>
+      <div class="bg-surface-container-low p-4 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-1">
+        <div class="w-9 h-9 rounded-full bg-secondary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary-container text-lg">handshake</span></div>
+        <p id="home-producers" class="font-headline-sm text-[18px] text-primary">0</p>
+        <p class="font-label-sm text-[11px] text-on-surface-variant leading-tight">Productores apoyados</p>
       </div>
     </section>
 
-    <!-- Métricas de impacto -->
-    <section class="grid grid-cols-2 gap-4">
-      <div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-2">
-        <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center mb-1">
-          <span class="material-symbols-outlined text-on-secondary-container text-xl">recycling</span>
-        </div>
-        <p class="font-headline-sm text-headline-sm text-secondary">12kg</p>
-        <p class="font-label-sm text-label-sm text-on-surface-variant">Plástico ahorrado</p>
-      </div>
-      <div class="bg-surface-container-low p-5 rounded-xl border border-outline-variant/30 flex flex-col items-center text-center space-y-2">
-        <div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center mb-1">
-          <span class="material-symbols-outlined text-on-tertiary-fixed text-xl">handshake</span>
-        </div>
-        <p class="font-headline-sm text-headline-sm text-primary">5</p>
-        <p class="font-label-sm text-label-sm text-on-surface-variant">Productores apoyados</p>
-      </div>
-    </section>
+    <!-- Tus últimas compras -->
+    <section id="home-recent" class="space-y-4"></section>
 
     <!-- Recomendados -->
     <section class="space-y-4">
@@ -386,8 +361,8 @@
       <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
     </button>
 
-    <!-- Cancelar suscripción (sección discreta al final) -->
-    <div class="pt-6 pb-2 text-center">
+    <!-- Cancelar suscripción (sección discreta al final, solo si hay suscripción) -->
+    <div id="home-cancel-wrap" class="hidden pt-6 pb-2 text-center">
       <button data-sub-cancel class="font-label-sm text-on-surface-variant/50 hover:text-error transition-colors underline underline-offset-4 decoration-outline-variant/40">Cancelar suscripción</button>
     </div>
   </main>
@@ -695,7 +670,7 @@
         <h2 id="acc-sub-title" class="font-headline-sm text-headline-sm">Canasta quincenal · Valle Central</h2>
         <p id="acc-sub-next" class="font-label-sm text-on-primary-container">Próxima entrega: Viernes 24 de Junio</p>
         <div class="flex gap-3 pt-1">
-          <button data-nav="schedule" class="flex-1 bg-leaf-green text-primary-container font-label-md py-2.5 rounded-lg active:scale-[0.98] transition-transform">Gestionar</button>
+          <button id="acc-sub-manage" data-nav="schedule" class="flex-1 bg-leaf-green text-primary-container font-label-md py-2.5 rounded-lg active:scale-[0.98] transition-transform">Gestionar</button>
           <button id="acc-sub-toggle" data-sub-toggle class="flex-1 border border-outline-variant text-on-primary font-label-md py-2.5 rounded-lg active:scale-[0.98] transition-transform">Pausar</button>
         </div>
       </div>
@@ -1307,21 +1282,27 @@ function renderAccount() {
   const badge = document.getElementById("acc-sub-badge");
   const toggle = document.getElementById("acc-sub-toggle");
   const next = document.getElementById("acc-sub-next");
-  if (badge) {
-    badge.textContent = st;
-    badge.className = "font-label-sm px-3 py-1 rounded-full " + (st === "Activa" ? "bg-leaf-green/15 text-leaf-green" : st === "Pausada" ? "bg-tertiary-fixed/30 text-tertiary-fixed" : "bg-error/20 text-error-container");
-  }
-  if (toggle) toggle.textContent = st === "Pausada" ? "Reanudar" : "Pausar";
-  if (next) next.textContent = st === "Activa" ? ("Próxima entrega: " + schedNextLabel()) : st === "Pausada" ? "Servicio en pausa" : "Suscripción cancelada";
+  const manage = document.getElementById("acc-sub-manage");
   const title = document.getElementById("acc-sub-title");
+  const hasSub = (st === "Activa" || st === "Pausada");
+  const labelMap = { "Activa": "Activa", "Pausada": "Pausada", "Cancelada": "Cancelada", "Ninguna": "Sin plan" };
+  if (badge) {
+    badge.textContent = labelMap[st] || st;
+    badge.className = "font-label-sm px-3 py-1 rounded-full " + (st === "Activa" ? "bg-leaf-green/15 text-leaf-green" : st === "Pausada" ? "bg-tertiary-fixed/30 text-tertiary-fixed" : "bg-outline/20 text-on-primary-container");
+  }
+  if (toggle) { toggle.textContent = st === "Pausada" ? "Reanudar" : "Pausar"; toggle.classList.toggle("hidden", !hasSub); }
+  if (manage) { manage.textContent = hasSub ? "Gestionar" : "Suscribirme"; manage.dataset.nav = hasSub ? "schedule" : "plans"; manage.classList.toggle("flex-1", hasSub); manage.classList.toggle("w-full", !hasSub); }
+  if (next) next.textContent = st === "Activa" ? ("Próxima entrega: " + schedNextLabel()) : st === "Pausada" ? "Servicio en pausa" : st === "Cancelada" ? "Suscripción cancelada" : "Aún no estás suscrito";
   if (title) {
     const b = getBilling(); const sched = getSchedule(); const f = FREQS.find(x => x.id === sched.freq) || FREQS[1];
-    title.textContent = (b && st !== "Cancelada") ? ("Plan mensual · Bs. 99/mes · " + billingLabel()) : ("Canasta " + f.label.toLowerCase());
+    title.textContent = !hasSub ? "Suscríbete y ahorra 12% en cada compra" : (b ? ("Plan mensual · Bs. 99/mes · " + billingLabel()) : ("Canasta " + f.label.toLowerCase()));
   }
 }
 
 /* ============ Suscripción: estado, pausa, cancelación ============ */
-const subStatus = () => localStorage.getItem("origen_sub_status") || "Activa";
+// Ninguna suscripción se activa sola: solo pasa a "Activa" tras pago confirmado.
+const subStatus = () => localStorage.getItem("origen_sub_status") || "Ninguna";
+const subActive = () => subStatus() === "Activa";
 function setSubStatus(s) {
   localStorage.setItem("origen_sub_status", s);
   const u = currentUser(); if (u) { const r = users.find(x => x.email === u.email); if (r) { r.status = s; saveUsers(); } }
@@ -1520,23 +1501,74 @@ function renderCatalog() {
   grid.innerHTML = list.length ? list.map(productCardCatalog).join("")
     : `<p class="col-span-2 text-center text-on-surface-variant py-12">No encontramos productos para tu búsqueda.</p>`;
 }
+// Pedidos del usuario actual (para métricas, últimas compras, favoritos)
+function userOrders() { const u = currentUser(); if (!u) return []; return orders.filter(o => o.customer && o.customer.email === u.email); }
+function impactMetrics() {
+  const mine = userOrders(); let items = 0; const origins = new Set();
+  mine.forEach(o => o.items.forEach(i => { items += i.qty; const p = findProduct(i.id); if (p && p.origin) origins.add(p.origin); }));
+  return { plastic: items * 0.05, carbon: items * 0.2, producers: origins.size }; // estimaciones por unidad
+}
+function homeSubCard() {
+  const st = subStatus();
+  const wrap = c => `<div class="relative overflow-hidden bg-primary-container rounded-xl p-6 text-on-primary shadow-sm"><div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-leaf-green opacity-10 rounded-full blur-3xl"></div><div class="relative z-10 space-y-4">${c}</div></div>`;
+  if (st === "Activa") {
+    return wrap(`
+      <div class="flex justify-between items-start"><div><span class="font-label-md text-label-md text-leaf-green uppercase tracking-wider">suscripción activa</span>
+        <h2 class="font-headline-sm text-headline-sm mt-1">Próxima entrega: ${schedNextLabel()}</h2></div>
+        <span class="material-symbols-outlined text-leaf-green text-3xl">local_shipping</span></div>
+      <div class="pt-1"><p class="font-label-sm text-leaf-green/80 uppercase tracking-wider mb-0.5">Tu canasta incluye</p>
+        <p class="font-body-md text-on-primary-container leading-snug">${subProducts().map(p => p.name).join(" · ") || "Personaliza tu canasta desde el catálogo."}</p></div>
+      <div class="flex gap-3 pt-2">
+        <button data-nav="tracking" class="flex-1 bg-leaf-green text-primary-container font-label-md py-3 rounded-lg active:scale-[0.98]">Ver detalle</button>
+        <button data-nav="schedule" class="flex-1 border border-outline-variant text-on-primary font-label-md py-3 rounded-lg active:scale-[0.98]">Actualizar pedido</button></div>`);
+  }
+  if (st === "Pausada") {
+    return wrap(`
+      <span class="font-label-md text-tertiary-fixed uppercase tracking-wider">suscripción en pausa</span>
+      <h2 class="font-headline-sm text-headline-sm">Tu compra programada está pausada</h2>
+      <button data-sub-toggle class="w-full bg-leaf-green text-primary-container font-label-md py-3 rounded-lg active:scale-[0.98]">Reanudar suscripción</button>`);
+  }
+  // Ninguna / Cancelada → invitación a suscribirse (nunca activa sola)
+  return wrap(`
+    <span class="font-label-md text-leaf-green uppercase tracking-wider">Suscripción Origen</span>
+    <h2 class="font-headline-sm text-headline-sm">Recibe tu canasta orgánica, sin pensarlo.</h2>
+    <ul class="text-on-primary-container text-sm space-y-1">
+      <li class="flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green text-[18px]">check</span>12% de descuento permanente</li>
+      <li class="flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green text-[18px]">check</span>Entregas semanales, quincenales o mensuales</li>
+      <li class="flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green text-[18px]">check</span>Edita tu caja hasta 2 h antes</li></ul>
+    <button data-nav="plans" class="w-full bg-leaf-green text-primary-container font-label-md py-3.5 rounded-lg active:scale-[0.98]">Suscribirme</button>`);
+}
 function renderHome() {
   const act = activeProducts();
   document.getElementById("home-reco").innerHTML = act.length
     ? act.slice(0, 6).map(productCardReco).join("")
     : `<p class="text-on-surface-variant py-6">Aún no hay productos publicados.</p>`;
-  // Estado de la suscripción en la tarjeta principal
-  const st = subStatus();
-  const stEl = document.getElementById("home-sub-state");
-  const nextEl = document.getElementById("home-sub-next");
-  if (stEl) stEl.textContent = "suscripción " + st.toLowerCase();
-  if (nextEl) nextEl.textContent = st === "Activa" ? ("Próxima entrega: " + schedNextLabel()) : st === "Pausada" ? "Servicio de compra programada en pausa" : "Suscripción cancelada";
-  // Lista de la canasta de suscripción (definida por el admin)
-  const subEl = document.getElementById("home-sub-list");
-  if (subEl) {
-    const items = subProducts();
-    subEl.textContent = items.length ? items.map(p => p.name).join(" · ") : "Personaliza tu canasta desde el catálogo.";
-  }
+  // Tarjeta de suscripción según estado real
+  document.getElementById("home-sub-card").innerHTML = homeSubCard();
+  const cw = document.getElementById("home-cancel-wrap");
+  if (cw) cw.classList.toggle("hidden", !(subStatus() === "Activa" || subStatus() === "Pausada"));
+  // Métricas de impacto reales
+  const m = impactMetrics();
+  document.getElementById("home-plastic").textContent = m.plastic ? m.plastic.toFixed(1).replace(".0", "") + " kg" : "0";
+  document.getElementById("home-carbon").textContent = m.carbon ? m.carbon.toFixed(1).replace(".0", "") + " kg" : "0";
+  document.getElementById("home-producers").textContent = m.producers;
+  // Tus últimas compras
+  renderRecent();
+}
+function renderRecent() {
+  const el = document.getElementById("home-recent"); if (!el) return;
+  const mine = userOrders().slice(0, 3);
+  if (!mine.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="flex justify-between items-end"><h3 class="font-headline-sm text-headline-sm text-primary">Tus últimas compras</h3></div>
+    <div class="space-y-3">${mine.map(o => `
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-1"><span class="font-body-md font-semibold text-primary">${o.id}</span><span class="font-label-md text-secondary">${bs(o.total)}</span></div>
+        <p class="font-label-sm text-on-surface-variant mb-3">${o.items.reduce((s, i) => s + i.qty, 0)} productos · ${o.deliveryDate || ""}</p>
+        <div class="flex gap-3">
+          <button data-rebuy='${JSON.stringify(o.items.map(i => ({ id: i.id, qty: i.qty }))).replace(/'/g, "&#39;")}' class="flex-1 bg-secondary text-on-secondary font-label-md py-2.5 rounded-lg active:scale-[0.98] flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[18px]">refresh</span>Volver a comprar</button>
+          <button data-nav="plans" class="flex-1 border border-outline-variant text-on-surface font-label-md py-2.5 rounded-lg active:scale-[0.98]">Programar</button>
+        </div>
+      </div>`).join("")}</div>`;
 }
 
 /* ============ Render canasta ============ */
@@ -1674,6 +1706,15 @@ document.addEventListener("click", e => {
   if (dec) { changeQty(dec.dataset.dec, -1); return; }
   const del = e.target.closest("[data-del]");
   if (del) { removeFromCart(del.dataset.del); return; }
+  const rebuy = e.target.closest("[data-rebuy]");
+  if (rebuy) {
+    try {
+      const items = JSON.parse(rebuy.dataset.rebuy);
+      items.forEach(it => { if (findProduct(it.id)) { const line = cart.find(c => c.id === it.id); if (line) line.qty += it.qty; else cart.push({ id: it.id, qty: it.qty }); } });
+      saveCart(); syncCart(); navigate("basket"); showToast("Productos añadidos a tu canasta");
+    } catch (e) {}
+    return;
+  }
 });
 
 document.getElementById("catalog-search").addEventListener("input", renderCatalog);
@@ -1855,6 +1896,10 @@ async function cloudCreateOrder(o) {
     if (!error && data) {
       o.dbId = data.id;
       await SBX().from("order_items").insert(o.items.map(i => ({ order_id: data.id, product_id: isUuid(i.id) ? i.id : null, name: i.name, qty: i.qty, price: i.price })));
+      await hydrateOrders(); // re-lee con los items ya insertados
+      if (current === "home") renderHome();
+      if (current === "tracking") renderTracking();
+      if (current === "admin") renderAdmin();
     }
   } catch (e) {}
 }

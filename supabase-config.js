@@ -7,7 +7,11 @@ window.ORIGEN_SB_CONFIG = {
   // Pon en true SOLO cuando hayas activado el proveedor Google en Supabase
   // (Authentication → Providers → Google). Mientras esté en false, el botón
   // de Google guía a entrar por correo y no muestra el error de Supabase.
-  googleEnabled: true
+  googleEnabled: true,
+  // Link de pago de Stripe (modo prueba) para la suscripción de Bs. 99/mes.
+  // En el dashboard de Stripe, configura el redireccionamiento tras el pago a:
+  //   https://kunabox14.github.io/origen_app/?sub=ok
+  stripeLink: "https://buy.stripe.com/test_7sY9AU4tJ0QH9TWd999k400"
 };
 
 // Inicializa el cliente si la librería cargó. Si no hay red/config, queda null

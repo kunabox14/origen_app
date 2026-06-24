@@ -1723,8 +1723,17 @@ document.getElementById("sched-activate").addEventListener("click", () => {
   const sched = getSchedule();
   if (sched.freq === "personalizada" && !sched.date) { showMessage({ icon: "event", title: "Elige una fecha", text: "Selecciona la fecha de tu próxima entrega para activar la suscripción personalizada.", confirmLabel: "Entendido" }); return; }
   // El plan mensual (Bs. 99) requiere tarjeta para el cobro recurrente
-  if (!getBilling()) { openBilling(finalizeSubscription); return; }
-  finalizeSubscription();
+  if (getBilling()) { finalizeSubscription(); return; } // ya tiene pago activo
+  const link = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.stripeLink;
+  if (link) {
+    // Cobro recurrente real con Stripe (checkout alojado)
+    localStorage.setItem("origen_pending_sub", "1");
+    const u = currentUser();
+    const sep = link.includes("?") ? "&" : "?";
+    location.href = link + (u && u.email ? sep + "prefilled_email=" + encodeURIComponent(u.email) : "");
+  } else {
+    openBilling(finalizeSubscription); // respaldo: formulario simulado
+  }
 });
 function finalizeSubscription() {
   setSubStatus("Activa");
@@ -2222,7 +2231,16 @@ syncCart();
   await hydrateOrders();
   await hydrateUsers();
   setupRealtime();
+  // Regreso desde el checkout de Stripe (?sub=ok) → activa la suscripción
+  const subReturn = new URLSearchParams(location.search).get("sub") === "ok" && localStorage.getItem("origen_pending_sub");
+  if (subReturn) {
+    localStorage.removeItem("origen_pending_sub");
+    saveBilling({ provider: "stripe", brand: "Stripe", last4: "test", amount: 99, cycle: "mensual", since: new Date().toISOString().slice(0, 10), nextCharge: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10) });
+    setSubStatus("Activa");
+    history.replaceState({}, "", location.pathname);
+  }
   navigate(currentUser() ? "home" : "welcome");
+  if (subReturn) showMessage({ icon: "event_available", title: "¡Suscripción activada!", text: "Tu pago con Stripe se procesó correctamente. Tu suscripción de Bs. 99/mes está activa. Puedes pausar o cancelar cuando quieras.", confirmLabel: "Listo", onConfirm: () => navigate("account") });
 })();
 </script>
 </body>

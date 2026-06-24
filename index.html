@@ -1201,9 +1201,11 @@ function closeGoogle() { document.getElementById("google-modal").classList.add("
 
 document.addEventListener("click", e => {
   if (e.target.closest("[data-google]")) {
-    if (sb) {
-      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } })
-        .then(({ error }) => { if (error) showMessage({ icon: "info", title: "Falta activar Google", text: "Habilita el proveedor Google en Supabase (Authentication → Providers) para usar este acceso. Mientras tanto puedes entrar con tu correo.", confirmLabel: "Entendido" }); });
+    const googleOn = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.googleEnabled;
+    if (sb && googleOn) {
+      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+    } else if (sb) {
+      showMessage({ icon: "info", title: "Google casi listo", text: "Estamos terminando de activar el acceso con Google. Por ahora ingresa con tu correo: es igual de rápido.", confirmLabel: "Entrar con correo", onConfirm: () => document.getElementById("auth-email").focus() });
     } else { openGoogle(); }
     return;
   }

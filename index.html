@@ -736,7 +736,7 @@
       </button>
     </section>
 
-    <button data-admin class="w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">
+    <button id="account-admin-btn" data-admin class="hidden w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">
       <span class="material-symbols-outlined text-leaf-green">admin_panel_settings</span> Panel de administrador
     </button>
 
@@ -936,35 +936,6 @@
   </div>
 </section>
 
-<!-- ===================== ADMIN · LOGIN ===================== -->
-<section id="screen-admin-login" class="screen flex flex-col items-center justify-center px-margin-mobile" style="min-height:100dvh">
-  <div class="w-full max-w-sm">
-    <button data-nav="account" class="text-on-surface-variant flex items-center gap-1 mb-8 hover:text-secondary transition-colors"><span class="material-symbols-outlined">arrow_back</span> Volver</button>
-    <div class="bg-surface border border-outline-variant/30 rounded-2xl p-8 shadow-sm">
-      <img src="assets/origen-logo.svg" alt="Origen" class="h-8 w-auto mx-auto mb-6">
-      <div class="flex items-center justify-center gap-2 mb-6">
-        <span class="material-symbols-outlined text-secondary">admin_panel_settings</span>
-        <h1 class="font-headline-sm text-headline-sm text-primary">Acceso administrador</h1>
-      </div>
-      <div class="space-y-4">
-        <div>
-          <label class="font-label-sm text-on-surface-variant">Correo</label>
-          <input id="admin-email" type="email" placeholder="admin@origen.bo" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
-        </div>
-        <div>
-          <label class="font-label-sm text-on-surface-variant">Contraseña</label>
-          <input id="admin-pass" type="password" placeholder="••••••••" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary outline-none">
-        </div>
-        <p id="admin-error" class="hidden text-error font-label-sm">Credenciales incorrectas.</p>
-        <button id="admin-login-btn" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Ingresar</button>
-      </div>
-      <div class="mt-6 bg-surface-container-low rounded-lg p-3 text-center">
-        <p class="font-label-sm text-on-surface-variant">Demo · usuario: <b class="text-primary">admin@origen.bo</b> · clave: <b class="text-primary">origen2026</b></p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ===================== ADMIN · PANEL ===================== -->
 <section id="screen-admin" class="screen flex flex-col" style="min-height:100dvh">
   <header class="bg-primary-container text-on-primary sticky top-0 w-full z-40 flex items-center justify-between px-margin-mobile h-16">
@@ -1142,9 +1113,20 @@ const PAY_DEFAULT = { comercio: "ORIGEN · Ankaya S.R.L.", qr: true, card: true 
 let paySettings = Object.assign({}, PAY_DEFAULT, JSON.parse(localStorage.getItem("origen_paysettings") || "{}"));
 const savePaySettings = () => localStorage.setItem("origen_paysettings", JSON.stringify(paySettings));
 
-/* ============ Admin (sesión) ============ */
-const ADMIN = { email: "admin@origen.bo", pass: "origen2026" };
-const isAdmin = () => sessionStorage.getItem("origen_admin") === "1";
+/* ============ Admin (rol real de Supabase) ============ */
+let adminRole = false;
+async function refreshAdminRole() {
+  adminRole = false;
+  if (!SBX()) return;
+  try {
+    const { data } = await SBX().auth.getUser();
+    if (data && data.user) {
+      const { data: p } = await SBX().from("profiles").select("role").eq("id", data.user.id).single();
+      adminRole = !!(p && p.role === "admin");
+    }
+  } catch (e) {}
+}
+const isAdmin = () => adminRole;
 
 /* ============ Usuarios / suscriptores ============ */
 const DEMO_GOOGLE = [
@@ -1319,6 +1301,7 @@ function renderAccount() {
   const el = document.getElementById("account-name"); if (el) el.textContent = "Hola, " + (u.name.split(" ")[0] || "Invitado");
   const ie = document.getElementById("account-initials"); if (ie) ie.textContent = initials(u.name);
   const em = document.getElementById("account-email"); if (em) em.textContent = u.email;
+  const adminBtn = document.getElementById("account-admin-btn"); if (adminBtn) adminBtn.classList.toggle("hidden", !isAdmin());
   // Estado de la suscripción
   const st = subStatus();
   const badge = document.getElementById("acc-sub-badge");
@@ -1610,7 +1593,7 @@ function renderBasket() {
 
 /* ============ Router ============ */
 const TABS = ["home", "catalog", "scanner", "account"];
-const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin-login", "admin", "plans", "schedule"];
+const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule"];
 let current = "welcome";
 function navigate(screen) {
   const target = document.getElementById("screen-" + screen);
@@ -1648,7 +1631,6 @@ function navigate(screen) {
   if (screen === "auth") { document.getElementById("auth-error").classList.add("hidden"); renderGoogleAccounts(); }
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();
-  if (screen === "admin-login") { document.getElementById("admin-error").classList.add("hidden"); }
   if (screen === "admin") renderAdmin();
   if (screen === "confirmed") document.getElementById("confirm-order-id").textContent = lastOrderId || ("#ORG-" + Math.floor(10000 + Math.random() * 89999));
 }
@@ -1716,7 +1698,12 @@ document.addEventListener("click", e => {
   if (btn && btn.querySelector(".material-symbols-outlined")?.textContent.trim() === "menu") { showToast("Menú · próximamente"); return; }
   const soon = e.target.closest("[data-soon]");
   if (soon) { showToast(soon.dataset.soon || "Disponible próximamente"); return; }
-  if (e.target.closest("[data-admin]")) navigate(isAdmin() ? "admin" : "admin-login");
+  if (e.target.closest("[data-admin]")) {
+    if (isAdmin()) navigate("admin");
+    else if (currentUser()) showMessage({ icon: "lock", title: "Acceso restringido", text: "Tu cuenta no tiene permisos de administrador.", confirmLabel: "Entendido" });
+    else showMessage({ icon: "lock", title: "Inicia sesión", text: "Inicia sesión con tu cuenta de administrador para gestionar la app.", confirmLabel: "Iniciar sesión", onConfirm: () => navigate("auth") });
+    return;
+  }
   if (e.target.closest("[data-logout]")) { logout(); navigate("welcome"); }
   if (e.target.closest("[data-sub-toggle]")) togglePause();
   if (e.target.closest("[data-sub-cancel]")) cancelSubscription();
@@ -1927,19 +1914,7 @@ document.getElementById("card-exp").addEventListener("input", e => {
 });
 
 /* ============ ADMIN ============ */
-document.getElementById("admin-login-btn").addEventListener("click", () => {
-  const email = document.getElementById("admin-email").value.trim().toLowerCase();
-  const pass = document.getElementById("admin-pass").value;
-  if (email === ADMIN.email && pass === ADMIN.pass) {
-    sessionStorage.setItem("origen_admin", "1");
-    document.getElementById("admin-pass").value = "";
-    navigate("admin");
-  } else {
-    document.getElementById("admin-error").classList.remove("hidden");
-  }
-});
-document.getElementById("admin-pass").addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("admin-login-btn").click(); });
-document.getElementById("admin-logout").addEventListener("click", () => { sessionStorage.removeItem("origen_admin"); navigate("account"); });
+document.getElementById("admin-logout").addEventListener("click", () => navigate("account"));
 
 const ADMIN_TABS = [
   { id: "dashboard", label: "Resumen", icon: "dashboard" },
@@ -1952,7 +1927,7 @@ const ADMIN_TABS = [
 ];
 let adminTab = "dashboard";
 function renderAdmin() {
-  if (!isAdmin()) { navigate("admin-login"); return; }
+  if (!isAdmin()) { navigate("account"); return; }
   document.getElementById("admin-tabs").innerHTML = ADMIN_TABS.map(t => {
     const on = t.id === adminTab;
     return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
@@ -2228,14 +2203,16 @@ syncCart();
   if (sb) {
     try {
       const { data } = await sb.auth.getSession();
-      if (data && data.session) setCurrentUser(userFromSb(data.session.user));
+      if (data && data.session) { setCurrentUser(userFromSb(data.session.user)); await refreshAdminRole(); }
       // Vuelta del login con Google (OAuth) u otro cambio de sesión
-      sb.auth.onAuthStateChange((event, session) => {
+      sb.auth.onAuthStateChange(async (event, session) => {
         if (event === "SIGNED_IN" && session) {
           setCurrentUser(userFromSb(session.user));
+          await refreshAdminRole();
           if (["welcome", "auth", "otp"].includes(current)) navigate("home");
+          else if (current === "account") renderAccount();
         }
-        if (event === "SIGNED_OUT") { localStorage.removeItem("origen_user"); }
+        if (event === "SIGNED_OUT") { localStorage.removeItem("origen_user"); adminRole = false; }
       });
     } catch (e) { /* sin conexión → modo local */ }
   }

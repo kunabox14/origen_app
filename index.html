@@ -419,6 +419,43 @@
     <section id="basket-items" class="space-y-4 mb-10"></section>
 
     <div id="basket-filled" class="hidden">
+      <!-- Detalles de entrega -->
+      <section class="bg-surface-container-low border border-outline-variant/20 rounded-2xl p-5 mb-8 space-y-4">
+        <h2 class="font-headline-sm text-headline-sm text-primary">Detalles de entrega</h2>
+        <div>
+          <label class="font-label-sm text-on-surface-variant">Tipo de pedido</label>
+          <div id="order-type" class="grid grid-cols-3 gap-2 mt-1"></div>
+        </div>
+        <div id="addr-wrap">
+          <label class="font-label-sm text-on-surface-variant" id="addr-label">Dirección de entrega</label>
+          <input id="order-address" placeholder="Av. Ballivián 1220, Calacoto" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        </div>
+        <div id="gift-fields" class="hidden space-y-3">
+          <div>
+            <label class="font-label-sm text-on-surface-variant">Dirección del receptor</label>
+            <input id="gift-address" placeholder="¿A dónde lo enviamos?" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+          </div>
+          <div>
+            <label class="font-label-sm text-on-surface-variant">Mensaje especial</label>
+            <textarea id="gift-message" rows="2" placeholder="Con cariño, de parte de…" class="mt-1 w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></textarea>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Fecha</label><input id="order-date" type="date" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary"></div>
+          <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Horario</label>
+            <select id="order-window" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary">
+              <option>09:00 – 11:00</option><option>11:00 – 13:00</option><option>15:00 – 17:00</option><option>17:00 – 19:00</option>
+            </select></div>
+        </div>
+        <div id="freq-wrap" class="hidden">
+          <label class="font-label-sm text-on-surface-variant">Frecuencia de la entrega recurrente</label>
+          <select id="order-freq" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary">
+            <option value="semanal">Cada semana</option><option value="quincenal" selected>Cada 15 días</option><option value="mensual">Cada mes</option>
+          </select>
+        </div>
+        <p id="order-detail-error" class="hidden text-error font-label-sm"></p>
+      </section>
+
       <section class="mb-8">
         <div class="bg-secondary-container border border-on-secondary-fixed-variant/10 rounded-xl p-5 flex items-start gap-4">
           <div class="bg-on-secondary-fixed-variant text-secondary-fixed rounded-full p-2 flex items-center justify-center">
@@ -1802,6 +1839,31 @@ function renderBasket() {
   document.getElementById("sum-km").textContent = "(~" + t.km.toFixed(1).replace(".0", "") + " km)";
   document.getElementById("sum-total").textContent = bs(t.total);
   document.getElementById("basket-savings").textContent = bs(t.disc);
+  renderOrderDetails();
+}
+
+/* ============ Detalles de entrega (tipo, dirección, fecha, regalo) ============ */
+let orderType = "directa";
+let orderDetails = null;
+const ORDER_TYPES = [
+  { id: "directa", label: "Directa", icon: "local_shipping" },
+  { id: "regalo", label: "Regalo", icon: "redeem" },
+  { id: "programada", label: "Programada", icon: "event_repeat" }
+];
+function renderOrderDetails() {
+  const cont = document.getElementById("order-type"); if (!cont) return;
+  cont.innerHTML = ORDER_TYPES.map(t => {
+    const on = t.id === orderType, locked = t.id === "programada" && !subActive();
+    return `<button data-otype="${t.id}" ${locked ? 'data-locked="1"' : ""} class="flex flex-col items-center gap-1 py-3 rounded-xl border text-[11px] font-label-md transition-colors ${on ? "border-secondary bg-secondary-container text-on-secondary-container" : "border-outline-variant bg-surface-container-lowest text-on-surface-variant"} ${locked ? "opacity-60" : ""}"><span class="material-symbols-outlined text-[20px]">${t.icon}</span>${t.label}</button>`;
+  }).join("");
+  document.getElementById("gift-fields").classList.toggle("hidden", orderType !== "regalo");
+  document.getElementById("freq-wrap").classList.toggle("hidden", orderType !== "programada");
+  document.getElementById("addr-wrap").classList.toggle("hidden", orderType === "regalo");
+  document.getElementById("addr-label").textContent = "Dirección de entrega";
+  const u = currentUser(), s = getSettings();
+  const addr = document.getElementById("order-address"); if (addr && !addr.value) addr.value = s.address || (u && u.address) || "";
+  const date = document.getElementById("order-date"); if (date && !date.value) { const d = new Date(); d.setDate(d.getDate() + 1); date.value = d.toISOString().slice(0, 10); }
+  const gm = document.getElementById("gift-message"); if (gm && !gm.value && s.giftmsg) gm.value = s.giftmsg;
 }
 
 /* ============ Router ============ */
@@ -1893,6 +1955,11 @@ document.addEventListener("click", e => {
   if (dec) { changeQty(dec.dataset.dec, -1); return; }
   const del = e.target.closest("[data-del]");
   if (del) { removeFromCart(del.dataset.del); return; }
+  const ot = e.target.closest("[data-otype]");
+  if (ot) {
+    if (ot.dataset.locked) { showMessage({ icon: "lock", title: "Solo para suscriptores", text: "Las entregas programadas recurrentes son un beneficio de la suscripción. Suscríbete para activarlas.", confirmLabel: "Ver planes", onConfirm: () => navigate("plans") }); return; }
+    orderType = ot.dataset.otype; renderOrderDetails(); return;
+  }
   const rebuy = e.target.closest("[data-rebuy]");
   if (rebuy) {
     try {
@@ -2000,7 +2067,23 @@ document.getElementById("bill-confirm").addEventListener("click", () => {
 });
 
 // Confirmar pedido → checkout (pago)
-document.getElementById("basket-confirm").addEventListener("click", () => navigate("checkout"));
+document.getElementById("basket-confirm").addEventListener("click", () => {
+  const date = document.getElementById("order-date").value;
+  const win = document.getElementById("order-window").value;
+  const addr = document.getElementById("order-address").value.trim();
+  const giftAddr = document.getElementById("gift-address").value.trim();
+  const giftMsg = document.getElementById("gift-message").value.trim();
+  const freq = document.getElementById("order-freq").value;
+  const err = document.getElementById("order-detail-error");
+  const fail = m => { err.textContent = m; err.classList.remove("hidden"); };
+  if (orderType === "regalo") { if (!giftAddr) return fail("Ingresa la dirección del receptor del regalo."); }
+  else if (!addr) return fail("Ingresa la dirección de entrega.");
+  if (!date) return fail("Selecciona la fecha de entrega.");
+  if (orderType === "programada" && !subActive()) return fail("Solo los suscriptores pueden programar entregas recurrentes.");
+  err.classList.add("hidden");
+  orderDetails = { type: orderType, date, window: win, address: orderType === "regalo" ? giftAddr : addr, giftAddress: giftAddr, giftMessage: giftMsg, freq };
+  navigate("checkout");
+});
 
 /* ============ Checkout (pago simulado) ============ */
 let lastOrderId = null;
@@ -2047,14 +2130,17 @@ function createOrder(method) {
   const t = cartTotals(), total = t.total;
   const id = "#ORG-" + Math.floor(10000 + Math.random() * 89999);
   const u = currentUser() || { name: "Cliente Origen", email: "cliente@origen.bo", address: "Av. Principal 123, Edificio Los Pinos", zone: "Zona Sur" };
+  const d = orderDetails || {};
   const order = {
     id, date: new Date().toISOString(), method,
     items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
     total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
-    status: "Nuevo", assignedTo: null,
-    customer: { name: u.name, email: u.email, address: u.address || "Av. Principal 123, Edificio Los Pinos", zone: u.zone || "Zona Sur" },
-    deliveryDate: new Date().toISOString().slice(0, 10),
-    window: "09:00 – 11:00",
+    status: "Nuevo", assignedTo: null, type: d.type || "directa",
+    gift: d.type === "regalo" ? { address: d.giftAddress || "", message: d.giftMessage || "" } : null,
+    freq: d.type === "programada" ? d.freq : null,
+    customer: { name: u.name, email: u.email, address: d.address || u.address || "Av. Principal 123, Edificio Los Pinos", zone: u.zone || "Zona Sur" },
+    deliveryDate: d.date || new Date().toISOString().slice(0, 10),
+    window: d.window || "09:00 – 11:00",
     history: [{ status: "Nuevo", at: new Date().toISOString() }]
   };
   orders.unshift(order);
@@ -2071,6 +2157,8 @@ const mapDbOrder = (r, items) => ({
   total: Number(r.total), subtotal: Number(r.subtotal || 0), discount: Number(r.discount || 0),
   serviceFee: Number(r.service_fee || 0), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0),
   assignedTo: r.assigned_rider || null,
+  type: r.order_type || "directa",
+  gift: r.gift_message ? { address: r.address || "", message: r.gift_message } : null,
   customer: { name: r.customer_name || "Cliente", email: r.customer_email || "", address: r.address || "", zone: r.zone || "Zona Sur" },
   deliveryDate: r.delivery_date, window: r.window || "09:00 – 11:00", history: []
 });
@@ -2079,7 +2167,10 @@ async function cloudCreateOrder(o) {
   try {
     let userId = null; try { const { data } = await SBX().auth.getUser(); userId = data && data.user ? data.user.id : null; } catch (e) {}
     const row = { code: o.id, user_id: userId, status: o.status, method: o.method, subtotal: o.subtotal, discount: o.discount, service_fee: o.serviceFee, delivery_fee: o.deliveryFee, delivery_km: o.deliveryKm, total: o.total, delivery_date: o.deliveryDate, "window": o.window, address: o.customer.address, zone: o.customer.zone, customer_name: o.customer.name, customer_email: o.customer.email };
-    const { data, error } = await SBX().from("orders").insert(row).select().single();
+    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null });
+    let res = await SBX().from("orders").insert(full).select().single();
+    if (res.error) res = await SBX().from("orders").insert(row).select().single(); // si faltan columnas extra, guarda sin ellas
+    const { data, error } = res;
     if (!error && data) {
       o.dbId = data.id;
       await SBX().from("order_items").insert(o.items.map(i => ({ order_id: data.id, product_id: isUuid(i.id) ? i.id : null, name: i.name, qty: i.qty, price: i.price })));
@@ -2093,8 +2184,12 @@ async function cloudCreateOrder(o) {
 async function hydrateOrders() {
   if (!SBX()) return false;
   try {
+    const prev = {}; orders.forEach(o => { if (o.type || o.gift || o.freq) prev[o.id] = { type: o.type, gift: o.gift, freq: o.freq }; });
     const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
-    if (!error && data) { orders = data.map(r => mapDbOrder(r, r.order_items)); saveOrders(); return true; }
+    if (!error && data) {
+      orders = data.map(r => { const m = mapDbOrder(r, r.order_items); if (prev[m.id]) Object.assign(m, { type: prev[m.id].type || m.type, gift: prev[m.id].gift || m.gift, freq: prev[m.id].freq || m.freq }); return m; });
+      saveOrders(); return true;
+    }
   } catch (e) {}
   return false;
 }

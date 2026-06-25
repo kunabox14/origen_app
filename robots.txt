@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kunabox14.github.io/origen_app/sitemap.xml

@@ -11,7 +11,9 @@ window.ORIGEN_SB_CONFIG = {
   // Link de pago de Stripe (modo prueba) para la suscripción de Bs. 99/mes.
   // En el dashboard de Stripe, configura el redireccionamiento tras el pago a:
   //   https://kunabox14.github.io/origen_app/?sub=ok
-  stripeLink: "https://buy.stripe.com/test_7sY9AU4tJ0QH9TWd999k400"
+  stripeLink: "https://buy.stripe.com/test_7sY9AU4tJ0QH9TWd999k400",
+  // Google Maps JavaScript API (restringida al dominio kunabox14.github.io)
+  mapsKey: "AIzaSyCqLzM4zQiGiynYwv6qmT4OVrShQ69I91Y"
 };
 
 // Inicializa el cliente si la librería cargó. Si no hay red/config, queda null

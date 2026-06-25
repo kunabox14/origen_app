@@ -575,15 +575,15 @@
 
   <main class="flex-grow">
     <section class="relative h-72 w-full overflow-hidden bg-surface-container">
-      <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuCn0eVieuVRF-W8yt1B6IcRf0okcYGR7OA4NG5IBbQ07_dfq68QspEMFpFFjjVTG_C_N85Iv76nbgkXpeIhWLc_SVHljMpqK9YSFh1MFN4JTUQXrtQLZfe3wCXD8H7n3Gzhijs4pjjOkPP2ox9cIHeJEiJDXDPc-Q_3rrniK0-l-npNcVBHujmjAM_mhMp_NVDaA4vqXJjHkCdcd304X5AVNakbfN_ep_bPbU5I3n1bgrCB9bkrc2_pDDoFaWie3KJQyfqoiGtOWIs');"></div>
-      <div class="absolute inset-0 flex justify-between items-start p-margin-mobile pointer-events-none">
+      <div id="track-map" class="absolute inset-0"></div>
+      <div class="absolute top-0 left-0 right-0 flex justify-between items-start p-margin-mobile pointer-events-none">
         <div class="bg-surface/90 backdrop-blur-sm p-3 rounded-xl shadow-sm border border-outline-variant/30">
-          <p class="font-label-sm text-secondary uppercase tracking-widest mb-1">Productor</p>
-          <p class="font-body-md font-semibold">Ankaya Origen</p>
+          <p class="font-label-sm text-secondary uppercase tracking-widest mb-1">Repartidor</p>
+          <p id="track-rider" class="font-body-md font-semibold">En camino</p>
         </div>
         <div class="bg-surface/90 backdrop-blur-sm p-3 rounded-xl shadow-sm border border-outline-variant/30 text-right">
-          <p class="font-label-sm text-secondary uppercase tracking-widest mb-1">Tu Hogar</p>
-          <p class="font-body-md font-semibold">Edificio Los Pinos 123</p>
+          <p class="font-label-sm text-secondary uppercase tracking-widest mb-1">Llega en</p>
+          <p id="track-eta" class="font-body-md font-semibold">—</p>
         </div>
       </div>
     </section>
@@ -1465,6 +1465,46 @@ function renderTracking() {
       <div class="flex flex-col">${label}<h3 class="font-body-md font-semibold text-primary">${s.title}</h3><p class="font-label-sm text-on-surface-variant">${s.desc}</p></div>
     </div>`;
   }).join("");
+  renderTrackingMap(o);
+}
+
+/* ============ Mapa de seguimiento (Google Maps) ============ */
+let mapsLoaded = false, mapsLoading = null, trackMap = null, riderMarker = null, destMarker = null;
+const WAREHOUSE = { lat: -16.5100, lng: -68.1050 }; // Almacén Origen, La Paz
+const ZONE_COORDS = { "Zona Sur": { lat: -16.5400, lng: -68.0800 }, "Calacoto": { lat: -16.5450, lng: -68.0790 }, "Miraflores": { lat: -16.4970, lng: -68.1180 }, "Centro": { lat: -16.5000, lng: -68.1330 }, "Sopocachi": { lat: -16.5120, lng: -68.1240 } };
+const destFor = o => ZONE_COORDS[o.customer.zone] || { lat: -16.5000, lng: -68.1300 };
+function haversine(a, b) { const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180; const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
+function loadMaps() {
+  if (mapsLoaded) return Promise.resolve(true);
+  if (mapsLoading) return mapsLoading;
+  const key = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.mapsKey;
+  if (!key) return Promise.resolve(false);
+  mapsLoading = new Promise(res => {
+    window.__origenMapsCb = () => { mapsLoaded = true; res(true); };
+    const s = document.createElement("script");
+    s.src = "https://maps.googleapis.com/maps/api/js?key=" + key + "&callback=__origenMapsCb&loading=async";
+    s.async = true; s.onerror = () => res(false);
+    document.head.appendChild(s);
+  });
+  return mapsLoading;
+}
+async function renderTrackingMap(o) {
+  if (!o) return;
+  const mapDiv = document.getElementById("track-map"); if (!mapDiv) return;
+  const ok = await loadMaps();
+  if (!ok || !window.google) { mapDiv.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined mr-2">map</span>Mapa no disponible</div>`; return; }
+  const dest = destFor(o);
+  const rider = (o.riderLat != null && o.riderLng != null) ? { lat: o.riderLat, lng: o.riderLng } : WAREHOUSE;
+  if (!trackMap) trackMap = new google.maps.Map(mapDiv, { center: dest, zoom: 14, disableDefaultUI: true, gestureHandling: "greedy" });
+  if (!destMarker) destMarker = new google.maps.Marker({ map: trackMap, title: "Tu dirección", icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: "#006e24", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 } });
+  destMarker.setPosition(dest);
+  if (!riderMarker) riderMarker = new google.maps.Marker({ map: trackMap, title: "Repartidor", label: { text: "🛵", fontSize: "20px" } });
+  riderMarker.setPosition(rider);
+  google.maps.event.trigger(trackMap, "resize");
+  const b = new google.maps.LatLngBounds(); b.extend(dest); b.extend(rider); trackMap.fitBounds(b, 70);
+  const km = haversine(rider, dest), mins = Math.max(1, Math.round(km / 18 * 60));
+  document.getElementById("track-eta").textContent = o.status === "Entregado" ? "Entregado ✓" : (o.riderLat != null ? "~" + mins + " min" : "Por salir");
+  document.getElementById("track-rider").textContent = o.assignedTo || "Por asignar";
 }
 
 /* ============ Cuenta (datos del usuario) ============ */
@@ -2395,6 +2435,8 @@ const mapDbOrder = (r, items) => ({
   total: Number(r.total), subtotal: Number(r.subtotal || 0), discount: Number(r.discount || 0),
   serviceFee: Number(r.service_fee || 0), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0),
   assignedTo: r.assigned_rider || null,
+  riderLat: r.rider_lat != null ? Number(r.rider_lat) : null,
+  riderLng: r.rider_lng != null ? Number(r.rider_lng) : null,
   type: r.order_type || "directa",
   gift: r.gift_message ? { address: r.address || "", message: r.gift_message } : null,
   customer: { name: r.customer_name || "Cliente", email: r.customer_email || "", address: r.address || "", zone: r.zone || "Zona Sur" },

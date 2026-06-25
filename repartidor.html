@@ -145,7 +145,19 @@ const feeOf = o => o.deliveryFee != null ? o.deliveryFee : 0;
 async function enterApp(){
   document.getElementById("rider-name").textContent=rider; show("rider-app");
   await hydrateRiderOrders();           // pedidos desde la nube
-  requestNotify(); renderApp(); setupRiderRealtime();
+  requestNotify(); renderApp(); setupRiderRealtime(); startRiderLocation();
+}
+// Comparte la ubicación del repartidor en vivo (para el mapa del cliente)
+let lastLocUpdate=0, locWatch=null;
+function startRiderLocation(){
+  if(!navigator.geolocation || locWatch!=null) return;
+  locWatch = navigator.geolocation.watchPosition(async function(pos){
+    var now=Date.now(); if(now-lastLocUpdate < 5000) return; lastLocUpdate=now;
+    if(!SBX()) return;
+    var lat=pos.coords.latitude, lng=pos.coords.longitude;
+    var active=loadOrders().filter(function(o){ return o.assignedTo===rider && ["Asignado","Recogido","En camino"].indexOf(o.status)>-1 && o.dbId; });
+    for(var i=0;i<active.length;i++){ try{ await SBX().from("orders").update({rider_lat:lat,rider_lng:lng}).eq("id",active[i].dbId); }catch(e){} }
+  }, function(){}, {enableHighAccuracy:true, maximumAge:5000});
 }
 let riderRealtimeSet=false;
 function setupRiderRealtime(){

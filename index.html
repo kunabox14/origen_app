@@ -327,6 +327,8 @@
 
   <main class="px-margin-mobile space-y-8 pt-6">
     <!-- Suscripción (Suscribirme / Activa / Pausada) -->
+    <!-- Prioridad: pedido activo / último pedido -->
+    <section id="home-order-card"></section>
     <section id="home-sub-card"></section>
 
     <!-- Métricas de impacto (reales, según tus compras) -->
@@ -372,11 +374,23 @@
       </div>
     </section>
 
-    <!-- Acceso a planes / programación -->
-    <button data-nav="plans" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 flex items-center justify-between active:scale-[0.99] transition-transform">
-      <span class="flex items-center gap-3 text-primary"><span class="material-symbols-outlined text-secondary">event_repeat</span><span class="font-label-md">Planes y entregas programadas</span></span>
+    <!-- Programar pedidos recurrentes -->
+    <button data-nav="schedule" class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl p-4 flex items-center justify-between active:scale-[0.99] transition-transform">
+      <span class="flex items-center gap-3 text-primary"><span class="material-symbols-outlined text-secondary">event_repeat</span><span class="font-label-md">Programar pedidos recurrentes</span></span>
       <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
     </button>
+
+    <!-- Recordatorio de próximo pedido programado (persistente) -->
+    <section id="home-reminder" class="hidden bg-primary-container text-on-primary rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-leaf-green">notifications_active</span><span class="font-label-md text-leaf-green uppercase tracking-wider">Próximo pedido programado</span></div>
+      <p id="home-reminder-date" class="font-headline-sm text-headline-sm mb-1">—</p>
+      <p class="font-label-sm text-on-primary-container mb-3">Te recordaremos y confirmaremos tu pedido <b>2 horas antes</b>. Puedes pagar cuando quieras.</p>
+      <div class="flex gap-2">
+        <button data-nav="schedule" class="flex-1 bg-leaf-green text-primary-container font-label-md py-2.5 rounded-lg active:scale-[0.98]">Ver detalle</button>
+        <button data-nav="schedule" class="flex-1 border border-outline-variant text-on-primary font-label-md py-2.5 rounded-lg active:scale-[0.98]">Actualizar</button>
+        <button data-subscribe class="flex-1 bg-sprout-green text-deep-forest font-label-md py-2.5 rounded-lg active:scale-[0.98]">Pagar</button>
+      </div>
+    </section>
 
     <!-- Cancelar suscripción (sección discreta al final, solo si hay suscripción) -->
     <div id="home-cancel-wrap" class="hidden pt-6 pb-2 text-center">
@@ -438,6 +452,7 @@
         <div id="addr-wrap">
           <label class="font-label-sm text-on-surface-variant" id="addr-label">Dirección de entrega</label>
           <input id="order-address" placeholder="Av. Ballivián 1220, Calacoto" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+          <button id="pick-location" class="mt-2 w-full border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">my_location</span>Seleccionar ubicación en el mapa</button>
         </div>
         <div id="gift-fields" class="hidden space-y-3">
           <div>
@@ -599,7 +614,7 @@
               <span class="material-symbols-outlined text-secondary text-3xl">spa</span>
             </div>
             <div>
-              <p class="font-headline-sm text-[20px] text-primary italic">Ankaya Origen</p>
+              <p id="track-producer" class="font-headline-sm text-[20px] text-primary italic">Origen</p>
               <p class="font-body-md text-on-secondary-fixed-variant italic">"Tu comida fue cosechada con amor"</p>
               <div class="mt-2 flex items-center gap-1 text-secondary"><span class="material-symbols-outlined text-[14px]">verified</span><span class="font-label-sm">Certificación Orgánica</span></div>
             </div>
@@ -611,17 +626,6 @@
       <div class="flex flex-col gap-4 mt-6">
         <button data-nav="chat" class="w-full bg-primary-container text-white py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all"><span class="material-symbols-outlined">chat</span><span class="font-label-md">Contactar repartidor</span></button>
         <button data-nav="support" class="w-full border border-outline py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">help</span><span class="font-label-md">¿Necesitas ayuda?</span></button>
-      </div>
-
-      <div class="grid grid-cols-1 gap-4 mt-8">
-        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 flex items-center gap-4">
-          <div class="w-12 h-12 bg-sprout-green/20 rounded-full flex items-center justify-center text-secondary"><span class="material-symbols-outlined">inventory_2</span></div>
-          <div><p class="font-label-sm text-on-surface-variant">Canasta</p><p class="font-body-md font-semibold">12 productos saludables</p></div>
-        </div>
-        <div class="bg-surface-container-lowest p-5 rounded-2xl border border-outline-variant/30 flex items-center gap-4">
-          <div class="w-12 h-12 bg-sprout-green/20 rounded-full flex items-center justify-center text-secondary"><span class="material-symbols-outlined">history</span></div>
-          <div><p class="font-label-sm text-on-surface-variant">Huella de Carbono</p><p class="font-body-md font-semibold">-2.4kg CO₂ reducido</p></div>
-        </div>
       </div>
     </div>
   </main>
@@ -948,7 +952,7 @@
           <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Puntos ×2 y acceso a Yapas</li>
           <li class="flex gap-2"><span class="material-symbols-outlined text-leaf-green text-[20px]">check</span>Edición de caja antes de cada entrega</li>
         </ul>
-        <button data-nav="schedule" class="mt-5 w-full bg-leaf-green text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Programar mi suscripción</button>
+        <button data-subscribe class="mt-5 w-full bg-leaf-green text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Suscribirme</button>
       </div>
     </div>
 
@@ -1008,8 +1012,13 @@
       <span class="material-symbols-outlined text-on-secondary-container">event_available</span>
       <div><p class="font-label-sm text-on-secondary-container uppercase tracking-wider">Próxima entrega</p><p id="sched-next" class="font-headline-sm text-headline-sm text-on-secondary-container">—</p></div>
     </div>
-    <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">schedule</span><p class="font-label-sm">Te cobraremos y confirmaremos tu pedido <b>2 horas antes</b> de cada entrega. Puedes editar tu canasta hasta ese momento.</p></div>
-    <button id="sched-activate" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Activar suscripción programada</button>
+    <div>
+      <h2 class="font-headline-sm text-headline-sm text-primary mb-1">¿Cuándo quieres pagar?</h2>
+      <p class="font-body-md text-on-surface-variant mb-3">Paga por adelantado y gana un bono extra, o paga justo antes de cada entrega.</p>
+      <div id="sched-pay-options" class="space-y-3"></div>
+    </div>
+    <div class="flex items-start gap-2 text-on-surface-variant"><span class="material-symbols-outlined text-[18px] text-secondary mt-0.5">schedule</span><p class="font-label-sm">Si eliges pagar antes de la entrega, te cobramos y confirmamos tu pedido <b>2 horas antes</b>. Puedes editar tu canasta hasta ese momento.</p></div>
+    <button id="sched-activate" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform">Activar pedidos recurrentes</button>
   </main>
 </section>
 
@@ -1189,6 +1198,17 @@
   </div>
 </div>
 
+<!-- Modal: selector de ubicación en mapa -->
+<div id="picker-modal" class="hidden fixed inset-0 z-[140] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl p-5">
+    <div class="flex items-center justify-between mb-3"><h2 class="font-headline-sm text-headline-sm text-primary">Marca tu ubicación</h2><button id="picker-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+    <div id="picker-map" class="w-full h-72 rounded-xl overflow-hidden bg-surface-container"></div>
+    <p class="text-sm text-on-surface-variant mt-2">Toca el mapa para colocar el pin en tu ubicación exacta.</p>
+    <p id="picker-addr" class="font-body-md text-primary mt-1 min-h-[24px]"></p>
+    <button id="picker-confirm" class="mt-3 w-full bg-leaf-green text-white font-label-md py-3.5 rounded-xl active:scale-95 transition-transform">Confirmar ubicación</button>
+  </div>
+</div>
+
 <!-- ===================== BOTTOM NAV (persistente) ===================== -->
 <nav id="bottom-nav" class="hidden fixed bottom-0 left-0 right-0 w-full max-w-[440px] mx-auto z-50 justify-around items-center px-4 py-3 bg-earth-cream shadow-[0_-4px_20px_0_rgba(20,34,26,0.05)] rounded-t-xl">
   <a data-nav="home" data-tab="home" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
@@ -1260,7 +1280,7 @@ const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
 /* ============ NUBE: productos en Supabase ============ */
 const SBX = () => window.ORIGEN_SB;
 const isUuid = s => typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}/.test(s);
-const mapDbProduct = r => ({ id: r.id, name: r.name, price: Number(r.price), unit: r.unit || "", origin: r.origin || "", cat: r.category || "Despensa", tag: r.tag || "Orgánico", img: r.image_url || "assets/products/generic.svg", active: r.active !== false, inSub: !!r.in_sub });
+const mapDbProduct = r => ({ id: r.id, name: r.name, price: Number(r.price), unit: r.unit || "", origin: r.origin || "", cat: r.category || "Despensa", tag: r.tag || "Orgánico", img: r.image_url || "assets/products/generic.svg", active: r.active !== false, inSub: !!r.in_sub, providerName: r.provider_name || null });
 const toDbProduct = p => ({ name: p.name, price: p.price, unit: p.unit, origin: p.origin, category: p.cat, tag: p.tag, image_url: p.img, active: p.active, in_sub: p.inSub });
 async function cloudSeedIfEmpty() {
   if (!SBX()) return;
@@ -1291,8 +1311,9 @@ async function cloudDeleteProduct(id) { if (SBX() && isUuid(id)) { try { await S
 /* ============ Pedidos + ajustes de pago (persistentes) ============ */
 let orders = JSON.parse(localStorage.getItem("origen_orders") || "[]");
 const saveOrders = () => localStorage.setItem("origen_orders", JSON.stringify(orders));
-const PAY_DEFAULT = { comercio: "ORIGEN · Ankaya S.R.L.", qr: true, card: true };
+const PAY_DEFAULT = { comercio: "Origen", qr: true, card: true };
 let paySettings = Object.assign({}, PAY_DEFAULT, JSON.parse(localStorage.getItem("origen_paysettings") || "{}"));
+if (paySettings.comercio && /ankaya|ancaya/i.test(paySettings.comercio)) paySettings.comercio = "Origen"; // migración
 const savePaySettings = () => localStorage.setItem("origen_paysettings", JSON.stringify(paySettings));
 
 /* ============ Admin (rol real de Supabase) ============ */
@@ -1497,6 +1518,9 @@ function renderTracking() {
       <div class="flex flex-col">${label}<h3 class="font-body-md font-semibold text-primary">${s.title}</h3><p class="font-label-sm text-on-surface-variant">${s.desc}</p></div>
     </div>`;
   }).join("");
+  const prod0 = o.items && o.items[0] ? findProduct(o.items[0].id) : null;
+  const producer = (prod0 && prod0.providerName) || "Origen";
+  const prodEl = document.getElementById("track-producer"); if (prodEl) prodEl.textContent = producer;
   renderTrackingMap(o);
 }
 
@@ -1538,6 +1562,34 @@ async function renderTrackingMap(o) {
   document.getElementById("track-eta").textContent = o.status === "Entregado" ? "Entregado ✓" : (o.riderLat != null ? "~" + mins + " min" : "Por salir");
   document.getElementById("track-rider").textContent = o.assignedTo || "Por asignar";
 }
+
+/* ============ Selector de ubicación en mapa ============ */
+let pickerMap = null, pickerMarker = null, pickerPos = null;
+async function openPicker() {
+  document.getElementById("picker-modal").classList.remove("hidden");
+  const ok = await loadMaps(); const div = document.getElementById("picker-map");
+  if (!ok || !window.google) { div.innerHTML = `<div class="w-full h-full flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined mr-2">map</span>Mapa no disponible</div>`; return; }
+  const center = { lat: -16.5000, lng: -68.1300 };
+  if (!pickerMap) {
+    pickerMap = new google.maps.Map(div, { center, zoom: 14, disableDefaultUI: true, gestureHandling: "greedy", clickableIcons: false });
+    pickerMap.addListener("click", ev => setPicker(ev.latLng.lat(), ev.latLng.lng()));
+  } else { google.maps.event.trigger(pickerMap, "resize"); pickerMap.setCenter(center); }
+  if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { const c = { lat: p.coords.latitude, lng: p.coords.longitude }; pickerMap.setCenter(c); setPicker(c.lat, c.lng); }, () => {});
+}
+function setPicker(lat, lng) {
+  pickerPos = { lat, lng };
+  if (!pickerMarker) pickerMarker = new google.maps.Marker({ map: pickerMap, draggable: true });
+  pickerMarker.setPosition(pickerPos); pickerMap.panTo(pickerPos);
+  document.getElementById("picker-addr").textContent = lat.toFixed(5) + ", " + lng.toFixed(5);
+  try { new google.maps.Geocoder().geocode({ location: pickerPos }, (res, status) => { if (status === "OK" && res && res[0]) document.getElementById("picker-addr").textContent = res[0].formatted_address; }); } catch (e) {}
+}
+document.getElementById("pick-location").addEventListener("click", openPicker);
+document.getElementById("picker-close").addEventListener("click", () => document.getElementById("picker-modal").classList.add("hidden"));
+document.getElementById("picker-modal").addEventListener("click", e => { if (e.target.id === "picker-modal") document.getElementById("picker-modal").classList.add("hidden"); });
+document.getElementById("picker-confirm").addEventListener("click", () => {
+  if (pickerPos) { document.getElementById("order-address").value = document.getElementById("picker-addr").textContent; localStorage.setItem("origen_geo", JSON.stringify(pickerPos)); showToast("Ubicación guardada"); }
+  document.getElementById("picker-modal").classList.add("hidden");
+});
 
 /* ============ Cuenta (datos del usuario) ============ */
 function renderAccount() {
@@ -1786,6 +1838,23 @@ function renderSchedule() {
   if (sched.date) document.getElementById("sched-date").value = sched.date;
   document.getElementById("sched-next").textContent = schedNextLabel();
   renderSchedBasket();
+  renderSchedPayOptions();
+}
+// Opciones de pago de la suscripción recurrente
+let schedPayMode = localStorage.getItem("origen_sched_paymode") || "now";
+const SCHED_PAY = [
+  { id: "now", title: "Pagar ahora", desc: "12% suscriptor + 3% bono = 15% de descuento", badge: "Mejor precio", off: "15%" },
+  { id: "later", title: "Pagar 2 horas antes", desc: "Solo descuento de suscriptor", badge: "", off: "12%" }
+];
+function renderSchedPayOptions() {
+  const cont = document.getElementById("sched-pay-options"); if (!cont) return;
+  cont.innerHTML = SCHED_PAY.map(p => {
+    const on = p.id === schedPayMode;
+    return `<button data-paymode="${p.id}" class="w-full text-left rounded-xl p-4 border flex items-center justify-between transition-colors ${on ? "border-secondary bg-secondary-container" : "border-outline-variant bg-surface-container-lowest"}">
+      <span class="min-w-0"><span class="flex items-center gap-2 flex-wrap"><span class="font-body-md font-semibold ${on ? "text-on-secondary-container" : "text-primary"}">${p.title}</span>${p.badge ? `<span class="bg-sprout-green text-deep-forest text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">${p.badge}</span>` : ""}</span><span class="block font-label-sm ${on ? "text-on-secondary-container/80" : "text-on-surface-variant"}">${p.desc}</span></span>
+      <span class="font-headline-sm text-[18px] ${on ? "text-secondary" : "text-outline-variant"} ml-2">${p.off}</span>
+    </button>`;
+  }).join("");
 }
 // Canasta recurrente del usuario (editable, persistente)
 function getSubBasket() {
@@ -2011,10 +2080,33 @@ function homeSubCard() {
       <li class="flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green text-[18px]">check</span>12% de descuento permanente</li>
       <li class="flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green text-[18px]">check</span>Entregas semanales, quincenales o mensuales</li>
       <li class="flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green text-[18px]">check</span>Edita tu caja hasta 2 h antes</li></ul>
-    <button data-nav="plans" class="w-full bg-leaf-green text-primary-container font-label-md py-3.5 rounded-lg active:scale-[0.98]">Suscribirme</button>`);
+    <button data-subscribe class="w-full bg-leaf-green text-primary-container font-label-md py-3.5 rounded-lg active:scale-[0.98]">Suscribirme</button>`);
+}
+function homeOrderCard() {
+  const o = userOrders()[0];
+  if (!o) return ""; // sin pedidos → el héroe es la suscripción
+  const inProgress = o.status !== "Entregado";
+  const items = o.items.reduce((s, i) => s + i.qty, 0);
+  return `<div class="bg-primary-container text-on-primary rounded-xl p-6 relative overflow-hidden">
+    <div class="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-leaf-green opacity-10 rounded-full blur-3xl"></div>
+    <div class="relative z-10 space-y-3">
+      <div class="flex justify-between items-start">
+        <div><span class="font-label-md text-label-md text-leaf-green uppercase tracking-wider">${inProgress ? "Pedido en camino" : "Último pedido"}</span>
+          <h2 class="font-headline-sm text-headline-sm mt-1">${o.id} · ${o.status}</h2></div>
+        <span class="material-symbols-outlined text-leaf-green text-3xl">${inProgress ? "local_shipping" : "receipt_long"}</span>
+      </div>
+      <p class="font-body-md text-on-primary-container">${items} productos · ${bs(o.total)} · Entrega ${o.deliveryDate || ""}</p>
+      <div class="flex gap-2 pt-1">
+        <button data-nav="tracking" class="flex-1 bg-leaf-green text-primary-container font-label-md py-2.5 rounded-lg active:scale-[0.98]">${inProgress ? "Rastrear" : "Ver detalle"}</button>
+        <button data-nav="orders" class="flex-1 border border-outline-variant text-on-primary font-label-md py-2.5 rounded-lg active:scale-[0.98]">Mis pedidos</button>
+        <button data-nav="chat" class="w-11 flex items-center justify-center border border-outline-variant text-on-primary rounded-lg active:scale-[0.98]"><span class="material-symbols-outlined text-[20px]">chat</span></button>
+      </div>
+    </div>
+  </div>`;
 }
 function renderHome() {
   const act = activeProducts();
+  document.getElementById("home-order-card").innerHTML = homeOrderCard();
   document.getElementById("home-reco").innerHTML = act.length
     ? act.slice(0, 6).map(productCardReco).join("")
     : `<p class="text-on-surface-variant py-6">Aún no hay productos publicados.</p>`;
@@ -2022,6 +2114,8 @@ function renderHome() {
   document.getElementById("home-sub-card").innerHTML = homeSubCard();
   const cw = document.getElementById("home-cancel-wrap");
   if (cw) cw.classList.toggle("hidden", !(subStatus() === "Activa" || subStatus() === "Pausada"));
+  const rem = document.getElementById("home-reminder");
+  if (rem) { const showRem = subStatus() === "Activa"; rem.classList.toggle("hidden", !showRem); if (showRem) document.getElementById("home-reminder-date").textContent = schedNextLabel(); }
   // Métricas de impacto reales
   const m = impactMetrics();
   document.getElementById("home-plastic").textContent = m.plastic ? m.plastic.toFixed(1).replace(".0", "") + " kg" : "0";
@@ -2220,32 +2314,32 @@ async function scanLoop() {
   if (value) { scanFound(value); return; }
   scanRAF = requestAnimationFrame(scanLoop);
 }
-// Busca un producto que coincida con el código leído (id, nombre o el QR de demo)
-function matchScanned(value) {
-  const v = String(value || "").toLowerCase();
-  return activeProducts().find(p => v.includes(String(p.id).toLowerCase()) || v.includes(p.name.toLowerCase().slice(0, 6))) || null;
-}
+// Lee el contenido real del QR: si es una URL válida, redirige; si no, muestra error.
+let scanUrl = null;
 function scanFound(value) {
   scanBusy = true; stopScanner();
-  const p = matchScanned(value) || activeProducts()[0];
   document.getElementById("scan-status").classList.add("hidden");
   const res = document.getElementById("scan-result");
   res.classList.remove("hidden");
-  res.innerHTML = p ? `
-    <div class="flex items-center gap-3 text-left">
-      <div class="w-14 h-14 rounded-xl overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.img}" onerror="imgFail(this)" class="w-full h-full object-contain p-1"></div>
-      <div class="flex-grow"><div class="flex items-center gap-1 text-secondary"><span class="material-symbols-outlined text-[18px]">verified</span><span class="font-label-sm font-bold uppercase tracking-wider">Trazabilidad verificada</span></div>
-        <h3 class="font-headline-sm text-[18px] text-primary leading-tight">${p.name}</h3></div>
-    </div>
-    <div class="mt-3 grid grid-cols-2 gap-2 text-left">
-      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Origen</p><p class="font-body-md font-semibold text-primary text-sm">${p.origin}</p></div>
-      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Productor</p><p class="font-body-md font-semibold text-primary text-sm">Ankaya Origen</p></div>
-      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Presentación</p><p class="font-body-md font-semibold text-primary text-sm">${p.unit}</p></div>
-      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Certificación</p><p class="font-body-md font-semibold text-primary text-sm">Orgánica</p></div>
-    </div>
-    <p class="text-[11px] text-on-surface-variant/70 mt-2 text-left">Código leído: ${String(value).slice(0, 40)}</p>
-    <button id="scan-again" class="mt-3 w-full bg-leaf-green text-white font-label-md py-3 rounded-xl active:scale-[0.98] transition-transform">Escanear otro</button>`
-    : `<p class="text-center text-on-surface-variant py-4">Código leído: ${String(value).slice(0, 40)}</p><button id="scan-again" class="w-full bg-leaf-green text-white font-label-md py-3 rounded-xl">Escanear otro</button>`;
+  scanUrl = null;
+  try { const u = new URL(String(value).trim()); if (u.protocol === "http:" || u.protocol === "https:") scanUrl = u.href; } catch (e) {}
+  if (scanUrl) {
+    res.innerHTML = `<div class="text-center">
+      <div class="w-16 h-16 rounded-full bg-leaf-green text-white flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-[32px]">link</span></div>
+      <h3 class="font-headline-sm text-headline-sm text-primary">Código detectado</h3>
+      <p class="text-on-surface-variant break-all mt-1 text-sm">${scanUrl}</p>
+      <p class="font-label-sm text-on-surface-variant/70 mt-1">Redirigiendo…</p>
+      <button id="scan-go" class="mt-3 w-full bg-leaf-green text-white font-label-md py-3 rounded-xl active:scale-[0.98] transition-transform">Abrir enlace ahora</button>
+      <button id="scan-again" class="mt-2 w-full text-secondary font-label-md">Escanear otro</button></div>`;
+    setTimeout(() => { if (current === "scanner" && scanUrl) window.location.href = scanUrl; }, 1200);
+  } else {
+    res.innerHTML = `<div class="text-center">
+      <div class="w-16 h-16 rounded-full bg-error/15 text-error flex items-center justify-center mx-auto mb-3"><span class="material-symbols-outlined text-[32px]">error</span></div>
+      <h3 class="font-headline-sm text-headline-sm text-primary">Código no válido</h3>
+      <p class="text-on-surface-variant mt-1">El código escaneado no contiene un enlace válido.</p>
+      <p class="text-[11px] text-on-surface-variant/60 mt-1 break-all">Contenido: ${String(value).slice(0, 60)}</p>
+      <button id="scan-again" class="mt-3 w-full bg-leaf-green text-white font-label-md py-3 rounded-xl active:scale-[0.98] transition-transform">Escanear otro</button></div>`;
+  }
 }
 
 /* ============ Eventos ============ */
@@ -2254,6 +2348,7 @@ document.addEventListener("click", e => {
   if (nav) { e.preventDefault(); if (nav.dataset.authmode) authMode = nav.dataset.authmode; navigate(nav.dataset.nav); return; }
   const atab = e.target.closest("[data-authmode]:not([data-nav])");
   if (atab) { authMode = atab.dataset.authmode; renderAuth(); return; }
+  if (e.target.closest("[data-subscribe]")) { subscribeNow(); return; }
 
   const cat = e.target.closest("[data-cat]");
   if (cat) { activeCat = cat.dataset.cat; renderCatalog(); return; }
@@ -2279,7 +2374,8 @@ document.addEventListener("click", e => {
   const sbx = e.target.closest("[data-sbdel]"); if (sbx) { saveSubBasket(getSubBasket().filter(x => x.id !== sbx.dataset.sbdel)); renderSchedBasket(); return; }
   const sba = e.target.closest("[data-sbadd]"); if (sba) { const b = getSubBasket(); if (!b.find(x => x.id === sba.dataset.sbadd)) b.push({ id: sba.dataset.sbadd, qty: 1 }); saveSubBasket(b); schedAddOpen = false; renderSchedBasket(); showToast("Agregado a tu canasta recurrente"); return; }
   const yp = e.target.closest("[data-yapa]"); if (yp) { redeemYapa(yp.dataset.yapa); return; }
-  if (e.target.closest("#scan-sim")) { const ap = activeProducts(); const p = ap[Math.floor(Math.random() * ap.length)]; scanFound(p ? p.id : "ORIGEN-DEMO"); return; }
+  if (e.target.closest("#scan-sim")) { scanFound("https://kunabox14.github.io/origen_app/?producto=cafe-yungas"); return; }
+  if (e.target.closest("#scan-go")) { if (scanUrl) window.location.href = scanUrl; return; }
   if (e.target.closest("#scan-again")) { runScanner(); return; }
   const rebuy = e.target.closest("[data-rebuy]");
   if (rebuy) {
@@ -2329,6 +2425,8 @@ document.addEventListener("click", e => {
     localStorage.setItem("origen_schedule", JSON.stringify(sched));
     renderSchedule();
   }
+  const pm = e.target.closest("[data-paymode]");
+  if (pm) { schedPayMode = pm.dataset.paymode; localStorage.setItem("origen_sched_paymode", schedPayMode); renderSchedPayOptions(); }
   if (e.target.id === "msg-modal") closeMessage();
 });
 // Programar suscripción
@@ -2338,19 +2436,28 @@ document.getElementById("sched-date").addEventListener("change", e => {
 document.getElementById("sched-activate").addEventListener("click", () => {
   const sched = getSchedule();
   if (sched.freq === "personalizada" && !sched.date) { showMessage({ icon: "event", title: "Elige una fecha", text: "Selecciona la fecha de tu próxima entrega para activar la suscripción personalizada.", confirmLabel: "Entendido" }); return; }
-  // El plan mensual (Bs. 99) requiere tarjeta para el cobro recurrente
-  if (getBilling()) { finalizeSubscription(); return; } // ya tiene pago activo
-  const link = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.stripeLink;
-  if (link) {
-    // Cobro recurrente real con Stripe (checkout alojado)
-    localStorage.setItem("origen_pending_sub", "1");
-    const u = currentUser();
-    const sep = link.includes("?") ? "&" : "?";
-    location.href = link + (u && u.email ? sep + "prefilled_email=" + encodeURIComponent(u.email) : "");
+  if (schedPayMode === "now") {
+    // Pagar ahora → Stripe, con bono 3% adicional (15% total)
+    localStorage.setItem("origen_sub_bonus", "1");
+    subscribeNow();
   } else {
-    openBilling(finalizeSubscription); // respaldo: formulario simulado
+    // Pagar 2 horas antes → se programa, sin pago inmediato (12%)
+    localStorage.removeItem("origen_sub_bonus");
+    setSubStatus("Activa");
+    const f = FREQS.find(x => x.id === sched.freq) || FREQS[1];
+    showMessage({ icon: "event_available", title: "¡Pedidos recurrentes activados!", text: "Recibirás tu canasta " + f.label.toLowerCase() + ". Te cobramos y confirmamos 2 horas antes de cada entrega, con 12% de descuento. Próxima entrega: " + schedNextLabel() + ".", confirmLabel: "Listo", onConfirm: () => navigate("account") });
   }
 });
+// "Suscribirme": va directo al link de pago de Stripe (o usa el pago ya registrado)
+function subscribeNow() {
+  if (getBilling()) { finalizeSubscription(); return; }
+  const link = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.stripeLink;
+  if (link) {
+    localStorage.setItem("origen_pending_sub", "1");
+    const u = currentUser(); const sep = link.includes("?") ? "&" : "?";
+    location.href = link + (u && u.email ? sep + "prefilled_email=" + encodeURIComponent(u.email) : "");
+  } else { navigate("plans"); }
+}
 function finalizeSubscription() {
   setSubStatus("Activa");
   const sched = getSchedule();

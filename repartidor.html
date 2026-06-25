@@ -46,9 +46,27 @@
       </div>
       <h1 class="font-headline text-3xl text-primary text-center mt-6 mb-2">Hola, repartidor</h1>
       <p class="text-on-surface-variant text-center mb-8">Inicia sesión para ver los pedidos asignados a tu ruta.</p>
-      <label class="text-sm text-on-surface-variant">Selecciona tu perfil (demo)</label>
-      <div id="rider-list" class="grid gap-2 mt-2 mb-6"></div>
-      <p class="text-center text-xs text-on-surface-variant/60">Demo · perfiles de repartidor simulados.</p>
+      <label class="text-sm text-on-surface-variant">Selecciona tu perfil</label>
+      <div id="rider-list" class="grid gap-2 mt-2 mb-4"></div>
+      <button id="rider-register-toggle" class="w-full text-secondary font-semibold py-2 mb-2">Soy nuevo · registrarme</button>
+      <div id="rider-register" class="hidden space-y-3 bg-surface-container-lowest border border-outline-variant rounded-2xl p-4">
+        <input id="reg-name" placeholder="Tu nombre completo" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <input id="reg-phone" placeholder="Teléfono / WhatsApp" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <select id="reg-zone" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Zona Sur</option><option>Miraflores</option><option>Centro</option><option>Sopocachi</option></select>
+        <p id="reg-error" class="hidden text-error text-sm">Completa tu nombre y teléfono.</p>
+        <button id="reg-submit" class="w-full bg-leaf-green text-white font-semibold py-3 rounded-xl active:scale-95 transition-transform">Enviar solicitud</button>
+      </div>
+      <p class="text-center text-xs text-on-surface-variant/60 mt-2">Los repartidores son aprobados por el equipo Origen.</p>
+    </div>
+  </section>
+
+  <!-- PENDIENTE de aprobación -->
+  <section id="rider-pending" class="scr flex flex-col items-center justify-center px-5 text-center" style="min-height:100dvh">
+    <div class="w-full max-w-sm">
+      <div class="w-20 h-20 rounded-full bg-sprout-green/30 flex items-center justify-center mx-auto mb-6"><span class="material-symbols-outlined text-secondary text-4xl">hourglass_top</span></div>
+      <h1 class="font-headline text-3xl text-primary">Solicitud en revisión</h1>
+      <p class="text-on-surface-variant mt-2">Gracias por registrarte. El equipo de Origen revisará tu cuenta de repartidor y te avisará al aprobarla.</p>
+      <button id="rider-pending-back" class="mt-6 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Volver al inicio</button>
     </div>
   </section>
 
@@ -124,12 +142,14 @@ function toast(m){ const t=document.getElementById("rtoast"); document.getElemen
 
 function show(id){ document.querySelectorAll(".scr").forEach(s=>s.classList.remove("on")); document.getElementById(id).classList.add("on"); }
 
-// LOGIN
-function renderLogin(){
-  document.getElementById("rider-list").innerHTML = RIDERS.map(r=>`
-    <button data-rider="${r}" class="text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3 hover:border-secondary transition-colors">
-      <span class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-semibold">${r.split(" ").map(w=>w[0]).join("")}</span>
-      <div><p class="font-semibold text-primary">${r}</p><p class="text-sm text-on-surface-variant">Repartidor · Zona Sur</p></div>
+// LOGIN — repartidores aprobados desde Supabase (respaldo demo si offline)
+async function renderLogin(){
+  let list = RIDERS.map(n=>({name:n, zone:"Zona Sur"}));
+  if(SBX()){ try{ const {data}=await SBX().from("riders").select("name,zone,status").eq("status","aprobado").order("name"); if(data&&data.length) list=data; }catch(e){} }
+  document.getElementById("rider-list").innerHTML = list.map(r=>`
+    <button data-rider="${r.name}" class="text-left bg-surface-container-lowest border border-outline-variant rounded-xl p-4 flex items-center gap-3 hover:border-secondary transition-colors">
+      <span class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-semibold">${r.name.split(" ").map(w=>w[0]).join("")}</span>
+      <div><p class="font-semibold text-primary">${r.name}</p><p class="text-sm text-on-surface-variant">Repartidor · ${r.zone||"Zona Sur"}</p></div>
     </button>`).join("");
 }
 document.addEventListener("click", e=>{
@@ -137,6 +157,18 @@ document.addEventListener("click", e=>{
   if(r){ rider=r.dataset.rider; sessionStorage.setItem("origen_rider",rider); enterApp(); }
 });
 document.getElementById("rider-logout").addEventListener("click", ()=>{ sessionStorage.removeItem("origen_rider"); rider=null; show("rider-login"); renderLogin(); });
+// Registro de repartidor (queda pendiente de aprobación)
+document.getElementById("rider-register-toggle").addEventListener("click", ()=>{ document.getElementById("rider-register").classList.toggle("hidden"); });
+document.getElementById("rider-pending-back").addEventListener("click", ()=>{ show("rider-login"); renderLogin(); });
+document.getElementById("reg-submit").addEventListener("click", async ()=>{
+  const name=document.getElementById("reg-name").value.trim();
+  const phone=document.getElementById("reg-phone").value.trim();
+  const zone=document.getElementById("reg-zone").value;
+  if(!name||!phone){ document.getElementById("reg-error").classList.remove("hidden"); return; }
+  document.getElementById("reg-error").classList.add("hidden");
+  if(SBX()){ try{ await SBX().from("riders").insert({name,phone,zone,status:"pendiente"}); }catch(e){} }
+  show("rider-pending");
+});
 
 // APP
 const TABS=[{id:"new",label:"Nuevos",icon:"fiber_new"},{id:"mine",label:"Mi ruta",icon:"local_shipping"},{id:"done",label:"Entregados",icon:"check_circle"},{id:"earn",label:"Ganancias",icon:"payments"}];

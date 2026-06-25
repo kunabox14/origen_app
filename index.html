@@ -1134,6 +1134,8 @@
     <div id="admin-users" class="admin-panel hidden"></div>
     <div id="admin-orders" class="admin-panel hidden"></div>
     <div id="admin-deliveries" class="admin-panel hidden"></div>
+    <div id="admin-providers" class="admin-panel hidden"></div>
+    <div id="admin-riders" class="admin-panel hidden"></div>
     <div id="admin-pay" class="admin-panel hidden"></div>
     <div id="admin-support" class="admin-panel hidden"></div>
   </main>
@@ -2598,6 +2600,8 @@ const ADMIN_TABS = [
   { id: "users", label: "Suscriptores", icon: "group" },
   { id: "orders", label: "Pedidos", icon: "receipt_long" },
   { id: "deliveries", label: "Entregas", icon: "local_shipping" },
+  { id: "providers", label: "Proveedores", icon: "storefront" },
+  { id: "riders", label: "Repartidores", icon: "delivery_dining" },
   { id: "pay", label: "Pagos", icon: "payments" },
   { id: "support", label: "Soporte", icon: "support_agent" }
 ];
@@ -2610,9 +2614,11 @@ function renderAdmin() {
     const on = t.id === adminTab;
     return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
   }).join("");
-  ["dashboard", "products", "sub", "users", "orders", "deliveries", "pay", "support"].forEach(id =>
+  ["dashboard", "products", "sub", "users", "orders", "deliveries", "providers", "riders", "pay", "support"].forEach(id =>
     document.getElementById("admin-" + id).classList.toggle("hidden", id !== adminTab));
   if (adminTab === "support") renderAdminSupport();
+  if (adminTab === "providers") renderAdminProviders();
+  if (adminTab === "riders") renderAdminRiders();
   if (adminTab === "dashboard") renderAdminDashboard();
   if (adminTab === "products") renderAdminProducts();
   if (adminTab === "sub") renderAdminSub();
@@ -2772,6 +2778,38 @@ function exportDeliveriesCSV(list) {
   showToast("Reporte descargado");
 }
 
+function approvalRow(item, kind, title, sub) {
+  const badge = item.status === "aprobado" ? "bg-secondary-container text-on-secondary-container" : item.status === "pendiente" ? "bg-tertiary-fixed/40 text-secondary" : "bg-error-container text-on-error-container";
+  return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+    <div class="flex justify-between items-start gap-2"><div class="min-w-0"><p class="font-semibold text-primary truncate">${title}</p><p class="font-label-sm text-on-surface-variant truncate">${sub}</p></div><span class="${badge} text-[10px] font-bold uppercase px-2 py-1 rounded-full h-fit flex-shrink-0">${item.status}</span></div>
+    ${item.status !== "aprobado" ? `<div class="flex gap-2 mt-3"><button data-approve="${kind}:${item.id}" class="flex-1 bg-leaf-green text-white font-label-md py-2 rounded-lg active:scale-95 transition-transform">Aprobar</button>${item.status !== "rechazado" ? `<button data-reject="${kind}:${item.id}" class="flex-1 border border-error text-error font-label-md py-2 rounded-lg active:scale-95 transition-transform">Rechazar</button>` : ""}</div>` : ""}
+  </div>`;
+}
+async function renderAdminProviders() {
+  const el = document.getElementById("admin-providers");
+  el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-3">Proveedores</h2><p class="text-on-surface-variant">Cargando…</p>`;
+  let rows = []; if (SBX()) { try { const { data } = await SBX().from("providers").select("*").order("created_at", { ascending: false }); rows = data || []; } catch (e) {} }
+  const pend = rows.filter(r => r.status === "pendiente").length;
+  el.innerHTML = `<div class="flex items-center justify-between mb-4"><h2 class="font-headline-sm text-headline-sm text-primary">Proveedores (${rows.length})</h2>${pend ? `<span class="bg-tertiary-fixed/40 text-secondary font-label-sm px-3 py-1 rounded-full">${pend} por revisar</span>` : ""}</div>
+    <a href="proveedor.html" target="_blank" class="mb-4 w-full border border-primary-container text-primary-container font-label-md py-3 rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined">storefront</span> Abrir app de proveedor</a>
+    <div class="space-y-3">${rows.length ? rows.map(r => approvalRow(r, "providers", r.business || r.name, (r.name || "") + " · " + (r.email || "") + (r.phone ? " · " + r.phone : ""))).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">storefront</span><p class="mt-3">Aún no hay proveedores registrados.</p></div>`}</div>`;
+}
+async function renderAdminRiders() {
+  const el = document.getElementById("admin-riders");
+  el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-3">Repartidores</h2><p class="text-on-surface-variant">Cargando…</p>`;
+  let rows = []; if (SBX()) { try { const { data } = await SBX().from("riders").select("*").order("created_at", { ascending: false }); rows = data || []; } catch (e) {} }
+  const pend = rows.filter(r => r.status === "pendiente").length;
+  el.innerHTML = `<div class="flex items-center justify-between mb-4"><h2 class="font-headline-sm text-headline-sm text-primary">Repartidores (${rows.length})</h2>${pend ? `<span class="bg-tertiary-fixed/40 text-secondary font-label-sm px-3 py-1 rounded-full">${pend} por revisar</span>` : ""}</div>
+    <div class="space-y-3">${rows.length ? rows.map(r => approvalRow(r, "riders", r.name, (r.zone || "") + (r.phone ? " · " + r.phone : ""))).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">delivery_dining</span><p class="mt-3">Aún no hay repartidores registrados.</p></div>`}</div>`;
+}
+document.addEventListener("click", async e => {
+  const ap = e.target.closest("[data-approve]"), rj = e.target.closest("[data-reject]");
+  const node = ap || rj; if (!node || !SBX()) return;
+  const [table, id] = (ap ? ap.dataset.approve : rj.dataset.reject).split(":");
+  try { await SBX().from(table).update({ status: ap ? "aprobado" : "rechazado" }).eq("id", id); } catch (er) {}
+  showToast(ap ? "Aprobado" : "Rechazado");
+  if (table === "providers") renderAdminProviders(); else renderAdminRiders();
+});
 async function renderAdminSupport() {
   const el = document.getElementById("admin-support");
   el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Tickets de soporte</h2><p class="text-on-surface-variant">Cargando…</p>`;

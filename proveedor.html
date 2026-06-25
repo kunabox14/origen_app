@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="light" lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Origen · Proveedor</title>
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A130D">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script>
+  tailwind.config = { darkMode: "class", theme: { extend: {
+    colors: { "deep-forest":"#0A130D","earth-cream":"#F5F2EB","on-surface-variant":"#434844","leaf-green":"#5EBC66",
+      "outline-variant":"#c3c8c2","surface":"#fcf9f2","surface-container":"#f1eee7","surface-container-high":"#ebe8e1","secondary":"#006e24",
+      "surface-container-low":"#f6f3ec","background":"#fcf9f2","surface-container-lowest":"#ffffff","sprout-green":"#BBE85B","primary-container":"#14221a",
+      "primary":"#000804","on-primary":"#ffffff","on-surface":"#1c1c18","secondary-container":"#95f598","on-secondary-container":"#037327","outline":"#737874",
+      "error":"#ba1a1a","error-container":"#ffdad6","on-error-container":"#93000a","on-secondary":"#ffffff","tertiary-fixed":"#c5f264" },
+    fontFamily: { "headline":["EB Garamond"], "body":["Hanken Grotesk"] }
+  } } }
+</script>
+<style>
+  body{background:#F5F2EB;-webkit-tap-highlight-color:transparent;font-family:"Hanken Grotesk"}
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400}
+  .no-scrollbar::-webkit-scrollbar{display:none;} .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+  #phone{width:100%;max-width:440px;margin:0 auto;min-height:100vh;min-height:100dvh;background:#F5F2EB;box-shadow:0 30px 80px -20px rgba(10,19,13,.25)}
+  @media (min-width:480px){#phone{min-height:900px;margin:24px auto;border-radius:28px;overflow:hidden}}
+  .scr:not(.on){display:none !important;}
+</style>
+</head>
+<body class="text-on-surface">
+<div id="phone">
+
+  <!-- AUTH (registro / login) -->
+  <section id="prov-auth" class="scr on flex flex-col justify-center px-5" style="min-height:100dvh">
+    <div class="w-full max-w-sm mx-auto">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <img src="assets/origen-logo.svg" class="h-8" alt="Origen">
+        <span class="bg-primary-container text-leaf-green text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">Proveedor</span>
+      </div>
+      <h1 class="font-headline text-3xl text-primary text-center mt-5 mb-1" id="prov-title">Vende en Origen</h1>
+      <p class="text-on-surface-variant text-center mb-6" id="prov-sub">Registra tu negocio y ofrece tus productos orgánicos.</p>
+
+      <div class="flex bg-surface-container-high rounded-full p-1 mb-6">
+        <button data-pmode="register" class="prov-tab flex-1 py-2.5 rounded-full font-semibold transition-colors">Registrarme</button>
+        <button data-pmode="login" class="prov-tab flex-1 py-2.5 rounded-full font-semibold transition-colors">Ya tengo cuenta</button>
+      </div>
+
+      <div class="space-y-3">
+        <div id="prov-reg-fields" class="space-y-3">
+          <input id="prov-name" placeholder="Tu nombre" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+          <input id="prov-business" placeholder="Nombre del negocio / marca" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+          <input id="prov-phone" placeholder="Teléfono / WhatsApp" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        </div>
+        <input id="prov-email" type="email" placeholder="Correo electrónico" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <p id="prov-error" class="hidden text-error text-sm"></p>
+        <button id="prov-submit" class="w-full bg-leaf-green text-white font-semibold py-4 rounded-xl active:scale-95 transition-transform">Crear cuenta de proveedor</button>
+      </div>
+      <p class="text-center text-xs text-on-surface-variant/60 mt-6">Tu cuenta y tus productos pasan por aprobación del equipo Origen antes de publicarse.</p>
+    </div>
+  </section>
+
+  <!-- PENDIENTE de aprobación -->
+  <section id="prov-pending" class="scr flex flex-col justify-center px-5 text-center" style="min-height:100dvh">
+    <div class="w-full max-w-sm mx-auto">
+      <div class="w-20 h-20 rounded-full bg-tertiary-fixed/40 flex items-center justify-center mx-auto mb-6"><span class="material-symbols-outlined text-secondary text-4xl">hourglass_top</span></div>
+      <h1 class="font-headline text-3xl text-primary">Cuenta en revisión</h1>
+      <p class="text-on-surface-variant mt-2">Gracias por registrarte, <b id="prov-pending-name">proveedor</b>. El equipo de Origen está revisando tu solicitud. Te avisaremos al aprobarla.</p>
+      <button id="prov-pending-refresh" class="mt-6 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Actualizar estado</button>
+      <button id="prov-pending-logout" class="mt-3 w-full text-on-surface-variant font-semibold py-2">Salir</button>
+    </div>
+  </section>
+
+  <!-- DASHBOARD (aprobado) -->
+  <section id="prov-app" class="scr pb-24">
+    <header class="bg-primary-container text-on-primary sticky top-0 z-40 flex items-center justify-between px-5 h-16">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-leaf-green">storefront</span>
+        <div><p class="font-headline text-lg leading-none">Panel Proveedor</p><p id="prov-bizname" class="text-xs text-leaf-green"></p></div>
+      </div>
+      <button id="prov-logout" class="text-on-primary/70 hover:text-white flex items-center gap-1 text-sm"><span class="material-symbols-outlined text-[20px]">logout</span></button>
+    </header>
+    <main class="px-5 py-5">
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
+        <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
+      </div>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-headline text-2xl text-primary">Mis productos</h2>
+        <button id="prov-add" class="bg-leaf-green text-white font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nuevo</button>
+      </div>
+      <div id="prov-products" class="space-y-3"></div>
+    </main>
+  </section>
+
+</div>
+
+<!-- Modal producto -->
+<div id="prov-modal" class="hidden fixed inset-0 z-[120] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6">
+    <div class="flex items-center justify-between mb-5"><h2 class="font-headline text-2xl text-primary">Nuevo producto</h2><button id="pv-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="space-y-4">
+      <div class="flex items-center gap-4">
+        <div class="w-24 h-24 rounded-xl overflow-hidden bg-earth-cream border border-outline-variant/30 flex-shrink-0"><img id="pv-preview" class="w-full h-full object-contain" alt="" src="assets/products/generic.svg"></div>
+        <label class="flex-1 cursor-pointer"><span class="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container font-semibold px-4 py-2.5 rounded-lg"><span class="material-symbols-outlined text-[20px]">upload</span> Subir foto</span><input id="pv-img" type="file" accept="image/*" class="hidden"><p class="text-sm text-on-surface-variant mt-2">Se optimiza a un cuadrado estándar.</p></label>
+      </div>
+      <input id="pv-name" placeholder="Nombre del producto" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      <div class="flex gap-3">
+        <input id="pv-price" type="number" min="0" placeholder="Precio Bs." class="flex-1 h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <input id="pv-unit" placeholder="Unidad (500g)" class="flex-1 h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      </div>
+      <input id="pv-origin" placeholder="Origen (Valle Central)" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      <select id="pv-cat" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Despensa</option><option>Superfoods</option><option>Snacks</option></select>
+      <p id="pv-error" class="hidden text-error text-sm">Completa nombre y precio.</p>
+      <button id="pv-save" class="w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="ptoast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[130] bg-primary-container text-on-primary px-5 py-3 rounded-full shadow-lg flex items-center gap-2 opacity-0 pointer-events-none transition-opacity"><span class="material-symbols-outlined text-leaf-green text-[20px]">check_circle</span><span id="ptoast-msg" class="text-sm font-semibold"></span></div>
+
+<script>
+const SBX = () => window.ORIGEN_SB;
+const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
+let provider = JSON.parse(localStorage.getItem("origen_provider") || "null");
+let pmode = "register", pendingImg = "assets/products/generic.svg";
+
+let toastT;
+function toast(m){ const t=document.getElementById("ptoast"); document.getElementById("ptoast-msg").textContent=m; t.classList.remove("opacity-0"); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.add("opacity-0"),1700); }
+function show(id){ document.querySelectorAll(".scr").forEach(s=>s.classList.remove("on")); document.getElementById(id).classList.add("on"); }
+
+function renderAuthMode(){
+  document.querySelectorAll(".prov-tab").forEach(t=>{ const on=t.dataset.pmode===pmode; t.classList.toggle("bg-surface",on); t.classList.toggle("text-primary",on); t.classList.toggle("shadow-sm",on); t.classList.toggle("text-on-surface-variant",!on); });
+  document.getElementById("prov-reg-fields").classList.toggle("hidden", pmode!=="register");
+  document.getElementById("prov-title").textContent = pmode==="register" ? "Vende en Origen" : "Bienvenido de vuelta";
+  document.getElementById("prov-sub").textContent = pmode==="register" ? "Registra tu negocio y ofrece tus productos orgánicos." : "Ingresa con el correo de tu negocio.";
+  document.getElementById("prov-submit").textContent = pmode==="register" ? "Crear cuenta de proveedor" : "Ingresar";
+  document.getElementById("prov-error").classList.add("hidden");
+}
+document.addEventListener("click", e=>{
+  const tab=e.target.closest("[data-pmode]"); if(tab){ pmode=tab.dataset.pmode; renderAuthMode(); }
+});
+
+const validEmail = e => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+document.getElementById("prov-submit").addEventListener("click", async ()=>{
+  const email=document.getElementById("prov-email").value.trim().toLowerCase();
+  const err=document.getElementById("prov-error"); const fail=m=>{ err.textContent=m; err.classList.remove("hidden"); };
+  if(!validEmail(email)) return fail("Ingresa un correo válido.");
+  if(!SBX()) return fail("Sin conexión al servidor.");
+  if(pmode==="register"){
+    const name=document.getElementById("prov-name").value.trim();
+    const business=document.getElementById("prov-business").value.trim();
+    const phone=document.getElementById("prov-phone").value.trim();
+    if(!name||!business) return fail("Completa tu nombre y el del negocio.");
+    const exist=await SBX().from("providers").select("id").eq("email",email).maybeSingle();
+    if(exist.data) return fail("Ya existe una cuenta con ese correo. Usa 'Ya tengo cuenta'.");
+    const ins=await SBX().from("providers").insert({name,business,email,phone,status:"pendiente"}).select().single();
+    if(ins.error) return fail(ins.error.message);
+    provider=ins.data; localStorage.setItem("origen_provider",JSON.stringify(provider));
+    route();
+  } else {
+    const r=await SBX().from("providers").select("*").eq("email",email).maybeSingle();
+    if(r.error||!r.data) return fail("No encontramos un proveedor con ese correo. Regístrate primero.");
+    provider=r.data; localStorage.setItem("origen_provider",JSON.stringify(provider));
+    route();
+  }
+});
+
+async function refreshProvider(){
+  if(!provider||!SBX()) return;
+  const r=await SBX().from("providers").select("*").eq("id",provider.id).maybeSingle();
+  if(r.data){ provider=r.data; localStorage.setItem("origen_provider",JSON.stringify(provider)); }
+}
+function route(){
+  if(!provider){ show("prov-auth"); renderAuthMode(); return; }
+  if(provider.status==="aprobado"){ enterApp(); }
+  else { document.getElementById("prov-pending-name").textContent = provider.name||"proveedor"; show("prov-pending"); }
+}
+document.getElementById("prov-pending-refresh").addEventListener("click", async ()=>{ await refreshProvider(); route(); if(provider.status!=="aprobado") toast("Aún en revisión"); });
+document.getElementById("prov-pending-logout").addEventListener("click", logout);
+document.getElementById("prov-logout").addEventListener("click", logout);
+function logout(){ localStorage.removeItem("origen_provider"); provider=null; show("prov-auth"); renderAuthMode(); }
+
+// DASHBOARD
+async function enterApp(){
+  document.getElementById("prov-bizname").textContent = provider.business||"";
+  show("prov-app"); await loadProducts(); setupRealtime();
+}
+async function loadProducts(){
+  if(!SBX()) return;
+  const r=await SBX().from("products").select("*").eq("provider_id",provider.id).order("created_at",{ascending:false});
+  const prods=r.data||[];
+  document.getElementById("prov-active-count").textContent = prods.filter(p=>p.active).length;
+  document.getElementById("prov-pending-count").textContent = prods.filter(p=>!p.active).length;
+  const el=document.getElementById("prov-products");
+  el.innerHTML = prods.length ? prods.map(function(p){
+    const approved=p.active;
+    return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 flex items-center gap-3">
+      <div class="w-14 h-14 rounded-lg overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.image_url||'assets/products/generic.svg'}" onerror="this.src='assets/products/generic.svg'" class="w-full h-full object-contain p-1"></div>
+      <div class="flex-grow min-w-0"><p class="font-semibold text-primary truncate">${p.name}</p><p class="text-sm text-secondary">${bs(p.price)} · ${p.category||""}</p></div>
+      <span class="${approved?'bg-secondary-container text-on-secondary-container':'bg-tertiary-fixed/40 text-secondary'} text-[10px] font-bold uppercase px-2 py-1 rounded-full">${approved?'Activo':'En revisión'}</span>
+    </div>`;
+  }).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inventory_2</span><p class="mt-3">Aún no tienes productos. Agrega el primero.</p></div>`;
+}
+let provRealtime=false;
+function setupRealtime(){
+  if(!SBX()||provRealtime) return; provRealtime=true;
+  SBX().channel("prov-products").on("postgres_changes",{event:"*",schema:"public",table:"products"},loadProducts).subscribe();
+  SBX().channel("prov-self").on("postgres_changes",{event:"*",schema:"public",table:"providers"}, async ()=>{ await refreshProvider(); if(provider.status!=="aprobado") route(); }).subscribe();
+}
+
+// Modal producto
+document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin"].forEach(id=>document.getElementById(id).value=""); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
+document.getElementById("pv-close").addEventListener("click", ()=>document.getElementById("prov-modal").classList.add("hidden"));
+document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") document.getElementById("prov-modal").classList.add("hidden"); });
+document.getElementById("pv-img").addEventListener("change", e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ const img=new Image(); img.onload=()=>{ const S=600,c=document.createElement("canvas"); c.width=c.height=S; const x=c.getContext("2d"); x.fillStyle="#F5F2EB"; x.fillRect(0,0,S,S); const sc=Math.min(S/img.width,S/img.height),w=img.width*sc,h=img.height*sc; x.drawImage(img,(S-w)/2,(S-h)/2,w,h); pendingImg=c.toDataURL("image/jpeg",0.85); document.getElementById("pv-preview").src=pendingImg; }; img.src=ev.target.result; };
+  reader.readAsDataURL(file);
+});
+document.getElementById("pv-save").addEventListener("click", async ()=>{
+  const name=document.getElementById("pv-name").value.trim();
+  const price=parseFloat(document.getElementById("pv-price").value);
+  if(!name||isNaN(price)){ document.getElementById("pv-error").classList.remove("hidden"); return; }
+  if(!SBX()) return;
+  const row={ name, price, unit:document.getElementById("pv-unit").value.trim()||"1u", origin:document.getElementById("pv-origin").value.trim()||"Bolivia",
+    category:document.getElementById("pv-cat").value, tag:"Orgánico", image_url:pendingImg, active:false, in_sub:false, provider_id:provider.id, provider_name:provider.business };
+  const ins=await SBX().from("products").insert(row);
+  document.getElementById("prov-modal").classList.add("hidden");
+  if(ins.error) toast("Error al enviar"); else { toast("Producto enviado para aprobación"); loadProducts(); }
+});
+
+// PWA
+if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{})); }
+
+// init
+renderAuthMode();
+if(provider){ refreshProvider().then(route); } else { route(); }
+</script>
+</body>
+</html>

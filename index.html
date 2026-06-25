@@ -741,6 +741,7 @@
         <div id="acc-points-bar" class="bg-leaf-green h-full rounded-full" style="width:0%"></div>
       </div>
       <p id="acc-points-hint" class="font-label-sm text-on-surface-variant">Acumula 1 punto por cada producto que compres y canjéalos por Yapas.</p>
+      <button data-nav="yapas" class="w-full bg-secondary text-on-secondary font-label-md py-3 rounded-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">redeem</span>Ver Yapas y canjear</button>
     </section>
 
     <!-- Menú -->
@@ -848,6 +849,22 @@
       <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
     </button>
     <p id="settings-saved" class="text-center font-label-sm text-secondary opacity-0 transition-opacity">Cambios guardados ✓</p>
+  </main>
+</section>
+
+<!-- ===================== YAPAS (canje por puntos) ===================== -->
+<section id="screen-yapas" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Yapas</h1>
+  </header>
+  <main class="px-margin-mobile pt-6 space-y-5">
+    <div class="bg-primary-container text-on-primary rounded-2xl p-6 flex items-center justify-between">
+      <div><p class="font-label-md text-leaf-green uppercase tracking-wider">Tus puntos</p><p id="yapas-points" class="font-display-lg text-display-lg-mobile">0</p></div>
+      <span class="material-symbols-outlined text-leaf-green text-5xl">stars</span>
+    </div>
+    <p class="font-body-md text-on-surface-variant">Canjea tus puntos por sorpresas exclusivas. Acumulas <b>1 punto por cada producto</b> que compras.</p>
+    <section id="yapas-grid" class="space-y-3"></section>
   </main>
 </section>
 
@@ -1443,8 +1460,8 @@ function renderAccount() {
   const ie = document.getElementById("account-initials"); if (ie) ie.textContent = initials(u.name);
   const em = document.getElementById("account-email"); if (em) em.textContent = u.email;
   const adminBtn = document.getElementById("account-admin-btn"); if (adminBtn) adminBtn.classList.toggle("hidden", !isAdmin());
-  // Origen Rewards: 1 punto por unidad comprada
-  const points = userOrders().reduce((s, o) => s + o.items.reduce((a, i) => a + i.qty, 0), 0);
+  // Origen Rewards: 1 punto por unidad comprada (disponibles = ganados − canjeados)
+  const points = availablePoints();
   const goal = 500;
   const ptsEl = document.getElementById("acc-points"); if (ptsEl) ptsEl.textContent = points.toLocaleString("es-BO") + " pts";
   const bar = document.getElementById("acc-points-bar"); if (bar) bar.style.width = Math.min(100, (points % goal) / goal * 100) + "%";
@@ -1506,6 +1523,41 @@ function renderReferrals() {
   document.getElementById("ref-link").value = refLink();
   document.getElementById("ref-count").textContent = JSON.parse(localStorage.getItem("origen_referrals") || "[]").length;
 }
+/* ============ Rewards: puntos y Yapas ============ */
+const earnedPoints = () => userOrders().reduce((s, o) => s + o.items.reduce((a, i) => a + i.qty, 0), 0);
+const spentPoints = () => parseInt(localStorage.getItem("origen_points_spent") || "0", 10);
+const availablePoints = () => Math.max(0, earnedPoints() - spentPoints());
+const YAPAS = [
+  { id: "cafe", name: "Café de Altura de regalo", desc: "Un paquete de 250g en tu próxima entrega", cost: 300, icon: "coffee" },
+  { id: "desc15", name: "15% de descuento", desc: "En tu próxima compra suelta", cost: 200, icon: "sell" },
+  { id: "x2", name: "Multiplicador ×2", desc: "Doble de puntos por una semana", cost: 250, icon: "bolt" },
+  { id: "miel", name: "Miel de Monte de regalo", desc: "Frasco de 500g en tu próxima entrega", cost: 350, icon: "redeem" }
+];
+function renderYapas() {
+  const pts = availablePoints();
+  document.getElementById("yapas-points").textContent = pts.toLocaleString("es-BO");
+  document.getElementById("yapas-grid").innerHTML = YAPAS.map(y => {
+    const can = pts >= y.cost;
+    return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-secondary-container">${y.icon}</span></div>
+      <div class="flex-grow min-w-0"><p class="font-body-md font-semibold text-primary">${y.name}</p><p class="font-label-sm text-on-surface-variant">${y.desc}</p><p class="font-label-sm text-secondary mt-0.5">${y.cost} pts</p></div>
+      <button data-yapa="${y.id}" ${can ? "" : "disabled"} class="flex-shrink-0 font-label-md px-4 py-2 rounded-lg transition-transform active:scale-95 ${can ? "bg-leaf-green text-white" : "bg-surface-container-high text-on-surface-variant/50"}">${can ? "Canjear" : "Faltan pts"}</button>
+    </div>`;
+  }).join("");
+}
+function redeemYapa(id) {
+  const y = YAPAS.find(x => x.id === id); if (!y) return;
+  if (availablePoints() < y.cost) { showToast("No tienes puntos suficientes"); return; }
+  showMessage({
+    icon: "redeem", title: "¿Canjear esta Yapa?", text: y.name + " por " + y.cost + " puntos.", confirmLabel: "Canjear", cancel: true, onConfirm: () => {
+      localStorage.setItem("origen_points_spent", spentPoints() + y.cost);
+      const red = JSON.parse(localStorage.getItem("origen_yapas_redeemed") || "[]"); red.unshift({ id: y.id, name: y.name, at: new Date().toISOString() }); localStorage.setItem("origen_yapas_redeemed", JSON.stringify(red));
+      renderYapas();
+      showMessage({ icon: "check_circle", title: "¡Yapa canjeada!", text: "Aplicaremos “" + y.name + "” a tu próxima entrega. Gracias por ser parte de Origen.", confirmLabel: "Genial" });
+    }
+  });
+}
+
 const getSettings = () => JSON.parse(localStorage.getItem("origen_settings") || "{}");
 function renderSettings() {
   const s = getSettings();
@@ -1936,7 +1988,7 @@ function renderOrderDetails() {
 
 /* ============ Router ============ */
 const TABS = ["home", "catalog", "scanner", "account"];
-const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings"];
+const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings", "yapas"];
 let current = "welcome";
 function navigate(screen) {
   const target = document.getElementById("screen-" + screen);
@@ -1975,6 +2027,7 @@ function navigate(screen) {
   if (screen === "favorites") renderFavorites();
   if (screen === "referrals") renderReferrals();
   if (screen === "settings") renderSettings();
+  if (screen === "yapas") renderYapas();
   if (screen === "auth") { renderAuth(); renderGoogleAccounts(); }
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();
@@ -2034,6 +2087,7 @@ document.addEventListener("click", e => {
   const sbd = e.target.closest("[data-sbdec]"); if (sbd) { subBasketChange(sbd.dataset.sbdec, -1); return; }
   const sbx = e.target.closest("[data-sbdel]"); if (sbx) { saveSubBasket(getSubBasket().filter(x => x.id !== sbx.dataset.sbdel)); renderSchedBasket(); return; }
   const sba = e.target.closest("[data-sbadd]"); if (sba) { const b = getSubBasket(); if (!b.find(x => x.id === sba.dataset.sbadd)) b.push({ id: sba.dataset.sbadd, qty: 1 }); saveSubBasket(b); schedAddOpen = false; renderSchedBasket(); showToast("Agregado a tu canasta recurrente"); return; }
+  const yp = e.target.closest("[data-yapa]"); if (yp) { redeemYapa(yp.dataset.yapa); return; }
   const rebuy = e.target.closest("[data-rebuy]");
   if (rebuy) {
     try {
@@ -2161,6 +2215,12 @@ document.getElementById("basket-confirm").addEventListener("click", () => {
 
 /* ============ Checkout (pago simulado) ============ */
 let lastOrderId = null;
+// Número de pedido correlativo (secuencial)
+function nextOrderCode() {
+  const n = parseInt(localStorage.getItem("origen_order_seq") || "0", 10) + 1;
+  localStorage.setItem("origen_order_seq", n);
+  return "#ORG-" + String(n).padStart(5, "0");
+}
 let payMethod = "qr";
 function renderCheckout() {
   pruneCart();
@@ -2202,7 +2262,7 @@ function fakeQR() {
 function createOrder(method) {
   pruneCart();
   const t = cartTotals(), total = t.total;
-  const id = "#ORG-" + Math.floor(10000 + Math.random() * 89999);
+  const id = nextOrderCode();
   const u = currentUser() || { name: "Cliente Origen", email: "cliente@origen.bo", address: "Av. Principal 123, Edificio Los Pinos", zone: "Zona Sur" };
   const d = orderDetails || {};
   const order = {
@@ -2287,8 +2347,20 @@ function setupRealtime() {
   }).subscribe();
   SBX().channel("origen-orders").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, async () => {
     await hydrateOrders();
+    notifyAdminNewOrders();
     if (current === "tracking") renderTracking(); if (current === "admin") renderAdmin();
   }).subscribe();
+}
+// Aviso al administrador cuando entra un nuevo pago/pedido
+let adminSeen = null;
+function notifyAdminNewOrders() {
+  if (!isAdmin()) { adminSeen = new Set(orders.map(o => o.id)); return; }
+  if (adminSeen === null) { adminSeen = new Set(orders.map(o => o.id)); return; }
+  orders.filter(o => !adminSeen.has(o.id)).forEach(o => {
+    adminSeen.add(o.id);
+    showToast("💰 Nuevo pago " + o.id + " · " + bs(o.total));
+    try { if ("Notification" in window && Notification.permission === "granted") new Notification("Nuevo pago Origen " + o.id, { body: o.customer.name + " · " + bs(o.total) + " · " + (o.method === "card" ? "Tarjeta" : "QR"), icon: "assets/icon-192.png" }); } catch (e) {}
+  });
 }
 // Estados del ciclo de entrega (compartido con la app de repartidor)
 const ORDER_FLOW = ["Nuevo", "Asignado", "Recogido", "En camino", "Entregado"];
@@ -2338,6 +2410,8 @@ const ADMIN_TABS = [
 let adminTab = "dashboard";
 function renderAdmin() {
   if (!isAdmin()) { navigate("account"); return; }
+  if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission(); } catch (e) {} }
+  if (adminSeen === null) adminSeen = new Set(orders.map(o => o.id));
   document.getElementById("admin-tabs").innerHTML = ADMIN_TABS.map(t => {
     const on = t.id === adminTab;
     return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
@@ -2365,12 +2439,19 @@ function statCard(icon, value, label, tint) {
 }
 function renderAdminDashboard() {
   const ingresos = orders.reduce((s, o) => s + o.total, 0);
+  const card = orders.filter(o => o.method === "card"), qr = orders.filter(o => o.method === "qr");
+  const cardTotal = card.reduce((s, o) => s + o.total, 0), qrTotal = qr.reduce((s, o) => s + o.total, 0);
   document.getElementById("admin-dashboard").innerHTML = `
     <div class="grid grid-cols-2 gap-3">
       ${statCard("inventory_2", activeProducts().length, "Productos activos", "bg-secondary-container text-on-secondary-container")}
       ${statCard("autorenew", subProducts().length, "En suscripción", "bg-tertiary-fixed text-on-tertiary-fixed")}
       ${statCard("receipt_long", orders.length, "Pedidos", "bg-secondary-container text-on-secondary-container")}
-      ${statCard("payments", bs(ingresos), "Ingresos (sim.)", "bg-sprout-green/40 text-deep-forest")}
+      ${statCard("payments", bs(ingresos), "Ingresos", "bg-sprout-green/40 text-deep-forest")}
+    </div>
+    <div class="mt-4 bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5">
+      <p class="font-label-md text-on-surface-variant uppercase tracking-wider mb-3">Pagos por método</p>
+      <div class="flex items-center justify-between py-2 border-b border-outline-variant/20"><span class="flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-secondary">credit_card</span>Tarjeta</span><span class="font-semibold text-primary">${bs(cardTotal)} <span class="text-on-surface-variant font-normal">· ${card.length}</span></span></div>
+      <div class="flex items-center justify-between py-2"><span class="flex items-center gap-2 text-on-surface"><span class="material-symbols-outlined text-secondary">qr_code_2</span>QR Simple</span><span class="font-semibold text-primary">${bs(qrTotal)} <span class="text-on-surface-variant font-normal">· ${qr.length}</span></span></div>
     </div>
     <div class="mt-6 bg-primary-container text-on-primary rounded-2xl p-6">
       <p class="font-label-md text-leaf-green uppercase tracking-wider mb-1">Canasta de suscripción</p>

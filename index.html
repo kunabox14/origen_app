@@ -610,7 +610,7 @@
 
       <div class="flex flex-col gap-4 mt-6">
         <button data-nav="chat" class="w-full bg-primary-container text-white py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all"><span class="material-symbols-outlined">chat</span><span class="font-label-md">Contactar repartidor</span></button>
-        <button data-soon="Soporte Origen · próximamente" class="w-full border border-outline py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">help</span><span class="font-label-md">¿Necesitas ayuda?</span></button>
+        <button data-nav="support" class="w-full border border-outline py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">help</span><span class="font-label-md">¿Necesitas ayuda?</span></button>
       </div>
 
       <div class="grid grid-cols-1 gap-4 mt-8">
@@ -756,6 +756,10 @@
         <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">favorite</span> Favoritos</span>
         <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
       </button>
+      <button data-nav="support" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
+        <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">support_agent</span> Ayuda y soporte</span>
+        <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+      </button>
       <button data-nav="settings" class="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container transition-colors">
         <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">settings</span> Configuración</span>
         <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
@@ -864,6 +868,31 @@
       <button id="chat-send" class="w-12 h-12 rounded-full bg-leaf-green text-white flex items-center justify-center active:scale-95 transition-transform"><span class="material-symbols-outlined">send</span></button>
     </div>
   </footer>
+</section>
+
+<!-- ===================== SOPORTE (ticket) ===================== -->
+<section id="screen-support" class="screen pb-28">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <h1 class="font-headline-sm text-headline-sm text-primary">Ayuda y soporte</h1>
+  </header>
+  <main class="px-margin-mobile pt-6 space-y-5">
+    <p class="font-body-md text-on-surface-variant">¿Necesitas ayuda con un pedido o tu cuenta? Cuéntanos y te respondemos. Generamos un ticket de seguimiento.</p>
+    <form id="support-form" class="space-y-4" onsubmit="return false;">
+      <div><label class="font-label-sm text-on-surface-variant">Asunto</label>
+        <input id="sup-subject" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Ej: Problema con mi entrega"></div>
+      <div><label class="font-label-sm text-on-surface-variant">Mensaje</label>
+        <textarea id="sup-body" rows="5" class="mt-1 w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary" placeholder="Describe tu consulta…"></textarea></div>
+      <p id="sup-error" class="hidden text-error font-label-sm">Completa el asunto y el mensaje.</p>
+      <button id="sup-send" class="w-full bg-leaf-green text-white font-label-md py-4 rounded-xl active:scale-95 transition-transform flex items-center justify-center gap-2"><span class="material-symbols-outlined">send</span>Enviar a soporte</button>
+    </form>
+    <div id="sup-success" class="hidden text-center py-6">
+      <div class="w-16 h-16 rounded-full bg-secondary-container flex items-center justify-center mx-auto mb-4"><span class="material-symbols-outlined text-on-secondary-container text-3xl">check_circle</span></div>
+      <h3 class="font-headline-sm text-headline-sm text-primary">¡Mensaje enviado!</h3>
+      <p class="text-on-surface-variant mt-1">Tu ticket es <b id="sup-ticket" class="text-secondary"></b>. Te responderemos a tu correo.</p>
+      <button data-nav="account" class="mt-5 border border-outline-variant text-on-surface font-label-md py-3 px-6 rounded-xl">Volver a mi cuenta</button>
+    </div>
+  </main>
 </section>
 
 <!-- ===================== YAPAS (canje por puntos) ===================== -->
@@ -1106,6 +1135,7 @@
     <div id="admin-orders" class="admin-panel hidden"></div>
     <div id="admin-deliveries" class="admin-panel hidden"></div>
     <div id="admin-pay" class="admin-panel hidden"></div>
+    <div id="admin-support" class="admin-panel hidden"></div>
   </main>
 </section>
 
@@ -1647,6 +1677,22 @@ async function sendChat() {
 document.getElementById("chat-send").addEventListener("click", sendChat);
 document.getElementById("chat-input").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
 
+/* ============ Soporte (tickets en Supabase) ============ */
+function nextTicketNo() { const n = parseInt(localStorage.getItem("origen_ticket_seq") || "0", 10) + 1; localStorage.setItem("origen_ticket_seq", n); return "#TK-" + String(n).padStart(5, "0"); }
+document.getElementById("sup-send").addEventListener("click", async () => {
+  const subject = document.getElementById("sup-subject").value.trim();
+  const body = document.getElementById("sup-body").value.trim();
+  if (!subject || body.length < 5) { document.getElementById("sup-error").classList.remove("hidden"); return; }
+  document.getElementById("sup-error").classList.add("hidden");
+  const u = currentUser() || {};
+  const ticket = nextTicketNo();
+  if (SBX()) { try { await SBX().from("support_tickets").insert({ ticket_no: ticket, user_email: u.email || "", name: u.name || "", subject, body, status: "Abierto" }); } catch (e) {} }
+  document.getElementById("sup-ticket").textContent = ticket;
+  document.getElementById("sup-subject").value = ""; document.getElementById("sup-body").value = "";
+  document.getElementById("support-form").classList.add("hidden");
+  document.getElementById("sup-success").classList.remove("hidden");
+});
+
 const getSettings = () => JSON.parse(localStorage.getItem("origen_settings") || "{}");
 function renderSettings() {
   const s = getSettings();
@@ -2077,7 +2123,7 @@ function renderOrderDetails() {
 
 /* ============ Router ============ */
 const TABS = ["home", "catalog", "scanner", "account"];
-const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings", "yapas", "chat"];
+const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings", "yapas", "chat", "support"];
 let current = "welcome";
 function navigate(screen) {
   const target = document.getElementById("screen-" + screen);
@@ -2120,6 +2166,7 @@ function navigate(screen) {
   if (screen === "settings") renderSettings();
   if (screen === "yapas") renderYapas();
   if (screen === "chat") openChat();
+  if (screen === "support") { document.getElementById("support-form").classList.remove("hidden"); document.getElementById("sup-success").classList.add("hidden"); document.getElementById("sup-error").classList.add("hidden"); }
   if (screen === "auth") { renderAuth(); renderGoogleAccounts(); }
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();
@@ -2551,7 +2598,8 @@ const ADMIN_TABS = [
   { id: "users", label: "Suscriptores", icon: "group" },
   { id: "orders", label: "Pedidos", icon: "receipt_long" },
   { id: "deliveries", label: "Entregas", icon: "local_shipping" },
-  { id: "pay", label: "Pagos", icon: "payments" }
+  { id: "pay", label: "Pagos", icon: "payments" },
+  { id: "support", label: "Soporte", icon: "support_agent" }
 ];
 let adminTab = "dashboard";
 function renderAdmin() {
@@ -2562,8 +2610,9 @@ function renderAdmin() {
     const on = t.id === adminTab;
     return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
   }).join("");
-  ["dashboard", "products", "sub", "users", "orders", "deliveries", "pay"].forEach(id =>
+  ["dashboard", "products", "sub", "users", "orders", "deliveries", "pay", "support"].forEach(id =>
     document.getElementById("admin-" + id).classList.toggle("hidden", id !== adminTab));
+  if (adminTab === "support") renderAdminSupport();
   if (adminTab === "dashboard") renderAdminDashboard();
   if (adminTab === "products") renderAdminProducts();
   if (adminTab === "sub") renderAdminSub();
@@ -2723,6 +2772,22 @@ function exportDeliveriesCSV(list) {
   showToast("Reporte descargado");
 }
 
+async function renderAdminSupport() {
+  const el = document.getElementById("admin-support");
+  el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Tickets de soporte</h2><p class="text-on-surface-variant">Cargando…</p>`;
+  let tickets = [];
+  if (SBX()) { try { const { data } = await SBX().from("support_tickets").select("*").order("created_at", { ascending: false }); tickets = data || []; } catch (e) {} }
+  if (!tickets.length) { el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Tickets de soporte</h2><div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">support_agent</span><p class="mt-3">No hay tickets todavía.</p></div>`; return; }
+  el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Tickets de soporte (${tickets.length})</h2>
+    <div class="space-y-3">${tickets.map(t => `
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-1"><span class="font-body-md font-bold text-primary">${t.ticket_no || t.id.slice(0, 6)}</span><span class="bg-sprout-green/20 text-secondary text-label-sm font-label-md px-2 py-0.5 rounded-full">${t.status || "Abierto"}</span></div>
+        <p class="font-body-md font-semibold text-primary">${t.subject || ""}</p>
+        <p class="font-label-sm text-on-surface-variant mb-1">${t.name || ""} · ${t.user_email || ""}</p>
+        <p class="font-label-sm text-on-surface-variant">${(t.body || "").slice(0, 160)}</p>
+        <p class="font-label-sm text-on-surface-variant/60 mt-1">${new Date(t.created_at).toLocaleString("es-BO")}</p>
+      </div>`).join("")}</div>`;
+}
 function renderAdminPay() {
   document.getElementById("admin-pay").innerHTML = `
     <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Métodos de pago</h2>

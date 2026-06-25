@@ -77,6 +77,22 @@
 </div>
 
 <!-- Toast -->
+<!-- Chat con el cliente -->
+<div id="chat-modal" class="hidden fixed inset-0 z-[120] flex flex-col bg-earth-cream max-w-[440px] mx-auto">
+  <header class="bg-primary-container text-on-primary flex items-center gap-3 px-5 h-16 flex-shrink-0">
+    <button id="chat-close" class="active:scale-95"><span class="material-symbols-outlined">arrow_back</span></button>
+    <div class="w-9 h-9 rounded-full bg-leaf-green/20 flex items-center justify-center"><span class="material-symbols-outlined text-leaf-green">person</span></div>
+    <div><p id="rchat-name" class="font-headline text-lg leading-none">Cliente</p><p id="rchat-order" class="text-xs text-leaf-green"></p></div>
+  </header>
+  <main id="rchat-messages" class="flex-grow overflow-y-auto px-5 py-4 space-y-3 no-scrollbar"></main>
+  <footer class="bg-surface-container-lowest border-t border-outline-variant/20 px-5 py-3 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <input id="rchat-input" placeholder="Escribe un mensaje…" class="flex-1 h-12 px-4 rounded-full border border-outline-variant bg-surface-container-low outline-none focus:border-secondary">
+      <button id="rchat-send" class="w-12 h-12 rounded-full bg-leaf-green text-white flex items-center justify-center active:scale-95"><span class="material-symbols-outlined">send</span></button>
+    </div>
+  </footer>
+</div>
+
 <div id="rtoast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] bg-primary-container text-on-primary px-5 py-3 rounded-full shadow-lg flex items-center gap-2 opacity-0 pointer-events-none transition-opacity">
   <span class="material-symbols-outlined text-leaf-green text-[20px]">check_circle</span><span id="rtoast-msg" class="text-sm font-semibold"></span>
 </div>
@@ -187,12 +203,47 @@ function renderEarn(all){
 document.addEventListener("click", e=>{
   const t=e.target.closest("[data-rtab]"); if(t){ tab=t.dataset.rtab; renderApp(); return; }
   const act=e.target.closest("[data-advance]"); if(act){ advance(act.dataset.advance); return; }
+  const ch=e.target.closest("[data-chat]"); if(ch){ const o=loadOrders().find(x=>x.id===ch.dataset.chat); openRiderChat(ch.dataset.chat, o?o.customer.name:"Cliente"); return; }
   if(e.target.closest("#rider-payout")){
     const all=loadOrders();
     const total=all.filter(o=>o.assignedTo===rider && o.status==="Entregado" && o.method==="card").reduce((s,o)=>s+feeOf(o),0);
     toast("Solicitud enviada: "+bs(total));
   }
 });
+
+/* ===== Chat con el cliente ===== */
+const escapeHtmlR = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let rchatCode=null, rchatChannel=null;
+async function openRiderChat(code, name){
+  rchatCode=code;
+  document.getElementById("rchat-name").textContent=name;
+  document.getElementById("rchat-order").textContent="Pedido "+code;
+  document.getElementById("chat-modal").classList.remove("hidden");
+  await loadRiderChat(); subscribeRiderChat();
+}
+function closeRiderChat(){ document.getElementById("chat-modal").classList.add("hidden"); if(rchatChannel && SBX()){ SBX().removeChannel(rchatChannel); rchatChannel=null; } }
+async function loadRiderChat(){
+  if(!SBX() || !rchatCode) return;
+  try{ const {data}=await SBX().from("messages").select("*").eq("order_code",rchatCode).order("created_at"); renderRiderChat(data||[]); }catch(e){}
+}
+function renderRiderChat(msgs){
+  const el=document.getElementById("rchat-messages");
+  if(!msgs.length){ el.innerHTML='<div class="text-center text-on-surface-variant py-8"><span class="material-symbols-outlined text-4xl text-outline-variant">chat</span><p class="mt-2 text-sm">Escríbele al cliente sobre la entrega.</p></div>'; return; }
+  el.innerHTML=msgs.map(function(m){ var mine=m.sender==="repartidor"; return '<div class="flex '+(mine?"justify-end":"justify-start")+'"><div class="max-w-[78%] px-4 py-2.5 rounded-2xl '+(mine?"bg-leaf-green text-white rounded-br-sm":"bg-surface-container-high text-on-surface rounded-bl-sm")+'"><p class="text-sm">'+escapeHtmlR(m.body)+'</p><p class="text-[10px] opacity-70 mt-0.5 text-right">'+new Date(m.created_at).toLocaleTimeString("es-BO",{hour:"2-digit",minute:"2-digit"})+'</p></div></div>'; }).join("");
+  el.scrollTop=el.scrollHeight;
+}
+function subscribeRiderChat(){
+  if(!SBX() || !rchatCode) return;
+  if(rchatChannel) SBX().removeChannel(rchatChannel);
+  rchatChannel=SBX().channel("rchat-"+rchatCode).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"order_code=eq."+rchatCode}, function(){ loadRiderChat(); }).subscribe();
+}
+async function sendRiderChat(){
+  var inp=document.getElementById("rchat-input"); var body=inp.value.trim(); if(!body) return; inp.value="";
+  if(SBX() && rchatCode){ try{ await SBX().from("messages").insert({order_code:rchatCode,sender:"repartidor",sender_name:rider,body:body}); }catch(e){} await loadRiderChat(); }
+}
+document.getElementById("chat-close").addEventListener("click", closeRiderChat);
+document.getElementById("rchat-send").addEventListener("click", sendRiderChat);
+document.getElementById("rchat-input").addEventListener("keydown", function(e){ if(e.key==="Enter") sendRiderChat(); });
 function stepInfo(status){
   // botón según el estado actual
   if(status==="Nuevo") return {next:"Asignado", label:"Aceptar pedido", icon:"check"};
@@ -222,6 +273,7 @@ function orderCard(o){
     </div>
     ${s ? `<button data-advance="${o.id}" class="mt-3 w-full bg-leaf-green text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined text-[20px]">${s.icon}</span>${s.label}</button>`
       : `<div class="mt-3 w-full bg-secondary-container text-on-secondary-container font-semibold py-3 rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">check_circle</span>Entregado</div>`}
+    <button data-chat="${o.id}" class="mt-2 w-full border border-outline-variant text-on-surface font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined text-[20px]">chat</span>Chat con ${escapeHtmlR(o.customer.name.split(" ")[0])}</button>
   </div>`;
 }
 async function advance(id){

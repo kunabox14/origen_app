@@ -609,7 +609,7 @@
       </div>
 
       <div class="flex flex-col gap-4 mt-6">
-        <button data-soon="Abriendo chat con el repartidor…" class="w-full bg-primary-container text-white py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all"><span class="material-symbols-outlined">chat</span><span class="font-label-md">Contactar repartidor</span></button>
+        <button data-nav="chat" class="w-full bg-primary-container text-white py-4 rounded-xl flex items-center justify-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all"><span class="material-symbols-outlined">chat</span><span class="font-label-md">Contactar repartidor</span></button>
         <button data-soon="Soporte Origen · próximamente" class="w-full border border-outline py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-surface-container-low transition-colors"><span class="material-symbols-outlined">help</span><span class="font-label-md">¿Necesitas ayuda?</span></button>
       </div>
 
@@ -848,6 +848,22 @@
     </button>
     <p id="settings-saved" class="text-center font-label-sm text-secondary opacity-0 transition-opacity">Cambios guardados ✓</p>
   </main>
+</section>
+
+<!-- ===================== CHAT con repartidor ===================== -->
+<section id="screen-chat" class="screen flex flex-col" style="min-height:100dvh">
+  <header class="bg-background sticky top-0 w-full z-40 flex items-center gap-3 px-margin-mobile h-16 border-b border-outline-variant/10">
+    <button data-nav="tracking" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+    <div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-secondary-container">delivery_dining</span></div>
+    <div><h1 class="font-headline-sm text-[18px] text-primary leading-none">Tu repartidor</h1><p id="chat-order" class="font-label-sm text-on-surface-variant"></p></div>
+  </header>
+  <main id="chat-messages" class="flex-grow overflow-y-auto px-margin-mobile py-4 space-y-3 no-scrollbar"></main>
+  <footer class="sticky bottom-0 bg-surface-container-lowest border-t border-outline-variant/20 px-margin-mobile py-3">
+    <div class="flex items-center gap-2">
+      <input id="chat-input" placeholder="Escribe un mensaje…" class="flex-1 h-12 px-4 rounded-full border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      <button id="chat-send" class="w-12 h-12 rounded-full bg-leaf-green text-white flex items-center justify-center active:scale-95 transition-transform"><span class="material-symbols-outlined">send</span></button>
+    </div>
+  </footer>
 </section>
 
 <!-- ===================== YAPAS (canje por puntos) ===================== -->
@@ -1556,6 +1572,41 @@ function redeemYapa(id) {
   });
 }
 
+/* ============ Chat cliente ↔ repartidor (Supabase Realtime) ============ */
+let chatOrderCode = null, chatChannel = null;
+const escapeHtml = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+async function openChat() {
+  const o = latestOrder(); chatOrderCode = o ? o.id : null;
+  document.getElementById("chat-order").textContent = chatOrderCode ? ("Pedido " + chatOrderCode) : "Sin pedido activo";
+  await loadChat(); subscribeChat();
+}
+async function loadChat() {
+  if (!SBX() || !chatOrderCode) { renderChat([]); return; }
+  try { const { data } = await SBX().from("messages").select("*").eq("order_code", chatOrderCode).order("created_at"); renderChat(data || []); } catch (e) { renderChat([]); }
+}
+function renderChat(msgs) {
+  const el = document.getElementById("chat-messages");
+  if (!msgs.length) { el.innerHTML = `<div class="text-center text-on-surface-variant py-8"><span class="material-symbols-outlined text-4xl text-outline-variant">chat</span><p class="mt-2 font-label-sm">Escríbele a tu repartidor sobre tu entrega.</p></div>`; return; }
+  el.innerHTML = msgs.map(m => {
+    const mine = m.sender === "cliente";
+    return `<div class="flex ${mine ? "justify-end" : "justify-start"}"><div class="max-w-[78%] px-4 py-2.5 rounded-2xl ${mine ? "bg-leaf-green text-white rounded-br-sm" : "bg-surface-container-high text-on-surface rounded-bl-sm"}"><p class="text-sm">${escapeHtml(m.body)}</p><p class="text-[10px] opacity-70 mt-0.5 text-right">${new Date(m.created_at).toLocaleTimeString("es-BO", { hour: "2-digit", minute: "2-digit" })}</p></div></div>`;
+  }).join("");
+  el.scrollTop = el.scrollHeight;
+}
+function subscribeChat() {
+  if (!SBX() || !chatOrderCode) return;
+  if (chatChannel) SBX().removeChannel(chatChannel);
+  chatChannel = SBX().channel("chat-" + chatOrderCode).on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: "order_code=eq." + chatOrderCode }, () => { if (current === "chat") loadChat(); }).subscribe();
+}
+async function sendChat() {
+  const inp = document.getElementById("chat-input"); const body = inp.value.trim(); if (!body) return;
+  inp.value = ""; const u = currentUser();
+  if (SBX() && chatOrderCode) { try { await SBX().from("messages").insert({ order_code: chatOrderCode, sender: "cliente", sender_name: u ? u.name : "Cliente", body }); } catch (e) {} await loadChat(); }
+  else showToast("Inicia sesión para chatear");
+}
+document.getElementById("chat-send").addEventListener("click", sendChat);
+document.getElementById("chat-input").addEventListener("keydown", e => { if (e.key === "Enter") sendChat(); });
+
 const getSettings = () => JSON.parse(localStorage.getItem("origen_settings") || "{}");
 function renderSettings() {
   const s = getSettings();
@@ -1986,12 +2037,13 @@ function renderOrderDetails() {
 
 /* ============ Router ============ */
 const TABS = ["home", "catalog", "scanner", "account"];
-const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings", "yapas"];
+const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings", "yapas", "chat"];
 let current = "welcome";
 function navigate(screen) {
   const target = document.getElementById("screen-" + screen);
   if (!target) return;
   if (current === "scanner" && screen !== "scanner" && typeof stopScanner === "function") stopScanner(); // libera la cámara
+  if (current === "chat" && screen !== "chat" && chatChannel && SBX()) { SBX().removeChannel(chatChannel); chatChannel = null; }
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   target.classList.add("active");
   current = screen;
@@ -2027,6 +2079,7 @@ function navigate(screen) {
   if (screen === "referrals") renderReferrals();
   if (screen === "settings") renderSettings();
   if (screen === "yapas") renderYapas();
+  if (screen === "chat") openChat();
   if (screen === "auth") { renderAuth(); renderGoogleAccounts(); }
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();

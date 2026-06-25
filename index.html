@@ -18,6 +18,8 @@
 <!-- Supabase (backend real) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<!-- Escáner QR (respaldo si el navegador no tiene BarcodeDetector) -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 
 <!-- Fuentes oficiales: EB Garamond (titulares) + Hanken Grotesk (cuerpo) -->
 <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -528,10 +530,9 @@
     </button>
   </header>
   <main class="relative w-full overflow-hidden" style="height:calc(100dvh - 144px)">
-    <div class="absolute inset-0 bg-primary-container h-[70%]">
-      <img class="w-full h-full object-cover opacity-60" alt="Productos orgánicos frescos" onerror="imgFail(this)"
-           src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsddSLxUi56oXetnVqh4scKBSktTMtCR9K4CrTRJPamLcNFw8uwE1AUVWGhujkV4CNT5jHYEwQboNvvPSYr9Bc5VAeP54op2dR-CAnK-_dBs1XMh3LnprQbgd75rIqSKpVQJNI0Zs8ckKtlXukj_cvubjSvMbM1QmMyjxvfMo1I4VYD6H1hiBS_aB4WKDH0XHjqZF1JCtpQJ-zg7AzhE2b6S1MMxj77TRQ8SVXdMWpy3iiMP8BMHH2BwlAEEmsE3O9AIOzkHdZBtk">
-      <div class="absolute inset-0 flex items-center justify-center">
+    <div class="absolute inset-0 bg-deep-forest h-[70%] overflow-hidden">
+      <video id="scan-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+      <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
         <div class="relative w-64 h-64">
           <div class="absolute top-0 left-0 viewfinder-corner border-t-4 border-l-4 rounded-tl-xl"></div>
           <div class="absolute top-0 right-0 viewfinder-corner border-t-4 border-r-4 rounded-tr-xl"></div>
@@ -541,23 +542,20 @@
         </div>
       </div>
       <div class="absolute top-8 left-0 w-full text-center px-8">
-        <p class="text-white font-label-md text-label-md tracking-wider uppercase drop-shadow-md">Apunta a la etiqueta para ver la trazabilidad</p>
+        <p class="text-white font-label-md text-label-md tracking-wider uppercase drop-shadow-md">Apunta al QR o código de barras del producto</p>
       </div>
     </div>
     <div class="absolute bottom-0 left-0 w-full h-[35%] bg-surface rounded-t-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] px-margin-mobile py-8 z-40">
-      <div class="w-12 h-1.5 bg-outline-variant rounded-full mx-auto mb-8"></div>
-      <div class="flex flex-col items-center justify-center text-center">
+      <div class="w-12 h-1.5 bg-outline-variant rounded-full mx-auto mb-6"></div>
+      <div id="scan-status" class="flex flex-col items-center justify-center text-center">
         <div id="scan-icon" class="w-16 h-16 rounded-full flex items-center justify-center mb-4 pulse-slow bg-surface-container text-outline">
           <span class="material-symbols-outlined text-[32px]">qr_code_scanner</span>
         </div>
         <h2 id="scan-title" class="font-headline-sm text-headline-sm text-primary mb-2">Buscando código…</h2>
-        <p id="scan-sub" class="text-on-surface-variant font-body-md max-w-xs mx-auto">Mantén la cámara estable sobre la etiqueta del producto.</p>
-        <div class="flex space-x-2 mt-6">
-          <div class="w-2 h-2 rounded-full bg-leaf-green"></div>
-          <div class="w-2 h-2 rounded-full bg-outline-variant animate-pulse" style="animation-delay:.2s"></div>
-          <div class="w-2 h-2 rounded-full bg-outline-variant animate-pulse" style="animation-delay:.4s"></div>
-        </div>
+        <p id="scan-sub" class="text-on-surface-variant font-body-md max-w-xs mx-auto">Permite el acceso a la cámara y apunta al código del producto.</p>
+        <button id="scan-sim" class="mt-5 text-secondary font-label-md hover:underline">Simular escaneo</button>
       </div>
+      <div id="scan-result" class="hidden"></div>
     </div>
   </main>
 </section>
@@ -1993,6 +1991,7 @@ let current = "welcome";
 function navigate(screen) {
   const target = document.getElementById("screen-" + screen);
   if (!target) return;
+  if (current === "scanner" && screen !== "scanner" && typeof stopScanner === "function") stopScanner(); // libera la cámara
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   target.classList.add("active");
   current = screen;
@@ -2035,26 +2034,76 @@ function navigate(screen) {
   if (screen === "confirmed") document.getElementById("confirm-order-id").textContent = lastOrderId || ("#ORG-" + Math.floor(10000 + Math.random() * 89999));
 }
 
-/* ============ Scanner simulado ============ */
-let scanTimer;
-function runScanner() {
-  const icon = document.getElementById("scan-icon");
-  const title = document.getElementById("scan-title");
-  const sub = document.getElementById("scan-sub");
-  icon.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 pulse-slow bg-surface-container text-outline";
-  icon.innerHTML = '<span class="material-symbols-outlined text-[32px]">qr_code_scanner</span>';
+/* ============ Escáner real (cámara + QR/código de barras) ============ */
+let scanStream = null, scanRAF = null, scanDetector = null, scanBusy = false;
+function stopScanner() {
+  if (scanRAF) { cancelAnimationFrame(scanRAF); scanRAF = null; }
+  if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
+  const v = document.getElementById("scan-video"); if (v) v.srcObject = null;
+}
+async function runScanner() {
+  scanBusy = false;
+  document.getElementById("scan-status").classList.remove("hidden");
+  document.getElementById("scan-result").classList.add("hidden");
+  const title = document.getElementById("scan-title"), sub = document.getElementById("scan-sub");
   title.textContent = "Buscando código…";
-  title.classList.remove("text-secondary");
-  sub.textContent = "Mantén la cámara estable sobre la etiqueta del producto.";
-  clearTimeout(scanTimer);
-  scanTimer = setTimeout(() => {
-    if (current !== "scanner") return;
-    icon.className = "w-16 h-16 rounded-full flex items-center justify-center mb-4 pulse-slow bg-leaf-green text-white";
-    icon.innerHTML = '<span class="material-symbols-outlined text-[32px]" style="font-variation-settings:\'FILL\' 1;">check_circle</span>';
-    title.textContent = "¡Código Encontrado!";
-    title.classList.add("text-secondary");
-    sub.textContent = "Café de Altura · Yungas — cosechado el 12 de junio por Ankaya Origen.";
-  }, 2600);
+  sub.textContent = "Permite el acceso a la cámara y apunta al código del producto.";
+  const video = document.getElementById("scan-video");
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+    video.srcObject = scanStream; await video.play();
+    if ("BarcodeDetector" in window) {
+      try { scanDetector = new window.BarcodeDetector({ formats: ["qr_code", "ean_13", "ean_8", "upc_a", "upc_e", "code_128"] }); } catch (e) { scanDetector = null; }
+    }
+    scanLoop();
+  } catch (err) {
+    sub.textContent = "No pudimos acceder a la cámara. Usa “Simular escaneo” o revisa los permisos.";
+  }
+}
+async function scanLoop() {
+  if (current !== "scanner" || scanBusy) return;
+  const video = document.getElementById("scan-video");
+  let value = null;
+  try {
+    if (scanDetector && video.videoWidth) {
+      const codes = await scanDetector.detect(video);
+      if (codes && codes.length) value = codes[0].rawValue;
+    } else if (window.jsQR && video.videoWidth) {
+      const c = document.createElement("canvas"); c.width = video.videoWidth; c.height = video.videoHeight;
+      const cx = c.getContext("2d"); cx.drawImage(video, 0, 0, c.width, c.height);
+      const r = window.jsQR(cx.getImageData(0, 0, c.width, c.height).data, c.width, c.height);
+      if (r) value = r.data;
+    }
+  } catch (e) {}
+  if (value) { scanFound(value); return; }
+  scanRAF = requestAnimationFrame(scanLoop);
+}
+// Busca un producto que coincida con el código leído (id, nombre o el QR de demo)
+function matchScanned(value) {
+  const v = String(value || "").toLowerCase();
+  return activeProducts().find(p => v.includes(String(p.id).toLowerCase()) || v.includes(p.name.toLowerCase().slice(0, 6))) || null;
+}
+function scanFound(value) {
+  scanBusy = true; stopScanner();
+  const p = matchScanned(value) || activeProducts()[0];
+  document.getElementById("scan-status").classList.add("hidden");
+  const res = document.getElementById("scan-result");
+  res.classList.remove("hidden");
+  res.innerHTML = p ? `
+    <div class="flex items-center gap-3 text-left">
+      <div class="w-14 h-14 rounded-xl overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.img}" onerror="imgFail(this)" class="w-full h-full object-contain p-1"></div>
+      <div class="flex-grow"><div class="flex items-center gap-1 text-secondary"><span class="material-symbols-outlined text-[18px]">verified</span><span class="font-label-sm font-bold uppercase tracking-wider">Trazabilidad verificada</span></div>
+        <h3 class="font-headline-sm text-[18px] text-primary leading-tight">${p.name}</h3></div>
+    </div>
+    <div class="mt-3 grid grid-cols-2 gap-2 text-left">
+      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Origen</p><p class="font-body-md font-semibold text-primary text-sm">${p.origin}</p></div>
+      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Productor</p><p class="font-body-md font-semibold text-primary text-sm">Ankaya Origen</p></div>
+      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Presentación</p><p class="font-body-md font-semibold text-primary text-sm">${p.unit}</p></div>
+      <div class="bg-surface-container-low rounded-lg p-2"><p class="font-label-sm text-on-surface-variant">Certificación</p><p class="font-body-md font-semibold text-primary text-sm">Orgánica</p></div>
+    </div>
+    <p class="text-[11px] text-on-surface-variant/70 mt-2 text-left">Código leído: ${String(value).slice(0, 40)}</p>
+    <button id="scan-again" class="mt-3 w-full bg-leaf-green text-white font-label-md py-3 rounded-xl active:scale-[0.98] transition-transform">Escanear otro</button>`
+    : `<p class="text-center text-on-surface-variant py-4">Código leído: ${String(value).slice(0, 40)}</p><button id="scan-again" class="w-full bg-leaf-green text-white font-label-md py-3 rounded-xl">Escanear otro</button>`;
 }
 
 /* ============ Eventos ============ */
@@ -2088,6 +2137,8 @@ document.addEventListener("click", e => {
   const sbx = e.target.closest("[data-sbdel]"); if (sbx) { saveSubBasket(getSubBasket().filter(x => x.id !== sbx.dataset.sbdel)); renderSchedBasket(); return; }
   const sba = e.target.closest("[data-sbadd]"); if (sba) { const b = getSubBasket(); if (!b.find(x => x.id === sba.dataset.sbadd)) b.push({ id: sba.dataset.sbadd, qty: 1 }); saveSubBasket(b); schedAddOpen = false; renderSchedBasket(); showToast("Agregado a tu canasta recurrente"); return; }
   const yp = e.target.closest("[data-yapa]"); if (yp) { redeemYapa(yp.dataset.yapa); return; }
+  if (e.target.closest("#scan-sim")) { const ap = activeProducts(); const p = ap[Math.floor(Math.random() * ap.length)]; scanFound(p ? p.id : "ORIGEN-DEMO"); return; }
+  if (e.target.closest("#scan-again")) { runScanner(); return; }
   const rebuy = e.target.closest("[data-rebuy]");
   if (rebuy) {
     try {

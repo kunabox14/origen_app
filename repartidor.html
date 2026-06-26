@@ -71,6 +71,48 @@
     </div>
   </section>
 
+  <!-- REGISTRO de repartidor nuevo (documentos + ubicación) -->
+  <section id="rider-register" class="scr flex flex-col justify-center px-5" style="min-height:100dvh">
+    <div class="w-full max-w-sm mx-auto py-8">
+      <div class="flex items-center justify-center gap-2 mb-2">
+        <img src="assets/origen-logo.svg" class="h-8" alt="Origen">
+        <span class="bg-primary-container text-leaf-green text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">Repartidor</span>
+      </div>
+      <h1 class="font-headline text-3xl text-primary text-center mt-5 mb-1">Completa tu registro</h1>
+      <p class="text-on-surface-variant text-center mb-6">Validamos tu identidad y tu zona antes de activarte.</p>
+      <div class="space-y-3">
+        <input id="rr-name" placeholder="Nombre completo" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <input id="rr-phone" placeholder="Teléfono / WhatsApp" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <select id="rr-zone" class="w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Zona Sur</option><option>Miraflores</option><option>Centro</option><option>Sopocachi</option><option>San Miguel</option><option>Calacoto</option></select>
+        <label class="block"><span class="text-sm text-on-surface-variant">Carnet de identidad (imagen o PDF) <span class="text-error">*</span></span>
+          <input id="rr-id" type="file" accept="image/*,application/pdf" class="mt-1 w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-secondary-container file:text-on-secondary-container file:font-semibold"></label>
+        <label class="block"><span class="text-sm text-on-surface-variant">Fotocopia (PDF) <span class="text-error">*</span></span>
+          <input id="rr-copy" type="file" accept="application/pdf" class="mt-1 w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-secondary-container file:text-on-secondary-container file:font-semibold"></label>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="rr-gps" type="button" class="border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">my_location</span>Mi ubicación</button>
+          <button id="rr-pick" type="button" class="border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">map</span>En el mapa</button>
+        </div>
+        <div id="rr-loc-display" class="hidden bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
+          <span class="material-symbols-outlined text-secondary text-[20px]">place</span><p id="rr-loc-text" class="text-on-surface text-sm leading-snug"></p>
+        </div>
+        <p class="text-xs text-on-surface-variant/70">Tu ubicación solo se define en el registro y no podrás cambiarla luego.</p>
+        <p id="rr-error" class="hidden text-error text-sm">Completa nombre, teléfono, documentos y ubicación.</p>
+        <button id="rr-submit" class="w-full bg-leaf-green text-white font-semibold py-4 rounded-xl active:scale-95 transition-transform">Enviar solicitud</button>
+        <button id="rr-cancel" class="w-full text-on-surface-variant font-semibold py-2">Cancelar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Selector de mapa (compartido) -->
+  <div id="map-modal" class="hidden fixed inset-0 z-[140] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+    <div class="bg-surface w-full max-w-[440px] mx-auto rounded-t-3xl p-4">
+      <div class="flex items-center justify-between mb-2 px-1"><p class="font-semibold text-primary">Toca el mapa para fijar tu ubicación</p><button id="map-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+      <div id="map-div" class="w-full rounded-xl overflow-hidden bg-earth-cream" style="height:46vh"></div>
+      <p id="map-addr" class="text-sm text-on-surface-variant mt-2 px-1 min-h-[1.25rem]"></p>
+      <button id="map-confirm" class="mt-3 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Confirmar ubicación</button>
+    </div>
+  </div>
+
   <!-- PENDIENTE de aprobación / onboarding -->
   <section id="rider-pending" class="scr flex flex-col items-center justify-center px-5 text-center" style="min-height:100dvh">
     <div class="w-full max-w-sm">
@@ -209,26 +251,93 @@ document.getElementById("rider-google").addEventListener("click", ()=>{
 });
 
 // Estado de aprobación tras iniciar sesión con Google
-let pendingEmail=null;
+let pendingEmail=null, pendingName=null;
 async function handleRiderSession(user){
   if(!user || !SBX()) return;
   const email=(user.email||"").toLowerCase();
   const fullName=(user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || (email.split("@")[0]) || "Repartidor";
-  pendingEmail=email;
+  pendingEmail=email; pendingName=fullName;
   let row=null;
-  try{
-    const {data}=await SBX().from("riders").select("*").eq("email",email).maybeSingle();
-    row=data||null;
-    if(!row){
-      const ins=await SBX().from("riders").insert({ name:fullName, email, zone:"Zona Sur", status:"pendiente" }).select().maybeSingle();
-      row=ins.data||{ name:fullName, email, zone:"Zona Sur", status:"pendiente" };
-    }
-  }catch(_){ row={ name:fullName, email, zone:"Zona Sur", status:"pendiente" }; }
-  if(row.status==="aprobado"){
-    rider=row.name; sessionStorage.setItem("origen_rider",rider); enterApp(); return;
+  try{ const {data}=await SBX().from("riders").select("*").eq("email",email).maybeSingle(); row=data||null; }catch(_){}
+  if(!row){ // repartidor nuevo → registro con documentos + ubicación (Update 4)
+    document.getElementById("rr-name").value=fullName;
+    document.getElementById("rr-phone").value="";
+    document.getElementById("rr-id").value=""; document.getElementById("rr-copy").value="";
+    document.getElementById("rr-loc-display").classList.add("hidden"); riderGeo=null;
+    document.getElementById("rr-error").classList.add("hidden");
+    show("rider-register"); return;
   }
+  if(row.status==="aprobado"){ rider=row.name; sessionStorage.setItem("origen_rider",rider); enterApp(); return; }
   showPending(row, email);
 }
+// Subida de documentos a Supabase Storage
+async function uploadDoc(file, prefix){
+  if(!file||!SBX()) return null;
+  const ext=(file.name.split(".").pop()||"dat").toLowerCase();
+  const path=prefix+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+"."+ext;
+  try{ const {error}=await SBX().storage.from("docs").upload(path, file, { upsert:true, contentType:file.type||undefined }); if(error) return null; const {data}=SBX().storage.from("docs").getPublicUrl(path); return data?data.publicUrl:null; }catch(_){ return null; }
+}
+// Registro del repartidor
+let riderGeo=null;
+document.getElementById("rr-pick").addEventListener("click", ()=>openMap(riderGeo,(addr,pos)=>{ riderGeo=pos; document.getElementById("rr-loc-text").textContent=addr; document.getElementById("rr-loc-display").classList.remove("hidden"); }));
+document.getElementById("rr-gps").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ toast("GPS no disponible"); return; }
+  toast("Obteniendo tu ubicación…");
+  navigator.geolocation.getCurrentPosition(async p=>{
+    const pos={lat:p.coords.latitude,lng:p.coords.longitude}; let addr=pos.lat.toFixed(5)+", "+pos.lng.toFixed(5);
+    const ok=await loadMaps(); if(ok&&window.google){ try{ await new Promise(r=>new google.maps.Geocoder().geocode({location:pos},(res,st)=>{ if(st==="OK"&&res&&res[0]) addr=res[0].formatted_address; r(); })); }catch(_){} }
+    riderGeo=pos; document.getElementById("rr-loc-text").textContent=addr; document.getElementById("rr-loc-display").classList.remove("hidden"); toast("Ubicación fijada");
+  }, ()=>toast("No pudimos obtener tu ubicación"), {enableHighAccuracy:true});
+});
+document.getElementById("rr-cancel").addEventListener("click", async ()=>{ pendingEmail=null; try{ if(SBX()) await SBX().auth.signOut(); }catch(_){} show("rider-login"); renderLogin(); });
+document.getElementById("rr-submit").addEventListener("click", async ()=>{
+  const name=document.getElementById("rr-name").value.trim();
+  const phone=document.getElementById("rr-phone").value.trim();
+  const zone=document.getElementById("rr-zone").value;
+  const idFile=document.getElementById("rr-id").files[0];
+  const copyFile=document.getElementById("rr-copy").files[0];
+  const err=document.getElementById("rr-error");
+  if(!name||!phone||!idFile||!copyFile||!riderGeo){ err.classList.remove("hidden"); return; }
+  if(!SBX()){ toast("Sin conexión"); return; }
+  err.classList.add("hidden");
+  const btn=document.getElementById("rr-submit"); btn.disabled=true; btn.textContent="Subiendo documentos…";
+  try{
+    const idUrl=await uploadDoc(idFile,"riders"); const copyUrl=await uploadDoc(copyFile,"riders");
+    const addr=document.getElementById("rr-loc-text").textContent;
+    const ins=await SBX().from("riders").insert({ name, email:pendingEmail, phone, zone, status:"pendiente", lat:riderGeo.lat, lng:riderGeo.lng, address:addr, id_doc_url:idUrl, copy_doc_url:copyUrl }).select().maybeSingle();
+    const row=ins.data||{ name, email:pendingEmail, status:"pendiente", zone };
+    showPending(row, pendingEmail);
+  }catch(_){ toast("No se pudo registrar"); }
+  btn.disabled=false; btn.textContent="Enviar solicitud";
+});
+// Selector de mapa (compartido)
+let mapsLoaded=false, mapsLoading=null, mapObj=null, mapMarker=null, mapPos=null, mapOnConfirm=null;
+function loadMaps(){
+  if(mapsLoaded) return Promise.resolve(true); if(mapsLoading) return mapsLoading;
+  const key=window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.mapsKey; if(!key) return Promise.resolve(false);
+  mapsLoading=new Promise(res=>{ window.__riderMapsCb=()=>{ mapsLoaded=true; res(true); }; const s=document.createElement("script"); s.src="https://maps.googleapis.com/maps/api/js?key="+key+"&callback=__riderMapsCb&loading=async"; s.async=true; s.onerror=()=>res(false); document.head.appendChild(s); });
+  return mapsLoading;
+}
+async function openMap(initial, onConfirm){
+  mapOnConfirm=onConfirm; mapPos=initial||null;
+  document.getElementById("map-modal").classList.remove("hidden");
+  const ok=await loadMaps(); const div=document.getElementById("map-div");
+  if(!ok||!window.google){ div.innerHTML=`<div class="w-full h-full flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined mr-2">map</span>Mapa no disponible</div>`; return; }
+  const center=initial||{lat:-16.5000,lng:-68.1300};
+  if(!mapObj){ mapObj=new google.maps.Map(div,{center,zoom:14,disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false}); mapObj.addListener("click",ev=>setMapPin(ev.latLng.lat(),ev.latLng.lng())); }
+  else { google.maps.event.trigger(mapObj,"resize"); mapObj.setCenter(center); }
+  if(initial) setMapPin(initial.lat,initial.lng);
+  else if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>{ const c={lat:p.coords.latitude,lng:p.coords.longitude}; mapObj.setCenter(c); setMapPin(c.lat,c.lng); }, ()=>{});
+}
+function setMapPin(lat,lng){
+  mapPos={lat,lng};
+  if(!mapMarker) mapMarker=new google.maps.Marker({map:mapObj,draggable:true});
+  mapMarker.setPosition(mapPos); mapObj.panTo(mapPos);
+  document.getElementById("map-addr").textContent=lat.toFixed(5)+", "+lng.toFixed(5);
+  try{ new google.maps.Geocoder().geocode({location:mapPos},(res,st)=>{ if(st==="OK"&&res&&res[0]) document.getElementById("map-addr").textContent=res[0].formatted_address; }); }catch(_){}
+}
+document.getElementById("map-close").addEventListener("click", ()=>document.getElementById("map-modal").classList.add("hidden"));
+document.getElementById("map-confirm").addEventListener("click", ()=>{ if(mapPos&&mapOnConfirm) mapOnConfirm(document.getElementById("map-addr").textContent, mapPos); document.getElementById("map-modal").classList.add("hidden"); });
 function showPending(row, email){
   const rejected = row && row.status==="rechazado";
   document.getElementById("rider-pending-email").textContent = email || (row&&row.email) || "—";

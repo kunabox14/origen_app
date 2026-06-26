@@ -96,7 +96,20 @@
       <div class="space-y-3">
         <input id="prov-c-business" placeholder="Nombre del negocio / marca" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
         <input id="prov-c-phone" placeholder="Teléfono / WhatsApp (opcional)" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-        <p id="prov-c-error" class="hidden text-error text-sm">Escribe el nombre de tu negocio.</p>
+        <label class="block">
+          <span class="text-sm text-on-surface-variant">Carnet de identidad (imagen o PDF) <span class="text-error">*</span></span>
+          <input id="prov-c-id" type="file" accept="image/*,application/pdf" class="mt-1 w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-secondary-container file:text-on-secondary-container file:font-semibold">
+        </label>
+        <label class="block">
+          <span class="text-sm text-on-surface-variant">Fotocopia (PDF) <span class="text-error">*</span></span>
+          <input id="prov-c-copy" type="file" accept="application/pdf" class="mt-1 w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-secondary-container file:text-on-secondary-container file:font-semibold">
+        </label>
+        <button id="prov-c-pick" type="button" class="w-full border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">map</span>Ubicación del negocio en el mapa <span class="text-error">*</span></button>
+        <div id="prov-c-loc-display" class="hidden bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
+          <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
+          <p id="prov-c-loc-text" class="text-on-surface text-sm leading-snug"></p>
+        </div>
+        <p id="prov-c-error" class="hidden text-error text-sm">Completa el nombre, los documentos y la ubicación.</p>
         <button id="prov-c-submit" class="w-full bg-leaf-green text-white font-semibold py-4 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
         <button id="prov-c-cancel" class="w-full text-on-surface-variant font-semibold py-2">Cancelar</button>
       </div>
@@ -125,6 +138,11 @@
     </header>
     <main class="px-5 py-5">
       <div id="prov-active" class="mb-5"></div>
+      <div id="prov-myloc" class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5 flex items-center gap-3">
+        <span class="material-symbols-outlined text-secondary">my_location</span>
+        <div class="flex-grow min-w-0"><p class="text-xs text-on-surface-variant">Dirección de mi negocio</p><p id="prov-myloc-text" class="font-semibold text-primary truncate">Sin definir</p></div>
+        <button id="prov-myloc-edit" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95">Actualizar</button>
+      </div>
       <div class="grid grid-cols-2 gap-3 mb-5">
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
@@ -279,19 +297,45 @@ async function handleProviderSession(user){
   document.getElementById("prov-complete-email").textContent=email;
   document.getElementById("prov-c-business").value="";
   document.getElementById("prov-c-phone").value="";
+  document.getElementById("prov-c-id").value="";
+  document.getElementById("prov-c-copy").value="";
+  document.getElementById("prov-c-loc-display").classList.add("hidden");
+  completeGeo=null;
   document.getElementById("prov-c-error").classList.add("hidden");
   show("prov-complete");
 }
+// Subida de documentos a Supabase Storage (bucket "docs")
+async function uploadDoc(file, prefix){
+  if(!file||!SBX()) return null;
+  const ext=(file.name.split(".").pop()||"dat").toLowerCase();
+  const path=prefix+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+"."+ext;
+  try{
+    const { error }=await SBX().storage.from("docs").upload(path, file, { upsert:true, contentType:file.type||undefined });
+    if(error) return null;
+    const { data }=SBX().storage.from("docs").getPublicUrl(path);
+    return data ? data.publicUrl : null;
+  }catch(_){ return null; }
+}
+let completeGeo=null;
+document.getElementById("prov-c-pick").addEventListener("click", ()=>openMap(completeGeo, (addr,pos)=>{ completeGeo=pos; document.getElementById("prov-c-loc-text").textContent=addr; document.getElementById("prov-c-loc-display").classList.remove("hidden"); }));
 document.getElementById("prov-c-submit").addEventListener("click", async ()=>{
   const business=document.getElementById("prov-c-business").value.trim();
   const phone=document.getElementById("prov-c-phone").value.trim();
-  if(!business){ document.getElementById("prov-c-error").classList.remove("hidden"); return; }
+  const idFile=document.getElementById("prov-c-id").files[0];
+  const copyFile=document.getElementById("prov-c-copy").files[0];
+  const err=document.getElementById("prov-c-error");
+  if(!business || !idFile || !copyFile || !completeGeo){ err.textContent="Completa el nombre, los documentos y la ubicación."; err.classList.remove("hidden"); return; }
   if(!googleProfile||!SBX()){ toast("Inicia sesión con Google"); return; }
+  err.classList.add("hidden");
+  const btn=document.getElementById("prov-c-submit"); btn.disabled=true; btn.textContent="Subiendo documentos…";
   try{
-    const ins=await SBX().from("providers").insert({ name:googleProfile.name, business, email:googleProfile.email, phone, status:"pendiente" }).select().single();
-    if(ins.error){ toast("No se pudo registrar"); return; }
+    const idUrl=await uploadDoc(idFile, "providers"); const copyUrl=await uploadDoc(copyFile, "providers");
+    const addr=document.getElementById("prov-c-loc-text").textContent;
+    const ins=await SBX().from("providers").insert({ name:googleProfile.name, business, email:googleProfile.email, phone, status:"pendiente", lat:completeGeo.lat, lng:completeGeo.lng, address:addr, id_doc_url:idUrl, copy_doc_url:copyUrl }).select().single();
+    if(ins.error){ toast("No se pudo registrar"); btn.disabled=false; btn.textContent="Enviar para aprobación"; return; }
     provider=ins.data; localStorage.setItem("origen_provider",JSON.stringify(provider)); route();
   }catch(_){ toast("No se pudo registrar"); }
+  btn.disabled=false; btn.textContent="Enviar para aprobación";
 });
 document.getElementById("prov-c-cancel").addEventListener("click", async ()=>{
   googleProfile=null;
@@ -342,8 +386,13 @@ async function logout(){ localStorage.removeItem("origen_provider"); provider=nu
 // DASHBOARD
 async function enterApp(){
   document.getElementById("prov-bizname").textContent = provider.business||"";
+  renderMyLoc();
   show("prov-app"); await loadProducts(); await loadBranches(); setupRealtime();
 }
+function renderMyLoc(){ const el=document.getElementById("prov-myloc-text"); if(el) el.textContent=(provider&&provider.address)||"Sin definir"; }
+document.getElementById("prov-myloc-edit").addEventListener("click", ()=>openMap(provider&&provider.lat?{lat:Number(provider.lat),lng:Number(provider.lng)}:null, async (addr,pos)=>{
+  try{ await SBX().from("providers").update({ lat:pos.lat, lng:pos.lng, address:addr }).eq("id",provider.id); provider.lat=pos.lat; provider.lng=pos.lng; provider.address=addr; localStorage.setItem("origen_provider",JSON.stringify(provider)); renderMyLoc(); toast("Ubicación actualizada"); }catch(_){ toast("No se pudo actualizar"); }
+}));
 async function loadProducts(){
   if(!SBX()) return;
   const r=await SBX().from("products").select("*").eq("provider_id",provider.id).order("created_at",{ascending:false});

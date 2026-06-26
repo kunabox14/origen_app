@@ -26,6 +26,8 @@
 
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
 <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
 <script>
   tailwind.config = { darkMode: "class", theme: { extend: {
@@ -126,7 +128,7 @@
       <button id="cf-reset" class="mt-5 border border-outline-variant text-on-surface dark:text-inverse-on-surface font-semibold py-3 px-6 rounded-xl hover:bg-surface-container-low dark:hover:bg-deep-forest transition-colors">Enviar otro mensaje</button>
     </div>
     <!-- Estado de error general -->
-    <div id="cf-error" class="hidden mt-4 bg-error/10 border border-error/30 text-error rounded-lg p-3 text-sm text-center">No pudimos abrir tu cliente de correo. Escríbenos directamente a <a href="mailto:kunabox14@gmail.com" class="underline font-semibold">kunabox14@gmail.com</a>.</div>
+    <div id="cf-error" class="hidden mt-4 bg-error/10 border border-error/30 text-error rounded-lg p-3 text-sm text-center">No pudimos registrar tu mensaje en este momento. Revisa tu conexión e inténtalo de nuevo, o escríbenos directamente a <a href="mailto:kunabox14@gmail.com" class="underline font-semibold">kunabox14@gmail.com</a>.</div>
   </div>
 </main>
 
@@ -157,7 +159,9 @@
     var msg = document.querySelector('.cf-err[data-for="'+field+'"]');
     input.classList.toggle("field-error", on); msg.classList.toggle("hidden", !on);
   }
-  form.addEventListener("submit", function(e){
+  // Número de ticket correlativo (comparte secuencia con la app del cliente en este dispositivo).
+  function nextTicketNo(){ var n=parseInt(localStorage.getItem("origen_ticket_seq")||"0",10)+1; localStorage.setItem("origen_ticket_seq",n); return "#TK-"+String(n).padStart(5,"0"); }
+  form.addEventListener("submit", async function(e){
     e.preventDefault();
     var name=document.getElementById("cf-name").value.trim();
     var email=document.getElementById("cf-email").value.trim();
@@ -171,15 +175,24 @@
     if(message.length<10){showErr("message",true);valid=false}else showErr("message",false);
     if(!valid) return;
 
-    var ticket = "ORG-" + Date.now().toString(36).toUpperCase().slice(-6);
-    try{
-      var body = encodeURIComponent("Ticket: "+ticket+"\nNombre: "+name+"\nCorreo: "+email+"\n\n"+message);
-      var subj = encodeURIComponent("["+ticket+"] "+subject);
-      window.location.href = "mailto:kunabox14@gmail.com?subject="+subj+"&body="+body;
-    }catch(err){ document.getElementById("cf-error").classList.remove("hidden"); }
-    document.getElementById("cf-ticket").textContent = ticket;
-    form.classList.add("hidden");
-    document.getElementById("cf-success").classList.remove("hidden");
+    var ticket = nextTicketNo();
+    var saved = false;
+    // Guarda el ticket en Supabase para que el admin lo vea (sin necesidad de servicio de correo).
+    if(window.ORIGEN_SB){
+      try{
+        var res = await window.ORIGEN_SB.from("support_tickets").insert({ ticket_no: ticket, user_email: email, name: name, subject: subject, body: message, status: "Abierto" });
+        saved = !res.error;
+      }catch(err){ saved = false; }
+    }
+    if(saved){
+      document.getElementById("cf-error").classList.add("hidden");
+      document.getElementById("cf-ticket").textContent = ticket;
+      form.classList.add("hidden");
+      document.getElementById("cf-success").classList.remove("hidden");
+    }else{
+      // Respaldo: si no se pudo guardar, ofrecemos el correo (sin redirigir bruscamente).
+      document.getElementById("cf-error").classList.remove("hidden");
+    }
   });
   document.getElementById("cf-reset").addEventListener("click", function(){
     form.reset(); form.classList.remove("hidden");

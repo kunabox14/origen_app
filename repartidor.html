@@ -156,6 +156,7 @@ let CLOUD_ORDERS = null; // null = aún no cargado de la nube → usa localStora
 const mapOrder = r => ({
   id: r.code, dbId: r.id, status: r.status, method: r.method, assignedTo: r.assigned_rider || null,
   customer: { name: r.customer_name || "Cliente", address: r.address || "", zone: r.zone || "Zona Sur" },
+  references: r.delivery_refs || "", giftName: r.gift_name || "", type: r.order_type || "directa",
   window: r.window || "09:00 – 11:00", items: (r.order_items || []).map(i => ({ name: i.name, qty: i.qty })),
   total: Number(r.total), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0)
 });
@@ -414,9 +415,10 @@ function orderCard(o){
       <span class="font-bold text-primary">${o.id}</span>
       <span class="bg-sprout-green/20 text-secondary text-xs font-semibold px-2 py-0.5 rounded-full">${o.status}</span>
     </div>
-    <p class="font-semibold text-primary">${o.customer.name}</p>
+    <p class="font-semibold text-primary">${o.customer.name}${o.type==="regalo"&&o.giftName?` <span class="text-xs font-normal text-secondary">🎁 para ${escapeHtmlR(o.giftName)}</span>`:""}</p>
     <p class="text-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">location_on</span>${o.customer.address}</p>
     <p class="text-sm text-on-surface-variant flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[15px]">map</span>${o.customer.zone} · ${o.window}</p>
+    ${o.references?`<p class="text-sm text-on-surface flex items-start gap-1 mt-1 bg-sprout-green/10 rounded-lg px-2 py-1.5"><span class="material-symbols-outlined text-[15px] text-secondary mt-0.5">info</span><span><b>Referencias:</b> ${escapeHtmlR(o.references)}</span></p>`:""}
     <div class="flex items-center justify-between mt-3 pt-3 border-t border-outline-variant/20">
       <span class="text-sm text-on-surface-variant">${items} productos · ${o.method==="card"?"Tarjeta":"QR/Efectivo"}</span>
       <span class="text-sm text-on-surface-variant">Pedido ${bs(o.total)}</span>

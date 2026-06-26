@@ -450,17 +450,41 @@
           <div id="order-type" class="grid grid-cols-3 gap-2 mt-1"></div>
         </div>
         <div id="addr-wrap">
-          <label class="font-label-sm text-on-surface-variant" id="addr-label">Dirección de entrega</label>
-          <input id="order-address" placeholder="Av. Ballivián 1220, Calacoto" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-          <button id="pick-location" class="mt-2 w-full border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-2 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">my_location</span>Seleccionar ubicación en el mapa</button>
+          <label class="font-label-sm text-on-surface-variant">Ubicación de entrega</label>
+          <div class="grid grid-cols-2 gap-2 mt-1">
+            <button id="use-gps" type="button" class="border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">my_location</span>Mi ubicación</button>
+            <button id="pick-location" type="button" class="border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">map</span>Elegir en mapa</button>
+          </div>
+          <div id="order-loc-display" class="hidden mt-2 bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
+            <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
+            <p id="order-loc-text" class="text-on-surface text-sm leading-snug"></p>
+          </div>
+          <input id="order-address" type="hidden">
+          <div class="mt-3">
+            <label class="font-label-sm text-on-surface-variant">Referencias de entrega <span class="text-error">*</span></label>
+            <textarea id="order-refs" rows="2" placeholder="Ej: Casa de portón verde, timbre 2, dejar con el portero." class="mt-1 w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></textarea>
+          </div>
         </div>
         <div id="gift-fields" class="hidden space-y-3">
           <div>
-            <label class="font-label-sm text-on-surface-variant">Dirección del receptor</label>
-            <input id="gift-address" placeholder="¿A dónde lo enviamos?" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+            <label class="font-label-sm text-on-surface-variant">Nombre del receptor <span class="text-error">*</span></label>
+            <input id="gift-name" placeholder="¿Para quién es el regalo?" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
           </div>
           <div>
-            <label class="font-label-sm text-on-surface-variant">Mensaje especial</label>
+            <label class="font-label-sm text-on-surface-variant">Ubicación del receptor <span class="text-error">*</span></label>
+            <button id="gift-pick" type="button" class="mt-1 w-full border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">map</span>Seleccionar en el mapa</button>
+            <div id="gift-loc-display" class="hidden mt-2 bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
+              <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
+              <p id="gift-loc-text" class="text-on-surface text-sm leading-snug"></p>
+            </div>
+            <input id="gift-address" type="hidden">
+          </div>
+          <div>
+            <label class="font-label-sm text-on-surface-variant">Referencias <span class="text-error">*</span></label>
+            <textarea id="gift-refs" rows="2" placeholder="Ej: Edificio Las Palmas, piso 3, dpto. B." class="mt-1 w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></textarea>
+          </div>
+          <div>
+            <label class="font-label-sm text-on-surface-variant">Mensaje especial (opcional)</label>
             <textarea id="gift-message" rows="2" placeholder="Con cariño, de parte de…" class="mt-1 w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></textarea>
           </div>
         </div>
@@ -1322,7 +1346,24 @@ const saveOrders = () => localStorage.setItem("origen_orders", JSON.stringify(or
 const PAY_DEFAULT = { comercio: "Origen", qr: true, card: true };
 let paySettings = Object.assign({}, PAY_DEFAULT, JSON.parse(localStorage.getItem("origen_paysettings") || "{}"));
 if (paySettings.comercio && /ankaya|ancaya/i.test(paySettings.comercio)) paySettings.comercio = "Origen"; // migración
-const savePaySettings = () => localStorage.setItem("origen_paysettings", JSON.stringify(paySettings));
+const savePaySettings = () => { localStorage.setItem("origen_paysettings", JSON.stringify(paySettings)); cloudSavePaySettings(); };
+// #5: la config de pago del admin se guarda en la nube para que TODOS los clientes la respeten
+// (antes vivía solo en el navegador del admin y el cliente veía siempre los valores por defecto).
+async function cloudSavePaySettings() {
+  if (!SBX()) return;
+  try { await SBX().from("app_settings").upsert({ key: "pay", value: paySettings, updated_at: new Date().toISOString() }, { onConflict: "key" }); } catch (e) {}
+}
+async function hydratePaySettings() {
+  if (!SBX()) return;
+  try {
+    const { data, error } = await SBX().from("app_settings").select("value").eq("key", "pay").maybeSingle();
+    if (!error && data && data.value) {
+      paySettings = Object.assign({}, PAY_DEFAULT, data.value);
+      if (paySettings.comercio && /ankaya|ancaya/i.test(paySettings.comercio)) paySettings.comercio = "Origen";
+      localStorage.setItem("origen_paysettings", JSON.stringify(paySettings));
+    }
+  } catch (e) {}
+}
 
 /* ============ Admin (rol real de Supabase) ============ */
 let adminRole = false;
@@ -1572,8 +1613,10 @@ async function renderTrackingMap(o) {
 }
 
 /* ============ Selector de ubicación en mapa ============ */
-let pickerMap = null, pickerMarker = null, pickerPos = null;
-async function openPicker() {
+let pickerMap = null, pickerMarker = null, pickerPos = null, pickerTarget = "order";
+let giftGeo = null; // coordenadas del receptor del regalo
+async function openPicker(target) {
+  pickerTarget = target || "order";
   document.getElementById("picker-modal").classList.remove("hidden");
   const ok = await loadMaps(); const div = document.getElementById("picker-map");
   if (!ok || !window.google) { div.innerHTML = `<div class="w-full h-full flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined mr-2">map</span>Mapa no disponible</div>`; return; }
@@ -1582,7 +1625,8 @@ async function openPicker() {
     pickerMap = new google.maps.Map(div, { center, zoom: 14, disableDefaultUI: true, gestureHandling: "greedy", clickableIcons: false });
     pickerMap.addListener("click", ev => setPicker(ev.latLng.lat(), ev.latLng.lng()));
   } else { google.maps.event.trigger(pickerMap, "resize"); pickerMap.setCenter(center); }
-  if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { const c = { lat: p.coords.latitude, lng: p.coords.longitude }; pickerMap.setCenter(c); setPicker(c.lat, c.lng); }, () => {});
+  // En entrega/programada centramos en la ubicación del usuario; en regalo NO (la elige el remitente).
+  if (pickerTarget !== "gift" && navigator.geolocation) navigator.geolocation.getCurrentPosition(p => { const c = { lat: p.coords.latitude, lng: p.coords.longitude }; pickerMap.setCenter(c); setPicker(c.lat, c.lng); }, () => {});
 }
 function setPicker(lat, lng) {
   pickerPos = { lat, lng };
@@ -1591,12 +1635,42 @@ function setPicker(lat, lng) {
   document.getElementById("picker-addr").textContent = lat.toFixed(5) + ", " + lng.toFixed(5);
   try { new google.maps.Geocoder().geocode({ location: pickerPos }, (res, status) => { if (status === "OK" && res && res[0]) document.getElementById("picker-addr").textContent = res[0].formatted_address; }); } catch (e) {}
 }
-document.getElementById("pick-location").addEventListener("click", openPicker);
+// Aplica la ubicación elegida (mapa o GPS) al destino correspondiente, guardando coordenadas.
+function applyLocation(target, addressText, pos) {
+  if (target === "gift") {
+    document.getElementById("gift-address").value = addressText;
+    document.getElementById("gift-loc-text").textContent = addressText;
+    document.getElementById("gift-loc-display").classList.remove("hidden");
+    giftGeo = pos;
+  } else {
+    document.getElementById("order-address").value = addressText;
+    document.getElementById("order-loc-text").textContent = addressText;
+    document.getElementById("order-loc-display").classList.remove("hidden");
+    localStorage.setItem("origen_geo", JSON.stringify(pos));
+  }
+}
+document.getElementById("pick-location").addEventListener("click", () => openPicker("order"));
+document.getElementById("gift-pick").addEventListener("click", () => openPicker("gift"));
 document.getElementById("picker-close").addEventListener("click", () => document.getElementById("picker-modal").classList.add("hidden"));
 document.getElementById("picker-modal").addEventListener("click", e => { if (e.target.id === "picker-modal") document.getElementById("picker-modal").classList.add("hidden"); });
 document.getElementById("picker-confirm").addEventListener("click", () => {
-  if (pickerPos) { document.getElementById("order-address").value = document.getElementById("picker-addr").textContent; localStorage.setItem("origen_geo", JSON.stringify(pickerPos)); showToast("Ubicación guardada"); }
+  if (pickerPos) { applyLocation(pickerTarget, document.getElementById("picker-addr").textContent, pickerPos); showToast("Ubicación guardada"); }
   document.getElementById("picker-modal").classList.add("hidden");
+});
+// Usar mi ubicación actual (GPS) para la entrega
+document.getElementById("use-gps").addEventListener("click", () => {
+  if (!navigator.geolocation) { showToast("GPS no disponible en este dispositivo"); return; }
+  showToast("Obteniendo tu ubicación…");
+  navigator.geolocation.getCurrentPosition(async p => {
+    const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+    let addressText = pos.lat.toFixed(5) + ", " + pos.lng.toFixed(5);
+    const ok = await loadMaps();
+    if (ok && window.google) {
+      try { await new Promise(r => new google.maps.Geocoder().geocode({ location: pos }, (res, status) => { if (status === "OK" && res && res[0]) addressText = res[0].formatted_address; r(); })); } catch (e) {}
+    }
+    applyLocation("order", addressText, pos);
+    showToast("Ubicación actual fijada");
+  }, () => showToast("No pudimos obtener tu ubicación"), { enableHighAccuracy: true });
 });
 
 /* ============ Cuenta (datos del usuario) ============ */
@@ -2243,9 +2317,15 @@ function renderOrderDetails() {
   document.getElementById("gift-fields").classList.toggle("hidden", orderType !== "regalo");
   document.getElementById("freq-wrap").classList.toggle("hidden", orderType !== "programada");
   document.getElementById("addr-wrap").classList.toggle("hidden", orderType === "regalo");
-  document.getElementById("addr-label").textContent = "Dirección de entrega";
   const u = currentUser(), s = getSettings();
-  const addr = document.getElementById("order-address"); if (addr && !addr.value) addr.value = s.address || (u && u.address) || "";
+  // Prefill de la ubicación de entrega si el usuario ya tenía una guardada (dirección + coordenadas).
+  const addr = document.getElementById("order-address");
+  const savedAddr = s.address || (u && u.address) || "";
+  if (addr && !addr.value && savedAddr) {
+    addr.value = savedAddr;
+    document.getElementById("order-loc-text").textContent = savedAddr;
+    document.getElementById("order-loc-display").classList.remove("hidden");
+  }
   const date = document.getElementById("order-date"); if (date && !date.value) { const d = new Date(); d.setDate(d.getDate() + 1); date.value = d.toISOString().slice(0, 10); }
   const gm = document.getElementById("gift-message"); if (gm && !gm.value && s.giftmsg) gm.value = s.giftmsg;
 }
@@ -2532,17 +2612,31 @@ document.getElementById("basket-confirm").addEventListener("click", () => {
   const date = document.getElementById("order-date").value;
   const win = document.getElementById("order-window").value;
   const addr = document.getElementById("order-address").value.trim();
+  const refs = document.getElementById("order-refs").value.trim();
+  const giftName = document.getElementById("gift-name").value.trim();
   const giftAddr = document.getElementById("gift-address").value.trim();
+  const giftRefs = document.getElementById("gift-refs").value.trim();
   const giftMsg = document.getElementById("gift-message").value.trim();
   const freq = document.getElementById("order-freq").value;
   const err = document.getElementById("order-detail-error");
   const fail = m => { err.textContent = m; err.classList.remove("hidden"); };
-  if (orderType === "regalo") { if (!giftAddr) return fail("Ingresa la dirección del receptor del regalo."); }
-  else if (!addr) return fail("Ingresa la dirección de entrega.");
+  if (orderType === "regalo") {
+    if (!giftName) return fail("Ingresa el nombre del receptor.");
+    if (!giftAddr) return fail("Selecciona la ubicación del receptor en el mapa.");
+    if (!giftRefs) return fail("Agrega referencias de entrega del regalo.");
+  } else {
+    if (!addr) return fail("Selecciona tu ubicación de entrega (GPS o mapa).");
+    if (!refs) return fail("Agrega las referencias de entrega.");
+  }
   if (!date) return fail("Selecciona la fecha de entrega.");
   if (orderType === "programada" && !subActive()) return fail("Solo los suscriptores pueden programar entregas recurrentes.");
   err.classList.add("hidden");
-  orderDetails = { type: orderType, date, window: win, address: orderType === "regalo" ? giftAddr : addr, giftAddress: giftAddr, giftMessage: giftMsg, freq };
+  orderDetails = {
+    type: orderType, date, window: win,
+    address: orderType === "regalo" ? giftAddr : addr,
+    references: orderType === "regalo" ? giftRefs : refs,
+    giftName, giftAddress: giftAddr, giftMessage: giftMsg, freq
+  };
   navigate("checkout");
 });
 
@@ -2598,12 +2692,16 @@ function createOrder(method) {
   const id = nextOrderCode();
   const u = currentUser() || { name: "Cliente Origen", email: "cliente@origen.bo", address: "Av. Principal 123, Edificio Los Pinos", zone: "Zona Sur" };
   const d = orderDetails || {};
+  // Coordenadas del destino (regalo = receptor; resto = ubicación del cliente)
+  const geo = d.type === "regalo" ? giftGeo : JSON.parse(localStorage.getItem("origen_geo") || "null");
   const order = {
     id, date: new Date().toISOString(), method,
     items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
     total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
     status: "Nuevo", assignedTo: null, type: d.type || "directa",
-    gift: d.type === "regalo" ? { address: d.giftAddress || "", message: d.giftMessage || "" } : null,
+    references: d.references || "",
+    lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
+    gift: d.type === "regalo" ? { name: d.giftName || "", address: d.giftAddress || "", message: d.giftMessage || "" } : null,
     freq: d.type === "programada" ? d.freq : null,
     customer: { name: u.name, email: u.email, address: d.address || u.address || "Av. Principal 123, Edificio Los Pinos", zone: u.zone || "Zona Sur" },
     deliveryDate: d.date || new Date().toISOString().slice(0, 10),
@@ -2627,7 +2725,10 @@ const mapDbOrder = (r, items) => ({
   riderLat: r.rider_lat != null ? Number(r.rider_lat) : null,
   riderLng: r.rider_lng != null ? Number(r.rider_lng) : null,
   type: r.order_type || "directa",
-  gift: r.gift_message ? { address: r.address || "", message: r.gift_message } : null,
+  references: r.delivery_refs || "",
+  lat: r.dest_lat != null ? Number(r.dest_lat) : null,
+  lng: r.dest_lng != null ? Number(r.dest_lng) : null,
+  gift: (r.gift_message || r.gift_name) ? { name: r.gift_name || "", address: r.address || "", message: r.gift_message || "" } : null,
   customer: { name: r.customer_name || "Cliente", email: r.customer_email || "", address: r.address || "", zone: r.zone || "Zona Sur" },
   deliveryDate: r.delivery_date, window: r.window || "09:00 – 11:00", history: []
 });
@@ -2636,7 +2737,7 @@ async function cloudCreateOrder(o) {
   try {
     let userId = null; try { const { data } = await SBX().auth.getUser(); userId = data && data.user ? data.user.id : null; } catch (e) {}
     const row = { code: o.id, user_id: userId, status: o.status, method: o.method, subtotal: o.subtotal, discount: o.discount, service_fee: o.serviceFee, delivery_fee: o.deliveryFee, delivery_km: o.deliveryKm, total: o.total, delivery_date: o.deliveryDate, "window": o.window, address: o.customer.address, zone: o.customer.zone, customer_name: o.customer.name, customer_email: o.customer.email };
-    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null });
+    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null, gift_name: o.gift ? o.gift.name : null, delivery_refs: o.references || null, dest_lat: o.lat, dest_lng: o.lng });
     let res = await SBX().from("orders").insert(full).select().single();
     if (res.error) res = await SBX().from("orders").insert(row).select().single(); // si faltan columnas extra, guarda sin ellas
     const { data, error } = res;
@@ -2653,10 +2754,10 @@ async function cloudCreateOrder(o) {
 async function hydrateOrders() {
   if (!SBX()) return false;
   try {
-    const prev = {}; orders.forEach(o => { if (o.type || o.gift || o.freq) prev[o.id] = { type: o.type, gift: o.gift, freq: o.freq }; });
+    const prev = {}; orders.forEach(o => { if (o.type || o.gift || o.freq || o.references || o.lat != null) prev[o.id] = { type: o.type, gift: o.gift, freq: o.freq, references: o.references, lat: o.lat, lng: o.lng }; });
     const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
     if (!error && data) {
-      orders = data.map(r => { const m = mapDbOrder(r, r.order_items); if (prev[m.id]) Object.assign(m, { type: prev[m.id].type || m.type, gift: prev[m.id].gift || m.gift, freq: prev[m.id].freq || m.freq }); return m; });
+      orders = data.map(r => { const m = mapDbOrder(r, r.order_items); if (prev[m.id]) Object.assign(m, { type: prev[m.id].type || m.type, gift: prev[m.id].gift || m.gift, freq: prev[m.id].freq || m.freq, references: m.references || prev[m.id].references || "", lat: m.lat != null ? m.lat : prev[m.id].lat, lng: m.lng != null ? m.lng : prev[m.id].lng }); return m; });
       saveOrders(); return true;
     }
   } catch (e) {}
@@ -2684,6 +2785,11 @@ function setupRealtime() {
     await hydrateOrders();
     notifyAdminNewOrders();
     if (current === "tracking") renderTracking(); if (current === "admin") renderAdmin();
+  }).subscribe();
+  // #5: si el admin cambia los métodos/comercio, el cliente lo refleja al instante
+  SBX().channel("origen-settings").on("postgres_changes", { event: "*", schema: "public", table: "app_settings" }, async () => {
+    await hydratePaySettings();
+    if (current === "checkout") renderCheckout();
   }).subscribe();
 }
 // Aviso al administrador cuando entra un nuevo pago/pedido
@@ -3105,6 +3211,7 @@ syncCart();
   await hydrateProducts();
   await hydrateOrders();
   await hydrateUsers();
+  await hydratePaySettings();
   setupRealtime();
   // Captura de referido (?ref=CODE) → se guarda para acreditar el beneficio
   const refBy = new URLSearchParams(location.search).get("ref");

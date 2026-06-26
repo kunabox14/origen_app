@@ -3187,7 +3187,7 @@ function approvalRow(item, kind, title, sub) {
   const badge = item.status === "aprobado" ? "bg-secondary-container text-on-secondary-container" : item.status === "pendiente" ? "bg-tertiary-fixed/40 text-secondary" : "bg-error-container text-on-error-container";
   const chip = (url, icon, label) => url ? `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 bg-surface-container-high text-secondary font-label-sm px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">${icon}</span>${label}</a>` : "";
   const mapUrl = (item.lat != null && item.lng != null) ? `https://www.google.com/maps?q=${item.lat},${item.lng}` : null;
-  const docs = [chip(item.id_doc_url, "badge", "Carnet"), chip(item.copy_doc_url, "description", "Fotocopia"), chip(mapUrl, "place", "Ubicación")].filter(Boolean).join("");
+  const docs = [chip(item.id_doc_url, "badge", "Carnet"), chip(item.copy_doc_url, "description", "Factura luz/agua"), chip(mapUrl, "place", "Ubicación")].filter(Boolean).join("");
   return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
     <div class="flex justify-between items-start gap-2"><div class="min-w-0"><p class="font-semibold text-primary truncate">${title}</p><p class="font-label-sm text-on-surface-variant truncate">${sub}</p></div><span class="${badge} text-[10px] font-bold uppercase px-2 py-1 rounded-full h-fit flex-shrink-0">${item.status}</span></div>
     ${docs ? `<div class="flex flex-wrap gap-2 mt-2">${docs}</div>` : ""}

@@ -94,22 +94,15 @@
         <div class="min-w-0"><p class="text-xs text-on-surface-variant">Cuenta de Google</p><p id="prov-complete-email" class="font-semibold text-primary truncate">—</p></div>
       </div>
       <div class="space-y-3">
-        <input id="prov-c-business" placeholder="Nombre del negocio / marca" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-        <input id="prov-c-phone" placeholder="Teléfono / WhatsApp (opcional)" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-        <label class="block">
-          <span class="text-sm text-on-surface-variant">Carnet de identidad (imagen o PDF) <span class="text-error">*</span></span>
-          <input id="prov-c-id" type="file" accept="image/*,application/pdf" class="mt-1 w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-secondary-container file:text-on-secondary-container file:font-semibold">
-        </label>
-        <label class="block">
-          <span class="text-sm text-on-surface-variant">Fotocopia (PDF) <span class="text-error">*</span></span>
-          <input id="prov-c-copy" type="file" accept="application/pdf" class="mt-1 w-full text-sm file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-secondary-container file:text-on-secondary-container file:font-semibold">
-        </label>
+        <input id="prov-c-manager" placeholder="Nombre del encargado" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <input id="prov-c-business" placeholder="Nombre de la tienda / marca" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <input id="prov-c-phone" type="tel" placeholder="WhatsApp" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
         <button id="prov-c-pick" type="button" class="w-full border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">map</span>Ubicación del negocio en el mapa <span class="text-error">*</span></button>
         <div id="prov-c-loc-display" class="hidden bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
           <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
           <p id="prov-c-loc-text" class="text-on-surface text-sm leading-snug"></p>
         </div>
-        <p id="prov-c-error" class="hidden text-error text-sm">Completa el nombre, los documentos y la ubicación.</p>
+        <p id="prov-c-error" class="hidden text-error text-sm">Completa el encargado, la tienda, el WhatsApp y la ubicación.</p>
         <button id="prov-c-submit" class="w-full bg-leaf-green text-white font-semibold py-4 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
         <button id="prov-c-cancel" class="w-full text-on-surface-variant font-semibold py-2">Cancelar</button>
       </div>
@@ -295,43 +288,28 @@ async function handleProviderSession(user){
   }catch(_){}
   // Proveedor nuevo → completar datos del negocio
   document.getElementById("prov-complete-email").textContent=email;
+  document.getElementById("prov-c-manager").value=(googleProfile && googleProfile.name) || "";
   document.getElementById("prov-c-business").value="";
   document.getElementById("prov-c-phone").value="";
-  document.getElementById("prov-c-id").value="";
-  document.getElementById("prov-c-copy").value="";
   document.getElementById("prov-c-loc-display").classList.add("hidden");
   completeGeo=null;
   document.getElementById("prov-c-error").classList.add("hidden");
   show("prov-complete");
 }
-// Subida de documentos a Supabase Storage (bucket "docs")
-async function uploadDoc(file, prefix){
-  if(!file||!SBX()) return null;
-  const ext=(file.name.split(".").pop()||"dat").toLowerCase();
-  const path=prefix+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,8)+"."+ext;
-  try{
-    const { error }=await SBX().storage.from("docs").upload(path, file, { upsert:true, contentType:file.type||undefined });
-    if(error) return null;
-    const { data }=SBX().storage.from("docs").getPublicUrl(path);
-    return data ? data.publicUrl : null;
-  }catch(_){ return null; }
-}
 let completeGeo=null;
 document.getElementById("prov-c-pick").addEventListener("click", ()=>openMap(completeGeo, (addr,pos)=>{ completeGeo=pos; document.getElementById("prov-c-loc-text").textContent=addr; document.getElementById("prov-c-loc-display").classList.remove("hidden"); }));
 document.getElementById("prov-c-submit").addEventListener("click", async ()=>{
+  const manager=document.getElementById("prov-c-manager").value.trim();
   const business=document.getElementById("prov-c-business").value.trim();
   const phone=document.getElementById("prov-c-phone").value.trim();
-  const idFile=document.getElementById("prov-c-id").files[0];
-  const copyFile=document.getElementById("prov-c-copy").files[0];
   const err=document.getElementById("prov-c-error");
-  if(!business || !idFile || !copyFile || !completeGeo){ err.textContent="Completa el nombre, los documentos y la ubicación."; err.classList.remove("hidden"); return; }
+  if(!manager || !business || !phone || !completeGeo){ err.classList.remove("hidden"); return; }
   if(!googleProfile||!SBX()){ toast("Inicia sesión con Google"); return; }
   err.classList.add("hidden");
-  const btn=document.getElementById("prov-c-submit"); btn.disabled=true; btn.textContent="Subiendo documentos…";
+  const btn=document.getElementById("prov-c-submit"); btn.disabled=true; btn.textContent="Enviando…";
   try{
-    const idUrl=await uploadDoc(idFile, "providers"); const copyUrl=await uploadDoc(copyFile, "providers");
     const addr=document.getElementById("prov-c-loc-text").textContent;
-    const ins=await SBX().from("providers").insert({ name:googleProfile.name, business, email:googleProfile.email, phone, status:"pendiente", lat:completeGeo.lat, lng:completeGeo.lng, address:addr, id_doc_url:idUrl, copy_doc_url:copyUrl }).select().single();
+    const ins=await SBX().from("providers").insert({ name:manager, business, email:googleProfile.email, phone, status:"pendiente", lat:completeGeo.lat, lng:completeGeo.lng, address:addr }).select().single();
     if(ins.error){ toast("No se pudo registrar"); btn.disabled=false; btn.textContent="Enviar para aprobación"; return; }
     provider=ins.data; localStorage.setItem("origen_provider",JSON.stringify(provider)); route();
   }catch(_){ toast("No se pudo registrar"); }

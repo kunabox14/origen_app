@@ -287,12 +287,17 @@ function startRiderLocation(){
     for(var i=0;i<active.length;i++){ try{ await SBX().from("orders").update({rider_lat:lat,rider_lng:lng}).eq("id",active[i].dbId); }catch(e){} }
   }, function(){}, {enableHighAccuracy:true, maximumAge:5000});
 }
+function riderLog(){ try{ console.log.apply(console, ["[Origen·Repartidor]"].concat([].slice.call(arguments))); }catch(_){} }
 let riderRealtimeSet=false;
 function setupRiderRealtime(){
   if(!SBX() || riderRealtimeSet) return; riderRealtimeSet=true;
-  SBX().channel("rider-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, async ()=>{
+  // Update 3: listener en tiempo real (Supabase Realtime) de la tabla de pedidos
+  SBX().channel("rider-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, async (payload)=>{
+    riderLog("evento pedido:", payload.eventType, payload.new && payload.new.code, "→", payload.new && payload.new.status);
     await hydrateRiderOrders(); checkNew(); renderApp();
-  }).subscribe();
+  }).subscribe(status=>riderLog("canal rider-orders:", status));
+  // Respaldo: re-hidrata de la nube cada 8s por si un evento se pierde (evita retrasos)
+  setInterval(async ()=>{ if(rider && SBX()){ await hydrateRiderOrders(); checkNew(); if(tab==="new"||tab==="mine") renderApp(); } }, 8000);
 }
 function renderApp(){
   const all = loadOrders();
@@ -470,7 +475,8 @@ function notifyOrder(o){
 }
 function checkNew(){
   const fresh = loadOrders().filter(o=>o.status==="Nuevo" && !seenNew.has(o.id));
-  fresh.forEach(o=>{ seenNew.add(o.id); notifyOrder(o); });
+  if(fresh.length) riderLog("nuevos pedidos detectados:", fresh.map(o=>o.id).join(", "));
+  fresh.forEach(o=>{ seenNew.add(o.id); notifyOrder(o); }); // seenNew evita notificaciones duplicadas
   if(fresh.length) renderApp();
 }
 // El cliente crea un pedido en otra pestaña → 'storage' dispara la notificación en vivo

@@ -140,7 +140,12 @@
         <h2 class="font-headline text-2xl text-primary">Mis productos</h2>
         <button id="prov-add" class="bg-leaf-green text-white font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nuevo</button>
       </div>
+      <div class="flex bg-surface-container-high rounded-full p-1 mb-4">
+        <button data-prodview="list" class="prod-view-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Gestión</button>
+        <button data-prodview="store" class="prod-view-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Mi tienda</button>
+      </div>
       <div id="prov-products" class="space-y-3"></div>
+      <div id="prov-store-preview" class="hidden"></div>
     </main>
   </section>
 
@@ -203,6 +208,19 @@
     <div id="map-div" class="w-full rounded-xl overflow-hidden bg-earth-cream" style="height:46vh"></div>
     <p id="map-addr" class="text-sm text-on-surface-variant mt-2 px-1 min-h-[1.25rem]"></p>
     <button id="map-confirm" class="mt-3 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Confirmar ubicación</button>
+  </div>
+</div>
+
+<!-- Modal de confirmación (eliminar) -->
+<div id="confirm-modal" class="hidden fixed inset-0 z-[150] flex items-center justify-center bg-deep-forest/50 backdrop-blur-sm px-6">
+  <div class="bg-surface w-full max-w-sm rounded-2xl p-6 text-center">
+    <div class="w-14 h-14 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-4"><span class="material-symbols-outlined text-error text-3xl">delete</span></div>
+    <h3 class="font-headline text-xl text-primary">¿Eliminar producto?</h3>
+    <p id="confirm-text" class="text-on-surface-variant mt-1 text-sm"></p>
+    <div class="flex gap-3 mt-6">
+      <button id="confirm-cancel" class="flex-1 border border-outline-variant text-on-surface font-semibold py-3 rounded-xl active:scale-95">Cancelar</button>
+      <button id="confirm-ok" class="flex-1 bg-error text-white font-semibold py-3 rounded-xl active:scale-95">Eliminar</button>
+    </div>
   </div>
 </div>
 
@@ -333,42 +351,122 @@ async function loadProducts(){
   PROV_PRODUCTS = prods;
   document.getElementById("prov-active-count").textContent = prods.filter(p=>p.active).length;
   document.getElementById("prov-pending-count").textContent = prods.filter(p=>!p.active).length;
-  loadProviderActive(prods);
-  const el=document.getElementById("prov-products");
-  el.innerHTML = prods.length ? prods.map(function(p){
+  loadProviderOrders(prods);
+  renderProdView();
+}
+let prodView = "list";
+function renderProdView(){
+  const prods = PROV_PRODUCTS;
+  const list = document.getElementById("prov-products");
+  const preview = document.getElementById("prov-store-preview");
+  document.querySelectorAll(".prod-view-tab").forEach(t=>{ const on=t.dataset.prodview===prodView; t.classList.toggle("bg-surface",on); t.classList.toggle("text-primary",on); t.classList.toggle("shadow-sm",on); t.classList.toggle("text-on-surface-variant",!on); });
+  list.classList.toggle("hidden", prodView!=="list");
+  preview.classList.toggle("hidden", prodView!=="store");
+  const empty = `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inventory_2</span><p class="mt-3">Aún no tienes productos. Agrega el primero.</p></div>`;
+  // Vista de gestión (con eliminar) — Update 1
+  list.innerHTML = prods.length ? prods.map(function(p){
     const approved=p.active;
     return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 flex items-center gap-3">
       <div class="w-14 h-14 rounded-lg overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.image_url||'assets/products/generic.svg'}" onerror="this.src='assets/products/generic.svg'" class="w-full h-full object-contain p-1"></div>
       <div class="flex-grow min-w-0"><p class="font-semibold text-primary truncate">${p.name}</p><p class="text-sm text-secondary">${bs(p.price)} · ${p.category||""}</p></div>
       <span class="${approved?'bg-secondary-container text-on-secondary-container':'bg-tertiary-fixed/40 text-secondary'} text-[10px] font-bold uppercase px-2 py-1 rounded-full">${approved?'Activo':'En revisión'}</span>
+      <button data-del-prod="${p.id}" data-del-name="${escapeAttr(p.name)}" class="text-on-surface-variant hover:text-error p-1.5 active:scale-90 transition-transform" aria-label="Eliminar"><span class="material-symbols-outlined text-[20px]">delete</span></button>
     </div>`;
-  }).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inventory_2</span><p class="mt-3">Aún no tienes productos. Agrega el primero.</p></div>`;
+  }).join("") : empty;
+  // Vista "Mi tienda" — preview tipo catálogo como lo ve el cliente — Update 5
+  preview.innerHTML = prods.length ? `<div class="grid grid-cols-2 gap-3">${prods.map(function(p){
+    const approved=p.active;
+    return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col ${approved?'':'opacity-60'}">
+      <div class="aspect-square relative bg-earth-cream"><img src="${p.image_url||'assets/products/generic.svg'}" onerror="this.src='assets/products/generic.svg'" class="w-full h-full object-contain p-3">
+        <span class="absolute top-2 left-2 ${approved?'bg-secondary-container text-on-secondary-container':'bg-tertiary-fixed/60 text-secondary'} text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">${approved?'Visible':'Inactivo'}</span></div>
+      <div class="p-3 flex-grow"><p class="font-semibold text-primary text-sm leading-tight">${p.name}</p><p class="text-xs text-on-surface-variant mt-0.5">${p.unit||""}${p.origin?" · "+p.origin:""}</p><p class="text-secondary font-semibold text-sm mt-1">${bs(p.price)}</p></div>
+    </div>`;
+  }).join("")}</div>
+  <p class="text-center text-xs text-on-surface-variant/70 mt-4">Así ven los clientes tu tienda. Los productos <b>Inactivos</b> están en revisión y no aparecen aún.</p>` : empty;
 }
-// Tarjeta "Pedido activo": último pedido que incluye productos de este proveedor.
-async function loadProviderActive(prods){
+function escapeAttr(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+document.addEventListener("click", e=>{
+  const tab=e.target.closest("[data-prodview]"); if(tab){ prodView=tab.dataset.prodview; renderProdView(); return; }
+  const del=e.target.closest("[data-del-prod]"); if(del){ askDeleteProduct(del.dataset.delProd, del.dataset.delName||"este producto"); return; }
+});
+// Eliminar producto con confirmación (Update 1)
+let pendingDeleteId=null;
+function askDeleteProduct(id, name){
+  pendingDeleteId=id;
+  document.getElementById("confirm-text").innerHTML = "Se quitará <b>"+escapeAttr(name)+"</b> de tu tienda y del catálogo. Esta acción no se puede deshacer.";
+  document.getElementById("confirm-modal").classList.remove("hidden");
+}
+document.getElementById("confirm-cancel").addEventListener("click", ()=>{ pendingDeleteId=null; document.getElementById("confirm-modal").classList.add("hidden"); });
+document.getElementById("confirm-modal").addEventListener("click", e=>{ if(e.target.id==="confirm-modal"){ pendingDeleteId=null; document.getElementById("confirm-modal").classList.add("hidden"); } });
+document.getElementById("confirm-ok").addEventListener("click", async ()=>{
+  if(!pendingDeleteId||!SBX()){ document.getElementById("confirm-modal").classList.add("hidden"); return; }
+  const id=pendingDeleteId; pendingDeleteId=null;
+  document.getElementById("confirm-modal").classList.add("hidden");
+  try{
+    await SBX().from("branch_inventory").delete().eq("product_id", id); // limpia stock asociado
+    const r=await SBX().from("products").delete().eq("id", id);
+    if(r.error){ toast("No se pudo eliminar"); return; }
+    toast("Producto eliminado"); await loadProducts(); // el catálogo del cliente se actualiza por realtime
+  }catch(_){ toast("No se pudo eliminar"); }
+});
+// Banner prioritario de pedidos por preparar (Update 2)
+function provHaversine(a,b){ const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180; const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
+const prepLabel = s => s==="listo" ? "Listo para recoger" : s==="preparando" ? "En preparación" : "Pendiente";
+let provSeenOrders=null;
+async function loadProviderOrders(prods){
   const el=document.getElementById("prov-active"); if(!el) return;
-  const ids=(prods||[]).map(p=>p.id).filter(Boolean);
+  const ids=(prods||PROV_PRODUCTS||[]).map(p=>p.id).filter(Boolean);
   if(!ids.length||!SBX()){ el.innerHTML=""; return; }
   try{
     const it=await SBX().from("order_items").select("order_id,name,qty,product_id").in("product_id",ids);
     const items=it.data||[];
     if(!items.length){ el.innerHTML=""; return; }
     const orderIds=[...new Set(items.map(i=>i.order_id))].filter(Boolean);
-    const or=await SBX().from("orders").select("id,code,status,total,zone,created_at").in("id",orderIds).order("created_at",{ascending:false}).limit(1);
-    const o=(or.data||[])[0];
-    if(!o){ el.innerHTML=""; return; }
-    const mine=items.filter(i=>i.order_id===o.id);
-    const qty=mine.reduce((s,i)=>s+(i.qty||1),0);
-    const names=mine.map(i=>i.name).filter(Boolean).join(", ");
-    const done=o.status==="Entregado"||o.status==="Cancelado";
-    el.innerHTML=`<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-5">
-      <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-leaf-green">${done?"check_circle":"local_shipping"}</span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">${done?"Último pedido":"Pedido activo"}</span></div>
-      <p class="font-headline text-xl">${o.code||("#"+String(o.id).slice(0,8))} · ${o.status}</p>
-      <p class="text-sm">${qty} u. de tus productos${o.zone?" · "+o.zone:""}</p>
-      ${names?`<p class="text-xs text-on-surface-variant mt-1 truncate">${names}</p>`:""}
-    </div>`;
+    const or=await SBX().from("orders").select("*").in("id",orderIds).order("created_at",{ascending:false});
+    const allOrders=or.data||[];
+    const active=allOrders.filter(o=>o.status!=="Entregado"&&o.status!=="Cancelado");
+    // Notificación inmediata de nuevo pedido
+    const activeIds=new Set(active.map(o=>o.id));
+    if(provSeenOrders!==null){ active.forEach(o=>{ if(!provSeenOrders.has(o.id)){ toast("¡Nuevo pedido por preparar!"); try{ if("Notification" in window && Notification.permission==="granted") new Notification("Nuevo pedido Origen", { body:(o.code||"")+" · prepáralo", icon:"assets/icon-192.png" }); }catch(_){} } }); }
+    provSeenOrders=activeIds;
+    if(!active.length){
+      const last=allOrders[0];
+      el.innerHTML = last ? `<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-4 flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green">check_circle</span><div><p class="text-xs font-bold text-leaf-green uppercase tracking-wider">Último pedido</p><p class="font-semibold">${last.code||""} · ${last.status}</p></div></div>` : "";
+      return;
+    }
+    el.innerHTML = active.map(o=>{
+      const mine=items.filter(i=>i.order_id===o.id);
+      const qty=mine.reduce((s,i)=>s+(i.qty||1),0);
+      const names=mine.map(i=>i.name).filter(Boolean).join(", ");
+      const prep=o.prep_status||"pendiente";
+      let eta="Repartidor por asignar";
+      if(o.rider_lat!=null && o.pickup_lat!=null){ const min=Math.max(1,Math.round(provHaversine({lat:Number(o.rider_lat),lng:Number(o.rider_lng)},{lat:Number(o.pickup_lat),lng:Number(o.pickup_lng)})/18*60)); eta="Repartidor llega en ~"+min+" min"; }
+      else if(o.assigned_rider){ eta="Repartidor en camino a recoger"; }
+      const steps=["pendiente","preparando","listo"];
+      const stepBar=steps.map((s,i)=>`<div class="flex-1 h-1.5 rounded-full ${steps.indexOf(prep)>=i?'bg-leaf-green':'bg-white/25'}"></div>`).join("");
+      const btn = prep==="pendiente"
+        ? `<button data-prep="${o.id}" data-prep-to="preparando" class="mt-3 w-full bg-leaf-green text-deep-forest font-bold py-3 rounded-xl active:scale-[0.98] transition-transform">Empezar preparación</button>`
+        : prep==="preparando"
+        ? `<button data-prep="${o.id}" data-prep-to="listo" class="mt-3 w-full bg-leaf-green text-deep-forest font-bold py-3 rounded-xl active:scale-[0.98] transition-transform">Marcar como listo</button>`
+        : `<div class="mt-3 w-full bg-leaf-green/20 text-leaf-green font-bold py-3 rounded-xl text-center flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[20px]">inventory_2</span>Listo para recoger</div>`;
+      return `<div class="bg-primary-container text-on-primary rounded-2xl p-5 mb-3 border-2 border-leaf-green shadow-lg">
+        <div class="flex items-center gap-2 mb-1"><span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-leaf-green opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-leaf-green"></span></span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">Tienes un pedido por preparar</span></div>
+        <p class="font-headline text-2xl leading-tight">${o.code||("#"+String(o.id).slice(0,8))}</p>
+        <p class="text-sm text-on-primary-container">${qty} u. de tus productos${o.zone?" · "+o.zone:""}</p>
+        ${names?`<p class="text-xs text-on-primary-container/80 mt-1">${names}</p>`:""}
+        <div class="flex items-center gap-2 mt-3 text-sm text-leaf-green"><span class="material-symbols-outlined text-[18px]">two_wheeler</span>${eta}</div>
+        <div class="flex gap-1.5 mt-3">${stepBar}</div>
+        <p class="text-[11px] text-on-primary-container/70 mt-1 uppercase tracking-wider">${prepLabel(prep)}</p>
+        ${btn}
+      </div>`;
+    }).join("");
   }catch(_){ el.innerHTML=""; }
 }
+document.addEventListener("click", async e=>{
+  const pb=e.target.closest("[data-prep]"); if(!pb) return;
+  const id=pb.dataset.prep, to=pb.dataset.prepTo;
+  try{ await SBX().from("orders").update({prep_status:to}).eq("id",id); toast(to==="listo"?"Pedido listo para recoger":"Pedido en preparación"); await loadProviderOrders(); }catch(_){ toast("No se pudo actualizar"); }
+});
 /* ============ Sucursales y stock por sucursal (#8) ============ */
 let PROV_PRODUCTS = [], PROV_BRANCHES = [], editingBranchId = null, branchGeo = null;
 async function loadBranches(){
@@ -494,8 +592,12 @@ document.addEventListener("click", e=>{
 let provRealtime=false;
 function setupRealtime(){
   if(!SBX()||provRealtime) return; provRealtime=true;
+  try{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); }catch(_){}
   SBX().channel("prov-products").on("postgres_changes",{event:"*",schema:"public",table:"products"},loadProducts).subscribe();
   SBX().channel("prov-branches").on("postgres_changes",{event:"*",schema:"public",table:"branches"},loadBranches).subscribe();
+  // Update 2/3: pedidos entrantes en tiempo real → refresca el banner del proveedor
+  SBX().channel("prov-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, ()=>loadProviderOrders()).subscribe();
+  SBX().channel("prov-order-items").on("postgres_changes",{event:"*",schema:"public",table:"order_items"}, ()=>loadProviderOrders()).subscribe();
   SBX().channel("prov-self").on("postgres_changes",{event:"*",schema:"public",table:"providers"}, async ()=>{ await refreshProvider(); if(provider.status!=="aprobado") route(); }).subscribe();
 }
 

@@ -85,6 +85,8 @@
       <p class="text-sm text-on-surface">Almacén Origen · Av. Costanera 450, La Paz</p>
     </div>
 
+    <div id="rider-active" class="px-5 pt-4"></div>
+
     <nav id="rider-tabs" class="bg-background sticky top-16 z-30 flex gap-1 px-2 py-2 border-b border-outline-variant/20"></nav>
 
     <main class="px-5 py-5">
@@ -200,6 +202,7 @@ function setupRiderRealtime(){
 }
 function renderApp(){
   const all = loadOrders();
+  renderRiderActive(all);
   const newCount = all.filter(o=>o.status==="Nuevo").length;
   document.getElementById("rider-tabs").innerHTML = TABS.map(t=>{
     const on=t.id===tab;
@@ -214,6 +217,20 @@ function renderApp(){
   if(tab==="done") list = all.filter(o=>o.assignedTo===rider && o.status==="Entregado");
   if(!list.length){ c.innerHTML=`<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inbox</span><p class="mt-3">${tab==="new"?"No hay pedidos nuevos por ahora.":tab==="mine"?"No tienes entregas en curso.":"Aún no has entregado pedidos."}</p></div>`; return; }
   c.innerHTML = list.map(orderCard).join("");
+}
+// Tarjeta "Pedido activo": la entrega en curso del repartidor
+function renderRiderActive(all){
+  const el=document.getElementById("rider-active"); if(!el) return;
+  const active = all.find(o=>o.assignedTo===rider && ["Asignado","Recogido","En camino"].indexOf(o.status)>-1);
+  const o = active || all.filter(o=>o.assignedTo===rider && o.status==="Entregado")[0];
+  if(!o){ el.innerHTML=""; return; }
+  const inProgress=!!active;
+  el.innerHTML=`<div class="bg-primary-container text-on-primary rounded-2xl p-5">
+    <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-leaf-green">${inProgress?"local_shipping":"check_circle"}</span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">${inProgress?"Pedido en camino":"Última entrega"}</span></div>
+    <p class="font-headline text-xl">${o.id} · ${o.status}</p>
+    <p class="text-sm text-on-primary-container">${o.customer.name} · ${o.customer.address}</p>
+    ${inProgress?`<button data-go-mine class="mt-3 w-full bg-leaf-green text-primary-container font-semibold py-2.5 rounded-lg active:scale-[0.98] transition-transform">Continuar entrega</button>`:""}
+  </div>`;
 }
 // Ganancias del repartidor: suma de tarifas de delivery
 function renderEarn(all){
@@ -246,6 +263,7 @@ function renderEarn(all){
 }
 document.addEventListener("click", e=>{
   const t=e.target.closest("[data-rtab]"); if(t){ tab=t.dataset.rtab; renderApp(); return; }
+  if(e.target.closest("[data-go-mine]")){ tab="mine"; renderApp(); return; }
   const act=e.target.closest("[data-advance]"); if(act){ advance(act.dataset.advance); return; }
   const ch=e.target.closest("[data-chat]"); if(ch){ const o=loadOrders().find(x=>x.id===ch.dataset.chat); openRiderChat(ch.dataset.chat, o?o.customer.name:"Cliente"); return; }
   if(e.target.closest("#rider-payout")){

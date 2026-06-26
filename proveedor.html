@@ -85,6 +85,7 @@
       <button id="prov-logout" class="text-on-primary/70 hover:text-white flex items-center gap-1 text-sm"><span class="material-symbols-outlined text-[20px]">logout</span></button>
     </header>
     <main class="px-5 py-5">
+      <div id="prov-active" class="mb-5"></div>
       <div class="grid grid-cols-2 gap-3 mb-5">
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
@@ -197,6 +198,7 @@ async function loadProducts(){
   const prods=r.data||[];
   document.getElementById("prov-active-count").textContent = prods.filter(p=>p.active).length;
   document.getElementById("prov-pending-count").textContent = prods.filter(p=>!p.active).length;
+  loadProviderActive(prods);
   const el=document.getElementById("prov-products");
   el.innerHTML = prods.length ? prods.map(function(p){
     const approved=p.active;
@@ -206,6 +208,31 @@ async function loadProducts(){
       <span class="${approved?'bg-secondary-container text-on-secondary-container':'bg-tertiary-fixed/40 text-secondary'} text-[10px] font-bold uppercase px-2 py-1 rounded-full">${approved?'Activo':'En revisión'}</span>
     </div>`;
   }).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inventory_2</span><p class="mt-3">Aún no tienes productos. Agrega el primero.</p></div>`;
+}
+// Tarjeta "Pedido activo": último pedido que incluye productos de este proveedor.
+async function loadProviderActive(prods){
+  const el=document.getElementById("prov-active"); if(!el) return;
+  const ids=(prods||[]).map(p=>p.id).filter(Boolean);
+  if(!ids.length||!SBX()){ el.innerHTML=""; return; }
+  try{
+    const it=await SBX().from("order_items").select("order_id,name,qty,product_id").in("product_id",ids);
+    const items=it.data||[];
+    if(!items.length){ el.innerHTML=""; return; }
+    const orderIds=[...new Set(items.map(i=>i.order_id))].filter(Boolean);
+    const or=await SBX().from("orders").select("id,code,status,total,zone,created_at").in("id",orderIds).order("created_at",{ascending:false}).limit(1);
+    const o=(or.data||[])[0];
+    if(!o){ el.innerHTML=""; return; }
+    const mine=items.filter(i=>i.order_id===o.id);
+    const qty=mine.reduce((s,i)=>s+(i.qty||1),0);
+    const names=mine.map(i=>i.name).filter(Boolean).join(", ");
+    const done=o.status==="Entregado"||o.status==="Cancelado";
+    el.innerHTML=`<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-leaf-green">${done?"check_circle":"local_shipping"}</span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">${done?"Último pedido":"Pedido activo"}</span></div>
+      <p class="font-headline text-xl">${o.code||("#"+String(o.id).slice(0,8))} · ${o.status}</p>
+      <p class="text-sm">${qty} u. de tus productos${o.zone?" · "+o.zone:""}</p>
+      ${names?`<p class="text-xs text-on-surface-variant mt-1 truncate">${names}</p>`:""}
+    </div>`;
+  }catch(_){ el.innerHTML=""; }
 }
 let provRealtime=false;
 function setupRealtime(){

@@ -1,5 +1,5 @@
 // Service Worker ORIGEN — cache del shell para que la app funcione offline (PWA instalable).
-const CACHE = "origen-v12";
+const CACHE = "origen-v13";
 const CORE = [
   "./",
   "./index.html",
@@ -37,8 +37,10 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const isHTML = req.mode === "navigate" || url.pathname.endsWith(".html");
-  // HTML: network-first (siempre la última versión; cache solo como respaldo offline).
-  if (isHTML) {
+  // La config (claves, googleEnabled, links) NUNCA debe quedar vieja en caché.
+  const isConfig = url.pathname.endsWith("supabase-config.js");
+  // HTML y config: network-first (siempre la última versión; cache solo como respaldo offline).
+  if (isHTML || isConfig) {
     e.respondWith(
       fetch(req).then(res => { const c = res.clone(); caches.open(CACHE).then(ca => ca.put(req, c)).catch(() => {}); return res; })
         .catch(() => caches.match(req).then(r => r || caches.match("./index.html")))

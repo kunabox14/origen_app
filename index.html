@@ -357,7 +357,7 @@
     <section class="space-y-4">
       <div class="flex justify-between items-end">
         <h3 class="font-headline-sm text-headline-sm text-primary">Recomendados para ti</h3>
-        <a data-nav="catalog" class="cursor-pointer font-label-md text-label-md text-secondary hover:underline">Ver todo</a>
+        <a data-nav="stores" class="cursor-pointer font-label-md text-label-md text-secondary hover:underline">Ver todo</a>
       </div>
       <div id="home-reco" class="flex overflow-x-auto no-scrollbar -mx-margin-mobile px-margin-mobile gap-gutter pb-4"></div>
     </section>
@@ -400,7 +400,8 @@
 </section>
 
 <!-- ===================== CATALOG ===================== -->
-<section id="screen-catalog" class="screen pb-28">
+<!-- ===================== TIENDAS (lista de proveedores) ===================== -->
+<section id="screen-stores" class="screen pb-28">
   <nav class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
     <div class="flex items-center gap-3">
       <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
@@ -411,12 +412,43 @@
       <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
     </button>
   </nav>
+  <main class="pt-6 px-margin-mobile">
+    <h1 class="font-headline-md text-headline-md text-primary mb-1">Tiendas</h1>
+    <p class="text-on-surface-variant mb-6">Compra directo de productores y tiendas orgánicas.</p>
+    <div class="relative w-full mb-6 group">
+      <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors">search</span>
+      <input id="stores-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar tiendas..." type="text">
+    </div>
+    <section id="stores-featured-wrap" class="hidden mb-8">
+      <h2 class="font-headline-sm text-headline-sm text-primary mb-3">Tiendas destacadas</h2>
+      <div id="stores-featured" class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-margin-mobile px-margin-mobile"></div>
+    </section>
+    <h2 class="font-headline-sm text-headline-sm text-primary mb-3">Todas las tiendas</h2>
+    <div id="stores-list" class="space-y-4"></div>
+  </main>
+</section>
+
+<!-- ===================== TIENDA (catálogo de una tienda) ===================== -->
+<section id="screen-catalog" class="screen pb-28">
+  <nav class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
+    <div class="flex items-center gap-3 min-w-0">
+      <button data-nav="stores" class="text-secondary active:scale-95 transition-transform flex-shrink-0"><span class="material-symbols-outlined">arrow_back</span></button>
+      <div class="min-w-0">
+        <p id="store-view-name" class="font-headline-sm text-headline-sm text-primary leading-none truncate">Tienda</p>
+        <p id="store-view-sub" class="font-label-sm text-on-surface-variant"></p>
+      </div>
+    </div>
+    <button data-nav="basket" class="basket-btn relative text-secondary active:scale-95 transition-transform flex-shrink-0">
+      <span class="material-symbols-outlined">shopping_basket</span>
+      <span class="cart-badge hidden absolute -top-1.5 -right-1.5 bg-leaf-green text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+    </button>
+  </nav>
 
   <main class="pt-6 px-margin-mobile">
     <header class="mb-8">
       <div class="relative w-full mb-6 group">
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors">search</span>
-        <input id="catalog-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar productos orgánicos..." type="text">
+        <input id="catalog-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar en esta tienda..." type="text">
       </div>
       <div id="catalog-chips" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-margin-mobile px-margin-mobile"></div>
     </header>
@@ -428,7 +460,7 @@
 <section id="screen-basket" class="screen flex flex-col" style="min-height:100dvh">
   <header class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
     <div class="flex items-center gap-3">
-      <button data-nav="catalog" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
+      <button data-nav="stores" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
       <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
     </div>
     <button class="basket-btn relative text-secondary">
@@ -544,7 +576,7 @@
       </div>
       <h2 class="font-headline-sm text-headline-sm text-primary mb-2">Tu canasta está vacía</h2>
       <p class="text-on-surface-variant max-w-xs mb-8">Descubre productos orgánicos seleccionados directamente desde el origen.</p>
-      <button data-nav="catalog" class="bg-leaf-green text-white font-label-md py-3 px-8 rounded-full active:scale-95 transition-transform">Explorar catálogo</button>
+      <button data-nav="stores" class="bg-leaf-green text-white font-label-md py-3 px-8 rounded-full active:scale-95 transition-transform">Explorar catálogo</button>
     </div>
   </main>
 
@@ -967,7 +999,7 @@
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Entrega a domicilio</li>
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Acumula puntos</li>
       </ul>
-      <button data-nav="catalog" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Comprar suelto</button>
+      <button data-nav="stores" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Comprar suelto</button>
     </div>
 
     <!-- Mensual (recomendado) -->
@@ -998,7 +1030,7 @@
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Selección personalizada</li>
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Empaque especial</li>
       </ul>
-      <button data-nav="catalog" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Armar regalo</button>
+      <button data-nav="stores" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Armar regalo</button>
     </div>
 
     <div class="bg-sprout-green/15 border border-sprout-green/30 rounded-xl p-4 flex gap-3">
@@ -1208,7 +1240,7 @@
       <div class="flex gap-3">
         <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Origen</label><input id="pm-origin" placeholder="Valle Central" class="mt-1 w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary"></div>
         <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Categoría</label>
-          <select id="pm-cat" class="mt-1 w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Despensa</option><option>Superfoods</option><option>Snacks</option></select>
+          <select id="pm-cat" class="mt-1 w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Superfoods</option><option>Despensa</option><option>Snacks</option><option>Bebidas</option><option>Carnes vegetales</option><option>Granos</option></select>
         </div>
       </div>
       <div><label class="font-label-sm text-on-surface-variant">Etiqueta</label>
@@ -1246,8 +1278,8 @@
   <a data-nav="home" data-tab="home" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
     <span class="material-symbols-outlined">home</span><span class="font-label-sm-mobile text-label-sm-mobile">Inicio</span>
   </a>
-  <a data-nav="catalog" data-tab="catalog" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
-    <span class="material-symbols-outlined">potted_plant</span><span class="font-label-sm-mobile text-label-sm-mobile">Catálogo</span>
+  <a data-nav="stores" data-tab="stores" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
+    <span class="material-symbols-outlined">storefront</span><span class="font-label-sm-mobile text-label-sm-mobile">Tiendas</span>
   </a>
   <a data-nav="scanner" data-tab="scanner" class="nav-tab flex flex-col items-center justify-center px-4 py-1 cursor-pointer transition-all duration-200">
     <span class="material-symbols-outlined">qr_code_scanner</span><span class="font-label-sm-mobile text-label-sm-mobile">Scanner</span>
@@ -1712,7 +1744,7 @@ function renderAccount() {
 function renderOrders() {
   const el = document.getElementById("orders-list");
   const mine = userOrders();
-  if (!mine.length) { el.innerHTML = `<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">receipt_long</span><p class="mt-3">Aún no tienes pedidos.</p><button data-nav="catalog" class="mt-4 bg-leaf-green text-white font-label-md py-2.5 px-6 rounded-full">Explorar catálogo</button></div>`; return; }
+  if (!mine.length) { el.innerHTML = `<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">receipt_long</span><p class="mt-3">Aún no tienes pedidos.</p><button data-nav="stores" class="mt-4 bg-leaf-green text-white font-label-md py-2.5 px-6 rounded-full">Explorar catálogo</button></div>`; return; }
   el.innerHTML = mine.map(o => `
     <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
       <div class="flex justify-between items-center mb-1"><span class="font-body-md font-bold text-primary">${o.id}</span><span class="bg-secondary-container text-on-secondary-container text-label-sm font-label-md px-2 py-0.5 rounded-full">${o.status}</span></div>
@@ -2125,18 +2157,89 @@ function productCardReco(p) {
 }
 
 /* ============ Render catálogo + home ============ */
+/* ============ Tiendas: proveedores como unidad principal (#6) ============ */
+let CLOUD_PROVIDERS = []; // proveedores aprobados (para featured / nueva / descripción)
+async function hydrateProviders() {
+  if (!SBX()) return;
+  try { const { data, error } = await SBX().from("providers").select("*").eq("status", "aprobado"); if (!error && data) CLOUD_PROVIDERS = data; } catch (e) {}
+}
+const providerMeta = name => CLOUD_PROVIDERS.find(p => (p.business || p.name) === name) || null;
+const STORE_CATEGORIES = ["Todos", "Superfoods", "Despensa", "Snacks", "Bebidas", "Carnes vegetales", "Granos"];
+// Agrupa los productos activos por tienda; los productos sin proveedor → tienda oficial "Origen".
+function storeList() {
+  const map = {};
+  activeProducts().forEach(p => { const key = p.providerName || "Origen"; if (!map[key]) map[key] = { name: key, products: [] }; map[key].products.push(p); });
+  return Object.values(map).map(s => {
+    const isOrigen = s.name === "Origen";
+    const meta = isOrigen ? null : providerMeta(s.name);
+    const isNew = meta && meta.created_at ? (Date.now() - new Date(meta.created_at).getTime()) < 30 * 864e5 : false;
+    const featured = isOrigen || (meta && meta.featured === true) || isNew;
+    return {
+      name: s.name, count: s.products.length, products: s.products,
+      logo: isOrigen ? "assets/origen-logo.svg" : (meta && meta.logo_url) || null,
+      description: isOrigen ? "Selección oficial Origen" : (meta && meta.description) || "Productos orgánicos seleccionados",
+      featured, isNew, isOrigen
+    };
+  }).sort((a, b) => (b.featured - a.featured) || (b.count - a.count));
+}
+function storeInitials(name) { return name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase(); }
+function storeCardWide(s) {
+  const badges = [];
+  if (s.isNew) badges.push('<span class="bg-sprout-green text-deep-forest text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Nueva</span>');
+  if (s.featured && !s.isNew) badges.push('<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Destacada</span>');
+  return `<button data-store="${encodeURIComponent(s.name)}" class="w-full text-left bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-4 hover:border-secondary transition-colors active:scale-[0.99]">
+    <div class="w-14 h-14 rounded-xl bg-earth-cream flex items-center justify-center overflow-hidden flex-shrink-0">${s.logo ? `<img src="${s.logo}" class="w-full h-full object-contain p-1.5" onerror="imgFail(this)">` : `<span class="font-headline-sm text-secondary">${storeInitials(s.name)}</span>`}</div>
+    <div class="flex-grow min-w-0">
+      <div class="flex items-center gap-2 flex-wrap"><p class="font-headline-sm text-[16px] text-primary truncate">${s.name}</p>${badges.join("")}</div>
+      <p class="font-label-sm text-on-surface-variant truncate">${s.description}</p>
+      <p class="font-label-sm text-secondary mt-0.5">${s.count} producto${s.count !== 1 ? "s" : ""} · Visitar tienda</p>
+    </div>
+    <span class="material-symbols-outlined text-secondary flex-shrink-0">chevron_right</span>
+  </button>`;
+}
+function storeCardFeatured(s) {
+  return `<button data-store="${encodeURIComponent(s.name)}" class="min-w-[170px] w-[170px] flex-shrink-0 text-left bg-primary-container text-on-primary rounded-2xl p-4 active:scale-[0.98] transition-transform">
+    <div class="w-12 h-12 rounded-xl bg-earth-cream flex items-center justify-center overflow-hidden mb-3">${s.logo ? `<img src="${s.logo}" class="w-full h-full object-contain p-1.5" onerror="imgFail(this)">` : `<span class="font-headline-sm text-secondary">${storeInitials(s.name)}</span>`}</div>
+    <p class="font-headline-sm text-[15px] leading-tight">${s.name}</p>
+    <p class="font-label-sm text-leaf-green mt-1">${s.isNew ? "Nueva tienda" : "Destacada"}</p>
+    <p class="font-label-sm text-on-primary-container mt-2">${s.count} producto${s.count !== 1 ? "s" : ""}</p>
+    <span class="mt-3 inline-flex items-center gap-1 text-leaf-green font-label-md">Visitar tienda <span class="material-symbols-outlined text-[18px]">arrow_forward</span></span>
+  </button>`;
+}
+function renderStores() {
+  const q = (document.getElementById("stores-search").value || "").toLowerCase();
+  const stores = storeList().filter(s => s.name.toLowerCase().includes(q));
+  const featured = stores.filter(s => s.featured).slice(0, 8);
+  const fw = document.getElementById("stores-featured-wrap");
+  if (featured.length && !q) { fw.classList.remove("hidden"); document.getElementById("stores-featured").innerHTML = featured.map(storeCardFeatured).join(""); }
+  else fw.classList.add("hidden");
+  const list = document.getElementById("stores-list");
+  list.innerHTML = stores.length ? stores.map(storeCardWide).join("") : `<p class="text-center text-on-surface-variant py-12">No encontramos tiendas.</p>`;
+}
+let activeStore = null;
+function openStore(name) { activeStore = name; activeCat = "Todos"; const cs = document.getElementById("catalog-search"); if (cs) cs.value = ""; navigate("catalog"); }
+
+/* ============ Tienda: catálogo de una sola tienda ============ */
 let activeCat = "Todos";
 function renderCatalog() {
-  const cats = ["Todos", "Despensa", "Superfoods", "Snacks"];
-  document.getElementById("catalog-chips").innerHTML = cats.map(c => {
+  if (!activeStore) { // entrada directa sin tienda → vuelve a la lista
+    const stores = storeList(); if (stores.length) { activeStore = stores[0].name; } else { navigate("stores"); return; }
+  }
+  const storeName = activeStore;
+  const all = activeProducts().filter(p => (p.providerName || "Origen") === storeName);
+  document.getElementById("store-view-name").textContent = storeName;
+  document.getElementById("store-view-sub").textContent = all.length + " producto" + (all.length !== 1 ? "s" : "");
+  const present = STORE_CATEGORIES.filter(c => c === "Todos" || all.some(p => p.cat === c));
+  if (!present.includes(activeCat)) activeCat = "Todos";
+  document.getElementById("catalog-chips").innerHTML = present.map(c => {
     const on = c === activeCat;
     return `<button data-cat="${c}" class="flex-none px-5 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary shadow-sm" : "bg-surface-container-high text-on-surface-variant hover:bg-outline-variant"}">${c}</button>`;
   }).join("");
   const q = (document.getElementById("catalog-search").value || "").toLowerCase();
-  const list = activeProducts().filter(p => (activeCat === "Todos" || p.cat === activeCat) && p.name.toLowerCase().includes(q));
+  const list = all.filter(p => (activeCat === "Todos" || p.cat === activeCat) && p.name.toLowerCase().includes(q));
   const grid = document.getElementById("catalog-grid");
   grid.innerHTML = list.length ? list.map(productCardCatalog).join("")
-    : `<p class="col-span-2 text-center text-on-surface-variant py-12">No encontramos productos para tu búsqueda.</p>`;
+    : `<p class="col-span-2 text-center text-on-surface-variant py-12">No encontramos productos en esta tienda.</p>`;
 }
 // Pedidos del usuario actual (para métricas, últimas compras, favoritos)
 function userOrders() { const u = currentUser(); if (!u) return []; return orders.filter(o => o.customer && o.customer.email === u.email); }
@@ -2331,7 +2434,7 @@ function renderOrderDetails() {
 }
 
 /* ============ Router ============ */
-const TABS = ["home", "catalog", "scanner", "account"];
+const TABS = ["home", "stores", "catalog", "scanner", "account"];
 const NO_NAV = ["welcome", "register", "auth", "otp", "basket", "confirmed", "checkout", "admin", "plans", "schedule", "orders", "favorites", "referrals", "settings", "yapas", "chat", "support"];
 let current = "welcome";
 function navigate(screen) {
@@ -2350,9 +2453,9 @@ function navigate(screen) {
   nav.classList.toggle("hidden", NO_NAV.includes(screen));
   nav.classList.toggle("flex", !NO_NAV.includes(screen));
 
-  // Estado activo de tabs
+  // Estado activo de tabs (la vista de una tienda mantiene activa la pestaña "Tiendas")
   document.querySelectorAll(".nav-tab").forEach(t => {
-    const on = t.dataset.tab === screen;
+    const on = t.dataset.tab === screen || (t.dataset.tab === "stores" && screen === "catalog");
     t.classList.toggle("bg-secondary-container", on);
     t.classList.toggle("text-on-secondary-container", on);
     t.classList.toggle("rounded-full", on);
@@ -2363,6 +2466,7 @@ function navigate(screen) {
   });
 
   if (screen === "home") renderHome();
+  if (screen === "stores") renderStores();
   if (screen === "catalog") renderCatalog();
   if (screen === "basket") renderBasket();
   if (screen === "scanner") runScanner();
@@ -2502,6 +2606,12 @@ document.addEventListener("click", e => {
 });
 
 document.getElementById("catalog-search").addEventListener("input", renderCatalog);
+document.getElementById("stores-search").addEventListener("input", renderStores);
+// Abrir una tienda al tocar su tarjeta
+document.addEventListener("click", e => {
+  const st = e.target.closest("[data-store]");
+  if (st) { openStore(decodeURIComponent(st.dataset.store)); }
+});
 
 // Registro → bienvenida → home
 document.getElementById("register-next").addEventListener("click", () => {
@@ -2779,7 +2889,11 @@ function setupRealtime() {
   if (!SBX() || realtimeSet) return; realtimeSet = true;
   SBX().channel("origen-products").on("postgres_changes", { event: "*", schema: "public", table: "products" }, async () => {
     await hydrateProducts();
-    if (current === "catalog") renderCatalog(); if (current === "home") renderHome(); if (current === "admin") renderAdmin();
+    if (current === "stores") renderStores(); if (current === "catalog") renderCatalog(); if (current === "home") renderHome(); if (current === "admin") renderAdmin();
+  }).subscribe();
+  SBX().channel("origen-providers").on("postgres_changes", { event: "*", schema: "public", table: "providers" }, async () => {
+    await hydrateProviders();
+    if (current === "stores") renderStores(); if (current === "admin") renderAdmin();
   }).subscribe();
   SBX().channel("origen-orders").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, async () => {
     await hydrateOrders();
@@ -3209,6 +3323,7 @@ syncCart();
   // Datos desde la nube (con respaldo local si falla)
   await cloudSeedIfEmpty();
   await hydrateProducts();
+  await hydrateProviders();
   await hydrateOrders();
   await hydrateUsers();
   await hydratePaySettings();

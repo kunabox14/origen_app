@@ -1609,7 +1609,7 @@ function renderTracking() {
 let mapsLoaded = false, mapsLoading = null, trackMap = null, riderMarker = null, destMarker = null;
 const WAREHOUSE = { lat: -16.5100, lng: -68.1050 }; // Almacén Origen, La Paz
 const ZONE_COORDS = { "Zona Sur": { lat: -16.5400, lng: -68.0800 }, "Calacoto": { lat: -16.5450, lng: -68.0790 }, "Miraflores": { lat: -16.4970, lng: -68.1180 }, "Centro": { lat: -16.5000, lng: -68.1330 }, "Sopocachi": { lat: -16.5120, lng: -68.1240 } };
-const destFor = o => ZONE_COORDS[o.customer.zone] || { lat: -16.5000, lng: -68.1300 };
+const destFor = o => (o.lat != null && o.lng != null) ? { lat: Number(o.lat), lng: Number(o.lng) } : (ZONE_COORDS[o.customer.zone] || { lat: -16.5000, lng: -68.1300 });
 function haversine(a, b) { const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180; const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
 function loadMaps() {
   if (mapsLoaded) return Promise.resolve(true);
@@ -1680,6 +1680,7 @@ function applyLocation(target, addressText, pos) {
     document.getElementById("order-loc-display").classList.remove("hidden");
     localStorage.setItem("origen_geo", JSON.stringify(pos));
   }
+  if (current === "basket") renderBasket(); // recalcula delivery con la distancia a la sucursal
 }
 document.getElementById("pick-location").addEventListener("click", () => openPicker("order"));
 document.getElementById("gift-pick").addEventListener("click", () => openPicker("gift"));
@@ -2067,10 +2068,12 @@ function cartTotals() {
   const isSub = subActive();
   const potentialDisc = sub * DISCOUNT;     // lo que ahorraría un suscriptor
   const disc = isSub ? potentialDisc : 0;   // el descuento del 12% es un beneficio del suscriptor
-  const km = deliveryKmFor();
+  // #9/#10: la sucursal elegida define el origen y la distancia → costo de delivery por tramos.
+  const pickup = cart.length ? selectPickup(clientGeoNow()) : null;
+  const km = (pickup && pickup.maxDist != null) ? pickup.maxDist : deliveryKmFor();
   const delivery = cart.length ? deliveryFeeForKm(km) : 0;
   const service = cart.length ? SERVICE_FEE : 0;
-  return { sub, disc, potentialDisc, isSub, service, delivery, km, total: sub - disc + service + delivery };
+  return { sub, disc, potentialDisc, isSub, service, delivery, km, pickup, total: sub - disc + service + delivery };
 }
 let cart = JSON.parse(localStorage.getItem("origen_cart") || "[]");
 const saveCart = () => localStorage.setItem("origen_cart", JSON.stringify(cart));
@@ -2164,6 +2167,42 @@ async function hydrateProviders() {
   try { const { data, error } = await SBX().from("providers").select("*").eq("status", "aprobado"); if (!error && data) CLOUD_PROVIDERS = data; } catch (e) {}
 }
 const providerMeta = name => CLOUD_PROVIDERS.find(p => (p.business || p.name) === name) || null;
+/* ---- Sucursales y stock (#9 selección inteligente / #7 origen=sucursal) ---- */
+let CLOUD_BRANCHES = [], CLOUD_INVENTORY = [];
+async function hydrateBranches() {
+  if (!SBX()) return;
+  try {
+    const b = await SBX().from("branches").select("*").eq("active", true); if (b.data) CLOUD_BRANCHES = b.data;
+    const inv = await SBX().from("branch_inventory").select("*"); if (inv.data) CLOUD_INVENTORY = inv.data;
+  } catch (e) {}
+}
+const stockAt = (branchId, productId) => { const e = CLOUD_INVENTORY.find(x => x.branch_id === branchId && x.product_id === productId); return e ? e.stock : 0; };
+// Mejor sucursal para los items de una tienda: con stock completo y la más cercana al cliente.
+function selectBranchForStore(storeName, items, clientGeo) {
+  const warehouse = { name: "Almacén Origen", lat: WAREHOUSE.lat, lng: WAREHOUSE.lng, distanceKm: clientGeo ? haversine(WAREHOUSE, clientGeo) : null, full: true };
+  if (storeName === "Origen") return warehouse;
+  const meta = providerMeta(storeName); if (!meta) return warehouse;
+  const branches = CLOUD_BRANCHES.filter(b => b.provider_id === meta.id && b.lat != null);
+  if (!branches.length) return Object.assign({}, warehouse, { name: meta.business || meta.name, full: false });
+  const scored = branches.map(b => ({
+    branch: b,
+    full: items.every(it => stockAt(b.id, it.id) >= it.qty),
+    dist: clientGeo ? haversine({ lat: Number(b.lat), lng: Number(b.lng) }, clientGeo) : 0
+  }));
+  scored.sort((a, b) => (b.full - a.full) || (a.dist - b.dist)); // primero las que tienen el pedido completo; luego la más cercana
+  const best = scored[0];
+  return { name: best.branch.name, lat: Number(best.branch.lat), lng: Number(best.branch.lng), distanceKm: clientGeo ? best.dist : null, full: best.full };
+}
+// Pickup del carrito completo: agrupa por tienda, elige sucursal por tienda; distancia = el tramo más largo.
+function selectPickup(clientGeo) {
+  const groups = {};
+  cart.forEach(l => { const p = findProduct(l.id); if (!p) return; const store = p.providerName || "Origen"; (groups[store] = groups[store] || []).push({ id: l.id, qty: l.qty }); });
+  const picks = Object.keys(groups).map(store => Object.assign({ store }, selectBranchForStore(store, groups[store], clientGeo)));
+  if (!picks.length) return null;
+  const dists = picks.map(p => p.distanceKm).filter(d => d != null);
+  return { picks, primary: picks[0], maxDist: dists.length ? Math.max(...dists) : null };
+}
+const clientGeoNow = () => (typeof orderType !== "undefined" && orderType === "regalo") ? (typeof giftGeo !== "undefined" ? giftGeo : null) : JSON.parse(localStorage.getItem("origen_geo") || "null");
 const STORE_CATEGORIES = ["Todos", "Superfoods", "Despensa", "Snacks", "Bebidas", "Carnes vegetales", "Granos"];
 // Agrupa los productos activos por tienda; los productos sin proveedor → tienda oficial "Origen".
 function storeList() {
@@ -2804,12 +2843,15 @@ function createOrder(method) {
   const d = orderDetails || {};
   // Coordenadas del destino (regalo = receptor; resto = ubicación del cliente)
   const geo = d.type === "regalo" ? giftGeo : JSON.parse(localStorage.getItem("origen_geo") || "null");
+  // #7/#9: sucursal de origen elegida (la más cercana con stock completo)
+  const pickup = t.pickup && t.pickup.primary ? t.pickup.primary : null;
   const order = {
     id, date: new Date().toISOString(), method,
     items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
     total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
     status: "Nuevo", assignedTo: null, type: d.type || "directa",
     references: d.references || "",
+    pickup: pickup ? { name: pickup.name, lat: pickup.lat, lng: pickup.lng } : null,
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
     gift: d.type === "regalo" ? { name: d.giftName || "", address: d.giftAddress || "", message: d.giftMessage || "" } : null,
     freq: d.type === "programada" ? d.freq : null,
@@ -2836,6 +2878,7 @@ const mapDbOrder = (r, items) => ({
   riderLng: r.rider_lng != null ? Number(r.rider_lng) : null,
   type: r.order_type || "directa",
   references: r.delivery_refs || "",
+  pickup: r.pickup_branch ? { name: r.pickup_branch, lat: r.pickup_lat != null ? Number(r.pickup_lat) : null, lng: r.pickup_lng != null ? Number(r.pickup_lng) : null } : null,
   lat: r.dest_lat != null ? Number(r.dest_lat) : null,
   lng: r.dest_lng != null ? Number(r.dest_lng) : null,
   gift: (r.gift_message || r.gift_name) ? { name: r.gift_name || "", address: r.address || "", message: r.gift_message || "" } : null,
@@ -2847,7 +2890,7 @@ async function cloudCreateOrder(o) {
   try {
     let userId = null; try { const { data } = await SBX().auth.getUser(); userId = data && data.user ? data.user.id : null; } catch (e) {}
     const row = { code: o.id, user_id: userId, status: o.status, method: o.method, subtotal: o.subtotal, discount: o.discount, service_fee: o.serviceFee, delivery_fee: o.deliveryFee, delivery_km: o.deliveryKm, total: o.total, delivery_date: o.deliveryDate, "window": o.window, address: o.customer.address, zone: o.customer.zone, customer_name: o.customer.name, customer_email: o.customer.email };
-    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null, gift_name: o.gift ? o.gift.name : null, delivery_refs: o.references || null, dest_lat: o.lat, dest_lng: o.lng });
+    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null, gift_name: o.gift ? o.gift.name : null, delivery_refs: o.references || null, dest_lat: o.lat, dest_lng: o.lng, pickup_branch: o.pickup ? o.pickup.name : null, pickup_lat: o.pickup ? o.pickup.lat : null, pickup_lng: o.pickup ? o.pickup.lng : null });
     let res = await SBX().from("orders").insert(full).select().single();
     if (res.error) res = await SBX().from("orders").insert(row).select().single(); // si faltan columnas extra, guarda sin ellas
     const { data, error } = res;
@@ -2864,10 +2907,10 @@ async function cloudCreateOrder(o) {
 async function hydrateOrders() {
   if (!SBX()) return false;
   try {
-    const prev = {}; orders.forEach(o => { if (o.type || o.gift || o.freq || o.references || o.lat != null) prev[o.id] = { type: o.type, gift: o.gift, freq: o.freq, references: o.references, lat: o.lat, lng: o.lng }; });
+    const prev = {}; orders.forEach(o => { if (o.type || o.gift || o.freq || o.references || o.lat != null || o.pickup) prev[o.id] = { type: o.type, gift: o.gift, freq: o.freq, references: o.references, lat: o.lat, lng: o.lng, pickup: o.pickup }; });
     const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
     if (!error && data) {
-      orders = data.map(r => { const m = mapDbOrder(r, r.order_items); if (prev[m.id]) Object.assign(m, { type: prev[m.id].type || m.type, gift: prev[m.id].gift || m.gift, freq: prev[m.id].freq || m.freq, references: m.references || prev[m.id].references || "", lat: m.lat != null ? m.lat : prev[m.id].lat, lng: m.lng != null ? m.lng : prev[m.id].lng }); return m; });
+      orders = data.map(r => { const m = mapDbOrder(r, r.order_items); if (prev[m.id]) Object.assign(m, { type: prev[m.id].type || m.type, gift: prev[m.id].gift || m.gift, freq: prev[m.id].freq || m.freq, references: m.references || prev[m.id].references || "", lat: m.lat != null ? m.lat : prev[m.id].lat, lng: m.lng != null ? m.lng : prev[m.id].lng, pickup: m.pickup || prev[m.id].pickup || null }); return m; });
       saveOrders(); return true;
     }
   } catch (e) {}
@@ -2895,6 +2938,8 @@ function setupRealtime() {
     await hydrateProviders();
     if (current === "stores") renderStores(); if (current === "admin") renderAdmin();
   }).subscribe();
+  SBX().channel("origen-branches").on("postgres_changes", { event: "*", schema: "public", table: "branches" }, hydrateBranches).subscribe();
+  SBX().channel("origen-inventory").on("postgres_changes", { event: "*", schema: "public", table: "branch_inventory" }, hydrateBranches).subscribe();
   SBX().channel("origen-orders").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, async () => {
     await hydrateOrders();
     notifyAdminNewOrders();
@@ -3324,6 +3369,7 @@ syncCart();
   await cloudSeedIfEmpty();
   await hydrateProducts();
   await hydrateProviders();
+  await hydrateBranches();
   await hydrateOrders();
   await hydrateUsers();
   await hydratePaySettings();

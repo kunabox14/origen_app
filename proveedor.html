@@ -130,6 +130,13 @@
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
       </div>
       <div class="flex items-center justify-between mb-3">
+        <h2 class="font-headline text-2xl text-primary">Mis sucursales</h2>
+        <button id="prov-add-branch" class="bg-leaf-green text-white font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nueva</button>
+      </div>
+      <p class="text-sm text-on-surface-variant mb-3">Cada sucursal tiene su ubicación y su propio stock. El sistema elige la sucursal más cercana con el pedido completo.</p>
+      <div id="prov-branches" class="space-y-3 mb-8"></div>
+
+      <div class="flex items-center justify-between mb-3">
         <h2 class="font-headline text-2xl text-primary">Mis productos</h2>
         <button id="prov-add" class="bg-leaf-green text-white font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nuevo</button>
       </div>
@@ -158,6 +165,44 @@
       <p id="pv-error" class="hidden text-error text-sm">Completa nombre y precio.</p>
       <button id="pv-save" class="w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
     </div>
+  </div>
+</div>
+
+<!-- Modal sucursal -->
+<div id="branch-modal" class="hidden fixed inset-0 z-[120] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6">
+    <div class="flex items-center justify-between mb-5"><h2 id="branch-title" class="font-headline text-2xl text-primary">Nueva sucursal</h2><button id="branch-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="space-y-4">
+      <input id="branch-name" placeholder="Nombre de la sucursal (ej. Casa matriz)" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      <select id="branch-zone" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Zona Sur</option><option>Miraflores</option><option>Centro</option><option>Sopocachi</option><option>San Miguel</option><option>Calacoto</option></select>
+      <button id="branch-pick" type="button" class="w-full border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">map</span>Ubicación en el mapa</button>
+      <div id="branch-loc-display" class="hidden bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
+        <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
+        <p id="branch-loc-text" class="text-on-surface text-sm leading-snug"></p>
+      </div>
+      <p id="branch-error" class="hidden text-error text-sm">Completa el nombre y la ubicación en el mapa.</p>
+      <button id="branch-save" class="w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Guardar sucursal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal stock por sucursal -->
+<div id="stock-modal" class="hidden fixed inset-0 z-[120] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6">
+    <div class="flex items-center justify-between mb-2"><h2 class="font-headline text-2xl text-primary">Stock de la sucursal</h2><button id="stock-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+    <p id="stock-branch-name" class="text-sm text-leaf-green font-semibold mb-4"></p>
+    <div id="stock-list" class="space-y-2"></div>
+    <button id="stock-save" class="mt-5 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Guardar stock</button>
+  </div>
+</div>
+
+<!-- Selector de mapa (compartido) -->
+<div id="map-modal" class="hidden fixed inset-0 z-[140] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
+  <div class="bg-surface w-full max-w-[440px] rounded-t-3xl p-4">
+    <div class="flex items-center justify-between mb-2 px-1"><p class="font-semibold text-primary">Toca el mapa para fijar la ubicación</p><button id="map-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+    <div id="map-div" class="w-full rounded-xl overflow-hidden bg-earth-cream" style="height:46vh"></div>
+    <p id="map-addr" class="text-sm text-on-surface-variant mt-2 px-1 min-h-[1.25rem]"></p>
+    <button id="map-confirm" class="mt-3 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Confirmar ubicación</button>
   </div>
 </div>
 
@@ -279,12 +324,13 @@ async function logout(){ localStorage.removeItem("origen_provider"); provider=nu
 // DASHBOARD
 async function enterApp(){
   document.getElementById("prov-bizname").textContent = provider.business||"";
-  show("prov-app"); await loadProducts(); setupRealtime();
+  show("prov-app"); await loadProducts(); await loadBranches(); setupRealtime();
 }
 async function loadProducts(){
   if(!SBX()) return;
   const r=await SBX().from("products").select("*").eq("provider_id",provider.id).order("created_at",{ascending:false});
   const prods=r.data||[];
+  PROV_PRODUCTS = prods;
   document.getElementById("prov-active-count").textContent = prods.filter(p=>p.active).length;
   document.getElementById("prov-pending-count").textContent = prods.filter(p=>!p.active).length;
   loadProviderActive(prods);
@@ -323,10 +369,133 @@ async function loadProviderActive(prods){
     </div>`;
   }catch(_){ el.innerHTML=""; }
 }
+/* ============ Sucursales y stock por sucursal (#8) ============ */
+let PROV_PRODUCTS = [], PROV_BRANCHES = [], editingBranchId = null, branchGeo = null;
+async function loadBranches(){
+  if(!SBX()||!provider) return;
+  try{
+    const r = await SBX().from("branches").select("*").eq("provider_id", provider.id).order("created_at");
+    PROV_BRANCHES = r.data || [];
+    if(!PROV_BRANCHES.length){ // siembra una sucursal por defecto la primera vez
+      const def = { provider_id: provider.id, name:"Casa matriz", zone:"Zona Sur", lat: provider.lat||-16.5400, lng: provider.lng||-68.0800, address:"" };
+      const ins = await SBX().from("branches").insert(def).select().single();
+      if(ins.data){ PROV_BRANCHES=[ins.data]; await seedBranchStock(ins.data.id); }
+    }
+  }catch(_){ PROV_BRANCHES=[]; }
+  renderBranches();
+}
+async function seedBranchStock(branchId){ // stock inicial para que se pueda vender de inmediato
+  try{
+    const prods = PROV_PRODUCTS.length ? PROV_PRODUCTS : ((await SBX().from("products").select("id").eq("provider_id",provider.id)).data||[]);
+    if(prods.length) await SBX().from("branch_inventory").upsert(prods.map(p=>({ branch_id:branchId, product_id:p.id, stock:20 })), { onConflict:"branch_id,product_id" });
+  }catch(_){}
+}
+function renderBranches(){
+  const el=document.getElementById("prov-branches"); if(!el) return;
+  el.innerHTML = PROV_BRANCHES.length ? PROV_BRANCHES.map(b=>`
+    <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-secondary">store</span>
+        <div class="flex-grow min-w-0"><p class="font-semibold text-primary truncate">${b.name||"Sucursal"}</p><p class="text-xs text-on-surface-variant truncate">${b.zone||""}${b.lat?` · ${Number(b.lat).toFixed(4)}, ${Number(b.lng).toFixed(4)}`:" · Sin ubicación"}</p></div>
+      </div>
+      <div class="flex gap-2 mt-3">
+        <button data-branch-stock="${b.id}" class="flex-1 bg-secondary-container text-on-secondary-container text-sm font-semibold py-2 rounded-lg flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[18px]">inventory</span>Stock</button>
+        <button data-branch-edit="${b.id}" class="flex-1 border border-outline-variant text-on-surface text-sm font-semibold py-2 rounded-lg flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[18px]">edit_location</span>Ubicación</button>
+      </div>
+    </div>`).join("") : `<div class="text-center py-8 text-on-surface-variant"><span class="material-symbols-outlined text-4xl text-outline-variant">store</span><p class="mt-2">Agrega tu primera sucursal.</p></div>`;
+}
+function openBranchModal(branch){
+  editingBranchId = branch ? branch.id : null;
+  branchGeo = branch && branch.lat ? { lat:Number(branch.lat), lng:Number(branch.lng) } : null;
+  document.getElementById("branch-title").textContent = branch ? "Editar sucursal" : "Nueva sucursal";
+  document.getElementById("branch-name").value = branch ? (branch.name||"") : "";
+  document.getElementById("branch-zone").value = branch ? (branch.zone||"Zona Sur") : "Zona Sur";
+  const disp=document.getElementById("branch-loc-display");
+  if(branchGeo){ document.getElementById("branch-loc-text").textContent = (branch&&branch.address) || (branchGeo.lat.toFixed(5)+", "+branchGeo.lng.toFixed(5)); disp.classList.remove("hidden"); }
+  else disp.classList.add("hidden");
+  document.getElementById("branch-error").classList.add("hidden");
+  document.getElementById("branch-modal").classList.remove("hidden");
+}
+document.getElementById("prov-add-branch").addEventListener("click", ()=>openBranchModal(null));
+document.getElementById("branch-close").addEventListener("click", ()=>document.getElementById("branch-modal").classList.add("hidden"));
+document.getElementById("branch-modal").addEventListener("click", e=>{ if(e.target.id==="branch-modal") document.getElementById("branch-modal").classList.add("hidden"); });
+document.getElementById("branch-pick").addEventListener("click", ()=>openMap(branchGeo, (addr,pos)=>{ branchGeo=pos; document.getElementById("branch-loc-text").textContent=addr; document.getElementById("branch-loc-display").classList.remove("hidden"); }));
+document.getElementById("branch-save").addEventListener("click", async ()=>{
+  const name=document.getElementById("branch-name").value.trim();
+  const zone=document.getElementById("branch-zone").value;
+  if(!name || !branchGeo){ document.getElementById("branch-error").classList.remove("hidden"); return; }
+  const addr=document.getElementById("branch-loc-text").textContent;
+  const row={ provider_id:provider.id, name, zone, lat:branchGeo.lat, lng:branchGeo.lng, address:addr };
+  try{
+    if(editingBranchId){ await SBX().from("branches").update(row).eq("id",editingBranchId); }
+    else { const ins=await SBX().from("branches").insert(row).select().single(); if(ins.data) await seedBranchStock(ins.data.id); }
+    document.getElementById("branch-modal").classList.add("hidden"); toast("Sucursal guardada"); await loadBranches();
+  }catch(_){ toast("No se pudo guardar"); }
+});
+
+// Selector de mapa (compartido)
+let mapsLoaded=false, mapsLoading=null, mapObj=null, mapMarker=null, mapPos=null, mapOnConfirm=null;
+function loadMaps(){
+  if(mapsLoaded) return Promise.resolve(true);
+  if(mapsLoading) return mapsLoading;
+  const key=window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.mapsKey; if(!key) return Promise.resolve(false);
+  mapsLoading=new Promise(res=>{ window.__provMapsCb=()=>{ mapsLoaded=true; res(true); }; const s=document.createElement("script"); s.src="https://maps.googleapis.com/maps/api/js?key="+key+"&callback=__provMapsCb&loading=async"; s.async=true; s.onerror=()=>res(false); document.head.appendChild(s); });
+  return mapsLoading;
+}
+async function openMap(initial, onConfirm){
+  mapOnConfirm=onConfirm; mapPos=initial||null;
+  document.getElementById("map-modal").classList.remove("hidden");
+  const ok=await loadMaps(); const div=document.getElementById("map-div");
+  if(!ok||!window.google){ div.innerHTML=`<div class="w-full h-full flex items-center justify-center text-on-surface-variant"><span class="material-symbols-outlined mr-2">map</span>Mapa no disponible</div>`; return; }
+  const center=initial||{lat:-16.5000,lng:-68.1300};
+  if(!mapObj){ mapObj=new google.maps.Map(div,{center,zoom:14,disableDefaultUI:true,gestureHandling:"greedy",clickableIcons:false}); mapObj.addListener("click",ev=>setMapPin(ev.latLng.lat(),ev.latLng.lng())); }
+  else { google.maps.event.trigger(mapObj,"resize"); mapObj.setCenter(center); }
+  if(initial) setMapPin(initial.lat,initial.lng);
+  else if(navigator.geolocation) navigator.geolocation.getCurrentPosition(p=>{ const c={lat:p.coords.latitude,lng:p.coords.longitude}; mapObj.setCenter(c); setMapPin(c.lat,c.lng); }, ()=>{});
+}
+function setMapPin(lat,lng){
+  mapPos={lat,lng};
+  if(!mapMarker) mapMarker=new google.maps.Marker({map:mapObj,draggable:true});
+  mapMarker.setPosition(mapPos); mapObj.panTo(mapPos);
+  document.getElementById("map-addr").textContent=lat.toFixed(5)+", "+lng.toFixed(5);
+  try{ new google.maps.Geocoder().geocode({location:mapPos},(res,st)=>{ if(st==="OK"&&res&&res[0]) document.getElementById("map-addr").textContent=res[0].formatted_address; }); }catch(_){}
+}
+document.getElementById("map-close").addEventListener("click", ()=>document.getElementById("map-modal").classList.add("hidden"));
+document.getElementById("map-confirm").addEventListener("click", ()=>{ if(mapPos&&mapOnConfirm) mapOnConfirm(document.getElementById("map-addr").textContent, mapPos); document.getElementById("map-modal").classList.add("hidden"); });
+
+// Stock por sucursal
+let stockBranchId=null;
+async function openStockModal(branchId){
+  stockBranchId=branchId;
+  const branch=PROV_BRANCHES.find(b=>b.id===branchId);
+  document.getElementById("stock-branch-name").textContent = branch ? branch.name : "";
+  const prods=(await SBX().from("products").select("id,name").eq("provider_id",provider.id)).data||[];
+  const inv=(await SBX().from("branch_inventory").select("product_id,stock").eq("branch_id",branchId)).data||[];
+  const stockOf=id=>{ const e=inv.find(x=>x.product_id===id); return e?e.stock:0; };
+  const list=document.getElementById("stock-list");
+  list.innerHTML = prods.length ? prods.map(p=>`
+    <div class="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-3 py-2">
+      <p class="flex-grow min-w-0 text-primary truncate">${p.name}</p>
+      <input type="number" min="0" data-stock-prod="${p.id}" value="${stockOf(p.id)}" class="w-20 h-9 px-2 text-center rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary">
+    </div>`).join("") : `<p class="text-center text-on-surface-variant py-6">Agrega productos primero.</p>`;
+  document.getElementById("stock-modal").classList.remove("hidden");
+}
+document.getElementById("stock-close").addEventListener("click", ()=>document.getElementById("stock-modal").classList.add("hidden"));
+document.getElementById("stock-save").addEventListener("click", async ()=>{
+  if(!stockBranchId) return;
+  const rows=[...document.querySelectorAll("[data-stock-prod]")].map(inp=>({ branch_id:stockBranchId, product_id:inp.dataset.stockProd, stock:Math.max(0,parseInt(inp.value||"0",10)) }));
+  try{ if(rows.length) await SBX().from("branch_inventory").upsert(rows,{onConflict:"branch_id,product_id"}); toast("Stock actualizado"); document.getElementById("stock-modal").classList.add("hidden"); }catch(_){ toast("No se pudo guardar"); }
+});
+document.addEventListener("click", e=>{
+  const st=e.target.closest("[data-branch-stock]"); if(st){ openStockModal(st.dataset.branchStock); return; }
+  const ed=e.target.closest("[data-branch-edit]"); if(ed){ const b=PROV_BRANCHES.find(x=>x.id===ed.dataset.branchEdit); openBranchModal(b); return; }
+});
+
 let provRealtime=false;
 function setupRealtime(){
   if(!SBX()||provRealtime) return; provRealtime=true;
   SBX().channel("prov-products").on("postgres_changes",{event:"*",schema:"public",table:"products"},loadProducts).subscribe();
+  SBX().channel("prov-branches").on("postgres_changes",{event:"*",schema:"public",table:"branches"},loadBranches).subscribe();
   SBX().channel("prov-self").on("postgres_changes",{event:"*",schema:"public",table:"providers"}, async ()=>{ await refreshProvider(); if(provider.status!=="aprobado") route(); }).subscribe();
 }
 

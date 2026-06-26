@@ -108,8 +108,8 @@
     </header>
 
     <div class="bg-sprout-green/20 border-b border-sprout-green/30 px-5 py-3 flex items-center gap-2">
-      <span class="material-symbols-outlined text-secondary">warehouse</span>
-      <p class="text-sm text-on-surface">Almacén Origen · Av. Costanera 450, La Paz</p>
+      <span class="material-symbols-outlined text-secondary">store</span>
+      <p class="text-sm text-on-surface">Recoge cada pedido en la tienda/sucursal indicada</p>
     </div>
 
     <div id="rider-active" class="px-5 pt-4"></div>
@@ -157,6 +157,7 @@ const mapOrder = r => ({
   id: r.code, dbId: r.id, status: r.status, method: r.method, assignedTo: r.assigned_rider || null,
   customer: { name: r.customer_name || "Cliente", address: r.address || "", zone: r.zone || "Zona Sur" },
   references: r.delivery_refs || "", giftName: r.gift_name || "", type: r.order_type || "directa",
+  pickup: r.pickup_branch ? { name: r.pickup_branch, lat: r.pickup_lat, lng: r.pickup_lng } : null,
   window: r.window || "09:00 – 11:00", items: (r.order_items || []).map(i => ({ name: i.name, qty: i.qty })),
   total: Number(r.total), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0)
 });
@@ -415,6 +416,7 @@ function orderCard(o){
       <span class="font-bold text-primary">${o.id}</span>
       <span class="bg-sprout-green/20 text-secondary text-xs font-semibold px-2 py-0.5 rounded-full">${o.status}</span>
     </div>
+    ${o.pickup?`<p class="text-sm text-secondary flex items-center gap-1 mb-1"><span class="material-symbols-outlined text-[15px]">store</span><b>Recoger en:</b> ${escapeHtmlR(o.pickup.name)}</p>`:""}
     <p class="font-semibold text-primary">${o.customer.name}${o.type==="regalo"&&o.giftName?` <span class="text-xs font-normal text-secondary">🎁 para ${escapeHtmlR(o.giftName)}</span>`:""}</p>
     <p class="text-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">location_on</span>${o.customer.address}</p>
     <p class="text-sm text-on-surface-variant flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[15px]">map</span>${o.customer.zone} · ${o.window}</p>

@@ -45,28 +45,48 @@
         <span class="bg-primary-container text-leaf-green text-xs font-bold uppercase tracking-wider px-2 py-1 rounded">Repartidor</span>
       </div>
       <h1 class="font-headline text-3xl text-primary text-center mt-6 mb-2">Hola, repartidor</h1>
-      <p class="text-on-surface-variant text-center mb-8">Inicia sesión para ver los pedidos asignados a tu ruta.</p>
-      <label class="text-sm text-on-surface-variant">Selecciona tu perfil</label>
-      <div id="rider-list" class="grid gap-2 mt-2 mb-4"></div>
-      <button id="rider-register-toggle" class="w-full text-secondary font-semibold py-2 mb-2">Soy nuevo · registrarme</button>
-      <div id="rider-register" class="hidden space-y-3 bg-surface-container-lowest border border-outline-variant rounded-2xl p-4">
-        <input id="reg-name" placeholder="Tu nombre completo" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-        <input id="reg-phone" placeholder="Teléfono / WhatsApp" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-        <select id="reg-zone" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Zona Sur</option><option>Miraflores</option><option>Centro</option><option>Sopocachi</option></select>
-        <p id="reg-error" class="hidden text-error text-sm">Completa tu nombre y teléfono.</p>
-        <button id="reg-submit" class="w-full bg-leaf-green text-white font-semibold py-3 rounded-xl active:scale-95 transition-transform">Enviar solicitud</button>
+      <p class="text-on-surface-variant text-center mb-8">Inicia sesión con tu cuenta de Google para registrarte y ver los pedidos de tu ruta.</p>
+
+      <button id="rider-google" class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl py-3.5 flex items-center justify-center gap-3 font-semibold text-on-surface hover:border-secondary transition-colors active:scale-95">
+        <svg class="w-5 h-5" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.6 34.6 26.9 36 24 36c-5.2 0-9.6-3.3-11.2-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.5 5.5C39.9 36.5 44 31 44 24c0-1.3-.1-2.3-.4-3.5z"/></svg>
+        Continuar con Google
+      </button>
+      <p class="text-center text-xs text-on-surface-variant/70 mt-3">El equipo Origen aprueba cada cuenta antes de activar tu ruta.</p>
+
+      <div class="flex items-center gap-3 my-6"><div class="flex-1 h-px bg-outline-variant/40"></div><span class="text-xs text-on-surface-variant/60">modo demo</span><div class="flex-1 h-px bg-outline-variant/40"></div></div>
+
+      <button id="rider-demo-toggle" class="w-full text-secondary font-semibold py-2 text-sm">Entrar con un perfil de prueba</button>
+      <div id="rider-demo" class="hidden mt-2">
+        <label class="text-sm text-on-surface-variant">Selecciona un perfil demo</label>
+        <div id="rider-list" class="grid gap-2 mt-2"></div>
+        <p class="text-center text-xs text-on-surface-variant/60 mt-2">Solo para demostración. Los repartidores reales ingresan con Google.</p>
       </div>
-      <p class="text-center text-xs text-on-surface-variant/60 mt-2">Los repartidores son aprobados por el equipo Origen.</p>
     </div>
   </section>
 
-  <!-- PENDIENTE de aprobación -->
+  <!-- PENDIENTE de aprobación / onboarding -->
   <section id="rider-pending" class="scr flex flex-col items-center justify-center px-5 text-center" style="min-height:100dvh">
     <div class="w-full max-w-sm">
-      <div class="w-20 h-20 rounded-full bg-sprout-green/30 flex items-center justify-center mx-auto mb-6"><span class="material-symbols-outlined text-secondary text-4xl">hourglass_top</span></div>
-      <h1 class="font-headline text-3xl text-primary">Solicitud en revisión</h1>
-      <p class="text-on-surface-variant mt-2">Gracias por registrarte. El equipo de Origen revisará tu cuenta de repartidor y te avisará al aprobarla.</p>
-      <button id="rider-pending-back" class="mt-6 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Volver al inicio</button>
+      <div id="rider-pending-icon" class="w-20 h-20 rounded-full bg-sprout-green/30 flex items-center justify-center mx-auto mb-6"><span class="material-symbols-outlined text-secondary text-4xl">hourglass_top</span></div>
+      <h1 id="rider-pending-title" class="font-headline text-3xl text-primary">Activa tu cuenta</h1>
+      <p id="rider-pending-text" class="text-on-surface-variant mt-2">Gracias por registrarte. El equipo de Origen revisará tu cuenta de repartidor y la activará pronto.</p>
+
+      <div class="bg-surface-container-lowest border border-outline-variant rounded-2xl p-4 mt-6 text-left">
+        <p class="text-xs text-on-surface-variant">Tu cuenta</p>
+        <p id="rider-pending-email" class="font-semibold text-primary truncate">—</p>
+        <div id="rider-pending-zone" class="mt-3">
+          <label class="text-xs text-on-surface-variant">Tu zona de reparto</label>
+          <select id="rider-pending-zone-select" class="w-full h-11 px-3 mt-1 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Zona Sur</option><option>Miraflores</option><option>Centro</option><option>Sopocachi</option></select>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-2 mt-4 text-left bg-sprout-green/15 rounded-xl p-3">
+        <span class="material-symbols-outlined text-secondary text-[20px]">info</span>
+        <p class="text-sm text-on-surface-variant">Cuando el admin te apruebe, toca <b>“Ya estoy aprobado”</b> para entrar a tu ruta.</p>
+      </div>
+
+      <button id="rider-pending-refresh" class="mt-5 w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Ya estoy aprobado · Actualizar</button>
+      <button id="rider-pending-back" class="mt-2 w-full text-on-surface-variant font-semibold py-2.5">Cerrar sesión</button>
     </div>
   </section>
 
@@ -158,18 +178,83 @@ document.addEventListener("click", e=>{
   const r = e.target.closest("[data-rider]");
   if(r){ rider=r.dataset.rider; sessionStorage.setItem("origen_rider",rider); enterApp(); }
 });
-document.getElementById("rider-logout").addEventListener("click", ()=>{ sessionStorage.removeItem("origen_rider"); rider=null; show("rider-login"); renderLogin(); });
-// Registro de repartidor (queda pendiente de aprobación)
-document.getElementById("rider-register-toggle").addEventListener("click", ()=>{ document.getElementById("rider-register").classList.toggle("hidden"); });
-document.getElementById("rider-pending-back").addEventListener("click", ()=>{ show("rider-login"); renderLogin(); });
-document.getElementById("reg-submit").addEventListener("click", async ()=>{
-  const name=document.getElementById("reg-name").value.trim();
-  const phone=document.getElementById("reg-phone").value.trim();
-  const zone=document.getElementById("reg-zone").value;
-  if(!name||!phone){ document.getElementById("reg-error").classList.remove("hidden"); return; }
-  document.getElementById("reg-error").classList.add("hidden");
-  if(SBX()){ try{ await SBX().from("riders").insert({name,phone,zone,status:"pendiente"}); }catch(e){} }
+document.getElementById("rider-logout").addEventListener("click", async ()=>{
+  sessionStorage.removeItem("origen_rider"); rider=null;
+  try{ if(SBX()) await SBX().auth.signOut(); }catch(_){}
+  show("rider-login"); renderLogin();
+});
+
+// LOGIN CON GOOGLE — identidad real del repartidor (Supabase OAuth)
+document.getElementById("rider-demo-toggle").addEventListener("click", ()=>{ document.getElementById("rider-demo").classList.toggle("hidden"); });
+document.getElementById("rider-google").addEventListener("click", ()=>{
+  const googleOn = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.googleEnabled;
+  if(SBX() && googleOn){
+    SBX().auth.signInWithOAuth({ provider:"google", options:{ redirectTo: location.origin + location.pathname } });
+  } else if(SBX()){
+    toast("Acceso con Google casi listo. Usa modo demo por ahora.");
+    document.getElementById("rider-demo").classList.remove("hidden");
+  } else {
+    toast("Sin conexión. Usa modo demo.");
+    document.getElementById("rider-demo").classList.remove("hidden");
+  }
+});
+
+// Estado de aprobación tras iniciar sesión con Google
+let pendingEmail=null;
+async function handleRiderSession(user){
+  if(!user || !SBX()) return;
+  const email=(user.email||"").toLowerCase();
+  const fullName=(user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name)) || (email.split("@")[0]) || "Repartidor";
+  pendingEmail=email;
+  let row=null;
+  try{
+    const {data}=await SBX().from("riders").select("*").eq("email",email).maybeSingle();
+    row=data||null;
+    if(!row){
+      const ins=await SBX().from("riders").insert({ name:fullName, email, zone:"Zona Sur", status:"pendiente" }).select().maybeSingle();
+      row=ins.data||{ name:fullName, email, zone:"Zona Sur", status:"pendiente" };
+    }
+  }catch(_){ row={ name:fullName, email, zone:"Zona Sur", status:"pendiente" }; }
+  if(row.status==="aprobado"){
+    rider=row.name; sessionStorage.setItem("origen_rider",rider); enterApp(); return;
+  }
+  showPending(row, email);
+}
+function showPending(row, email){
+  const rejected = row && row.status==="rechazado";
+  document.getElementById("rider-pending-email").textContent = email || (row&&row.email) || "—";
+  document.getElementById("rider-pending-title").textContent = rejected ? "Cuenta no aprobada" : "Activa tu cuenta";
+  document.getElementById("rider-pending-text").textContent = rejected
+    ? "Tu solicitud de repartidor no fue aprobada. Si crees que es un error, contacta al equipo de Origen."
+    : "Gracias por registrarte. El equipo de Origen revisará tu cuenta de repartidor y la activará pronto.";
+  document.getElementById("rider-pending-icon").innerHTML = rejected
+    ? '<span class="material-symbols-outlined text-error text-4xl">cancel</span>'
+    : '<span class="material-symbols-outlined text-secondary text-4xl">hourglass_top</span>';
+  document.getElementById("rider-pending-zone").style.display = rejected ? "none" : "";
+  document.getElementById("rider-pending-refresh").style.display = rejected ? "none" : "";
+  const sel=document.getElementById("rider-pending-zone-select");
+  if(row && row.zone) sel.value=row.zone;
   show("rider-pending");
+}
+// Guarda la zona elegida mientras está pendiente
+document.getElementById("rider-pending-zone-select").addEventListener("change", async (e)=>{
+  if(!SBX()||!pendingEmail) return;
+  try{ await SBX().from("riders").update({ zone:e.target.value }).eq("email",pendingEmail); toast("Zona actualizada"); }catch(_){}
+});
+// "Ya estoy aprobado" → vuelve a consultar el estado
+document.getElementById("rider-pending-refresh").addEventListener("click", async ()=>{
+  if(!SBX()||!pendingEmail){ toast("Inicia sesión con Google"); return; }
+  try{
+    const {data}=await SBX().from("riders").select("*").eq("email",pendingEmail).maybeSingle();
+    if(data && data.status==="aprobado"){ rider=data.name; sessionStorage.setItem("origen_rider",rider); enterApp(); }
+    else if(data && data.status==="rechazado"){ showPending(data, pendingEmail); }
+    else toast("Tu cuenta sigue en revisión");
+  }catch(_){ toast("No se pudo verificar"); }
+});
+document.getElementById("rider-pending-back").addEventListener("click", async ()=>{
+  pendingEmail=null;
+  try{ if(SBX()) await SBX().auth.signOut(); }catch(_){}
+  show("rider-login"); renderLogin();
 });
 
 // APP
@@ -387,7 +472,20 @@ if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.s
 
 // init
 renderLogin();
-if(rider) enterApp(); else show("rider-login");
+(async ()=>{
+  // Modo demo: si ya eligió un perfil en esta sesión, entra directo.
+  if(rider){ enterApp(); return; }
+  // Sesión real de Google (incluye la vuelta del OAuth) → verifica aprobación.
+  if(SBX()){
+    try{
+      const { data } = await SBX().auth.getSession();
+      if(data && data.session){ await handleRiderSession(data.session.user); }
+      SBX().auth.onAuthStateChange(async (event, session)=>{
+        if(event==="SIGNED_IN" && session && !rider){ await handleRiderSession(session.user); }
+      });
+    }catch(_){}
+  }
+})();
 </script>
 </body>
 </html>

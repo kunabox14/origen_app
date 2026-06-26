@@ -2907,7 +2907,7 @@ async function renderAdminRiders() {
   let rows = []; if (SBX()) { try { const { data } = await SBX().from("riders").select("*").order("created_at", { ascending: false }); rows = data || []; } catch (e) {} }
   const pend = rows.filter(r => r.status === "pendiente").length;
   el.innerHTML = `<div class="flex items-center justify-between mb-4"><h2 class="font-headline-sm text-headline-sm text-primary">Repartidores (${rows.length})</h2>${pend ? `<span class="bg-tertiary-fixed/40 text-secondary font-label-sm px-3 py-1 rounded-full">${pend} por revisar</span>` : ""}</div>
-    <div class="space-y-3">${rows.length ? rows.map(r => approvalRow(r, "riders", r.name, (r.zone || "") + (r.phone ? " · " + r.phone : ""))).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">delivery_dining</span><p class="mt-3">Aún no hay repartidores registrados.</p></div>`}</div>`;
+    <div class="space-y-3">${rows.length ? rows.map(r => approvalRow(r, "riders", r.name, (r.zone || "") + (r.email ? " · " + r.email : "") + (r.phone ? " · " + r.phone : ""))).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">delivery_dining</span><p class="mt-3">Aún no hay repartidores registrados.</p></div>`}</div>`;
 }
 document.addEventListener("click", async e => {
   const ap = e.target.closest("[data-approve]"), rj = e.target.closest("[data-reject]");

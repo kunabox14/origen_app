@@ -486,9 +486,9 @@
             <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">stars</span>
           </div>
           <div>
-            <h4 class="font-label-md text-label-md text-on-secondary-container uppercase tracking-wider">Beneficio Exclusivo</h4>
-            <p class="font-headline-sm text-headline-sm text-on-secondary-container">Ahorras <span id="basket-savings">Bs. 0</span> por ser suscriptor</p>
-            <p class="text-on-secondary-container/80 text-label-sm mt-1">Este descuento se aplica automáticamente a tu pedido actual.</p>
+            <h4 id="basket-benefit-title" class="font-label-md text-label-md text-on-secondary-container uppercase tracking-wider">Beneficio de suscriptor</h4>
+            <p id="basket-benefit-msg" class="font-headline-sm text-headline-sm text-on-secondary-container">Estás ahorrando <span id="basket-savings">Bs. 0</span></p>
+            <p id="basket-benefit-sub" class="text-on-secondary-container/80 text-label-sm mt-1">Este descuento se aplica automáticamente a tu pedido actual.</p>
           </div>
         </div>
       </section>
@@ -497,7 +497,7 @@
         <h2 class="font-headline-sm text-headline-sm text-primary mb-6">Resumen del Pedido</h2>
         <div class="space-y-4">
           <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md">Subtotal productos</span><span id="sum-subtotal" class="font-label-md">Bs. 0</span></div>
-          <div class="flex justify-between items-center text-secondary"><span class="font-body-md">Descuento Suscriptor (12%)</span><span id="sum-discount" class="font-label-md">- Bs. 0</span></div>
+          <div id="row-discount" class="flex justify-between items-center text-secondary"><span class="font-body-md">Descuento Suscriptor (12%)</span><span id="sum-discount" class="font-label-md">- Bs. 0</span></div>
           <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md">Tarifa de servicio (uso de la app)</span><span id="sum-service" class="font-label-md">Bs. 5</span></div>
           <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md flex items-center gap-1">Costo de delivery <span id="sum-km" class="text-[11px] text-on-surface-variant/60"></span></span><span id="sum-delivery" class="font-label-md">Bs. 0</span></div>
           <hr class="border-outline-variant/30 my-4">
@@ -1947,13 +1947,24 @@ const SERVICE_FEE = 5; // tarifa fija de uso de la app (Bs)
 // Distancia estimada por zona (km) → costo de delivery 7–18 Bs (18 si excede 4 km)
 const ZONE_KM = { "Zona Sur": 2.8, "Calacoto": 2.8, "Miraflores": 5.2, "Centro": 4.3, "Sopocachi": 3.6 };
 const deliveryKmFor = () => { const u = currentUser(); const z = u && u.zone; return ZONE_KM[z] != null ? ZONE_KM[z] : 3.0; };
-const deliveryFeeForKm = km => km > 4 ? 18 : Math.min(18, Math.max(7, Math.round(7 + km * 2.75)));
+// Tarifa de delivery por tramos de distancia (sucursal→cliente). En Fase 2 el km vendrá de la
+// distancia real entre la sucursal de la tienda y el cliente; por ahora se estima por zona.
+function deliveryFeeForKm(km) {
+  const m = km * 1000;
+  if (m <= 800) return 5;
+  if (m <= 1500) return 10;
+  if (m <= 2500) return 15;
+  return 18; // 2.5 km en adelante
+}
 function cartTotals() {
-  const sub = cartSubtotal(), disc = sub * DISCOUNT;
+  const sub = cartSubtotal();
+  const isSub = subActive();
+  const potentialDisc = sub * DISCOUNT;     // lo que ahorraría un suscriptor
+  const disc = isSub ? potentialDisc : 0;   // el descuento del 12% es un beneficio del suscriptor
   const km = deliveryKmFor();
   const delivery = cart.length ? deliveryFeeForKm(km) : 0;
   const service = cart.length ? SERVICE_FEE : 0;
-  return { sub, disc, service, delivery, km, total: sub - disc + service + delivery };
+  return { sub, disc, potentialDisc, isSub, service, delivery, km, total: sub - disc + service + delivery };
 }
 let cart = JSON.parse(localStorage.getItem("origen_cart") || "[]");
 const saveCart = () => localStorage.setItem("origen_cart", JSON.stringify(cart));
@@ -2197,7 +2208,21 @@ function renderBasket() {
   document.getElementById("sum-delivery").textContent = bs(t.delivery);
   document.getElementById("sum-km").textContent = "(~" + t.km.toFixed(1).replace(".0", "") + " km)";
   document.getElementById("sum-total").textContent = bs(t.total);
-  document.getElementById("basket-savings").textContent = bs(t.disc);
+  // Fila de descuento solo visible para suscriptores (a ellos aplica el 12%).
+  document.getElementById("row-discount").classList.toggle("hidden", !t.isSub);
+  // Mensaje de ahorro según la suscripción (#4)
+  const title = document.getElementById("basket-benefit-title");
+  const msg = document.getElementById("basket-benefit-msg");
+  const subMsg = document.getElementById("basket-benefit-sub");
+  if (t.isSub) {
+    title.textContent = "Beneficio de suscriptor";
+    msg.innerHTML = 'Gracias a tu suscripción, estás ahorrando <span id="basket-savings">' + bs(t.disc) + '</span>';
+    subMsg.textContent = "Este descuento se aplica automáticamente a tu pedido.";
+  } else {
+    title.textContent = "Suscríbete y ahorra";
+    msg.innerHTML = 'Si estuvieras suscrito, ahorrarías <span id="basket-savings">' + bs(t.potentialDisc) + '</span> en esta compra';
+    subMsg.textContent = "Hazte suscriptor y obtén 12% de descuento en cada pedido.";
+  }
   renderOrderDetails();
 }
 

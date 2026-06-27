@@ -2163,13 +2163,15 @@ function syncCart() {
 
 /* ============ Toast ============ */
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById("toast");
+  const ico = t.querySelector(".material-symbols-outlined");
   document.getElementById("toast-msg").textContent = msg;
+  if (ico) { ico.textContent = type === "error" ? "warning" : "check_circle"; ico.style.color = type === "error" ? "#EF9F27" : ""; }
   t.classList.remove("opacity-0");
   t.style.transform = "translate(-50%, 0)";
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.classList.add("opacity-0"); t.style.transform = "translate(-50%, 8px)"; }, 1800);
+  toastTimer = setTimeout(() => { t.classList.add("opacity-0"); t.style.transform = "translate(-50%, 8px)"; }, 2400);
 }
 
 /* ============ Render: tarjeta de producto ============ */
@@ -2930,7 +2932,7 @@ document.getElementById("basket-confirm").addEventListener("click", () => {
   const giftMsg = document.getElementById("gift-message").value.trim();
   const freq = document.getElementById("order-freq").value;
   const err = document.getElementById("order-detail-error");
-  const fail = m => { err.textContent = m; err.classList.remove("hidden"); };
+  const fail = m => { err.textContent = m; err.classList.remove("hidden"); showToast(m, "error"); err.scrollIntoView({ behavior: "smooth", block: "center" }); };
   if (orderType === "regalo") {
     if (!giftName) return fail("Ingresa el nombre del receptor.");
     if (!giftAddr) return fail("Selecciona la ubicación del receptor en el mapa.");

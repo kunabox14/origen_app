@@ -3063,17 +3063,19 @@ async function cloudCreateOrder(o) {
     const row = { code: o.id, user_id: userId, status: o.status, method: o.method, subtotal: o.subtotal, discount: o.discount, service_fee: o.serviceFee, delivery_fee: o.deliveryFee, delivery_km: o.deliveryKm, total: o.total, delivery_date: o.deliveryDate, "window": o.window, address: o.customer.address, zone: o.customer.zone, customer_name: o.customer.name, customer_email: o.customer.email };
     const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null, gift_name: o.gift ? o.gift.name : null, delivery_refs: o.references || null, dest_lat: o.lat, dest_lng: o.lng, pickup_branch: o.pickup ? o.pickup.name : null, pickup_lat: o.pickup ? o.pickup.lat : null, pickup_lng: o.pickup ? o.pickup.lng : null });
     let res = await SBX().from("orders").insert(full).select().single();
-    if (res.error) res = await SBX().from("orders").insert(row).select().single(); // si faltan columnas extra, guarda sin ellas
+    if (res.error) { console.warn("[Origen] insert full falló:", res.error.message, "→ reintentando sin columnas extra"); res = await SBX().from("orders").insert(row).select().single(); }
     const { data, error } = res;
-    if (!error && data) {
+    if (error) { console.error("[Origen] cloudCreateOrder ERROR:", error.message, error.code); showToast("Pedido guardado local · sin conexión estable", "error"); return; }
+    if (data) {
       o.dbId = data.id;
-      await SBX().from("order_items").insert(o.items.map(i => ({ order_id: data.id, product_id: isUuid(i.id) ? i.id : null, name: i.name, qty: i.qty, price: i.price })));
-      await hydrateOrders(); // re-lee con los items ya insertados
+      const itemsRes = await SBX().from("order_items").insert(o.items.map(i => ({ order_id: data.id, product_id: isUuid(i.id) ? i.id : null, name: i.name, qty: i.qty, price: i.price })));
+      if (itemsRes.error) console.warn("[Origen] order_items insert falló:", itemsRes.error.message);
+      await hydrateOrders();
       if (current === "home") renderHome();
       if (current === "tracking") renderTracking();
       if (current === "admin") renderAdmin();
     }
-  } catch (e) {}
+  } catch (e) { console.error("[Origen] cloudCreateOrder excepción:", e); }
 }
 async function hydrateOrders() {
   if (!SBX()) return false;

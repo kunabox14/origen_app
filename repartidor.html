@@ -405,8 +405,10 @@ function setupRiderRealtime(){
     riderLog("evento pedido:", payload.eventType, payload.new && payload.new.code, "→", payload.new && payload.new.status);
     await hydrateRiderOrders(); checkNew(); renderApp();
   }).subscribe(status=>riderLog("canal rider-orders:", status));
-  // Respaldo: re-hidrata de la nube cada 8s por si un evento se pierde (evita retrasos)
-  setInterval(async ()=>{ if(rider && SBX()){ await hydrateRiderOrders(); checkNew(); if(tab==="new"||tab==="mine") renderApp(); } }, 8000);
+  // Respaldo: re-hidrata de la nube cada 4s por si un evento se pierde (evita retrasos)
+  setInterval(async ()=>{ if(rider && SBX()){ await hydrateRiderOrders(); checkNew(); if(tab==="new"||tab==="mine") renderApp(); } }, 4000);
+  // Al volver al foco (móvil: cambio de app) → re-hidrata inmediatamente
+  document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && rider && SBX()){ await hydrateRiderOrders(); checkNew(); renderApp(); } });
 }
 function renderApp(){
   const all = loadOrders();

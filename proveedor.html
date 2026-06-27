@@ -151,6 +151,25 @@
         </div>
         <button id="prov-hours-save" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95 ml-2">Guardar</button>
       </div>
+      <!-- Perfil de la tienda: logo + descripción -->
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-4">
+          <span class="material-symbols-outlined text-secondary">storefront</span>
+          <p class="font-semibold text-primary text-sm">Perfil de la tienda</p>
+        </div>
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-20 h-20 rounded-xl overflow-hidden bg-earth-cream border border-outline-variant/30 flex-shrink-0">
+            <img id="prov-logo-preview" class="w-full h-full object-contain p-2" src="assets/origen-logo.svg" onerror="this.src='assets/origen-logo.svg'">
+          </div>
+          <label class="flex-1 cursor-pointer">
+            <span class="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container font-semibold px-4 py-2.5 rounded-lg text-sm"><span class="material-symbols-outlined text-[18px]">upload</span>Subir logotipo</span>
+            <input id="prov-logo-img" type="file" accept="image/*" class="hidden">
+            <p class="text-xs text-on-surface-variant mt-2">Cuadrado, fondo blanco o transparente.</p>
+          </label>
+        </div>
+        <textarea id="prov-desc-input" rows="3" placeholder="Describe tu tienda, productos y su origen..." class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-sm resize-none mb-3"></textarea>
+        <button id="prov-profile-save" class="w-full bg-secondary text-on-secondary font-semibold py-3 rounded-xl active:scale-95 transition-transform text-sm">Guardar perfil</button>
+      </div>
       <div class="grid grid-cols-2 gap-3 mb-5">
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
@@ -193,6 +212,15 @@
       </div>
       <input id="pv-origin" placeholder="Origen (Valle Central)" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
       <select id="pv-cat" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Superfoods</option><option>Despensa</option><option>Snacks</option><option>Bebidas</option><option>Carnes vegetales</option><option>Granos</option></select>
+      <div>
+        <p class="text-sm text-on-surface-variant mb-2">Tipo de producción <span class="text-on-surface-variant/60">(selecciona los que apliquen)</span></p>
+        <div class="flex flex-wrap gap-3">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Fresco" id="pvc-fresco" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🌿 Fresco</span></label>
+          <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Artesanal" id="pvc-artesanal" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🤝 Artesanal</span></label>
+          <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Semiindustrial" id="pvc-semi" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">⚙️ Semiindustrial</span></label>
+          <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Industrial" id="pvc-industrial" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🏭 Industrial</span></label>
+        </div>
+      </div>
       <p id="pv-error" class="hidden text-error text-sm">Completa nombre y precio.</p>
       <button id="pv-save" class="w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
     </div>
@@ -393,7 +421,7 @@ async function logout(){ localStorage.removeItem("origen_provider"); provider=nu
 // DASHBOARD
 async function enterApp(){
   document.getElementById("prov-bizname").textContent = provider.business||"";
-  renderMyLoc(); renderMyHours();
+  renderMyLoc(); renderMyHours(); renderMyProfile();
   show("prov-app"); await loadProducts(); await loadBranches(); loadStockAlerts(); setupRealtime();
 }
 function renderMyLoc(){ const el=document.getElementById("prov-myloc-text"); if(el) el.textContent=(provider&&provider.address)||"Sin definir"; }
@@ -401,6 +429,30 @@ document.getElementById("prov-myloc-edit").addEventListener("click", ()=>openMap
   try{ await SBX().from("providers").update({ lat:pos.lat, lng:pos.lng, address:addr }).eq("id",provider.id); provider.lat=pos.lat; provider.lng=pos.lng; provider.address=addr; localStorage.setItem("origen_provider",JSON.stringify(provider)); renderMyLoc(); toast("Ubicación actualizada"); }catch(_){ toast("No se pudo actualizar"); }
 }));
 function renderMyHours(){ const el=document.getElementById("prov-hours-input"); if(el) el.value=(provider&&provider.business_hours)||""; }
+function renderMyProfile(){
+  const logo=document.getElementById("prov-logo-preview");
+  const desc=document.getElementById("prov-desc-input");
+  if(logo) logo.src=(provider&&provider.logo_url)||"assets/origen-logo.svg";
+  if(desc) desc.value=(provider&&provider.description)||"";
+}
+let pendingLogoData=null;
+document.getElementById("prov-logo-img").addEventListener("change", e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{ const img=new Image(); img.onload=()=>{ const S=400,c=document.createElement("canvas"); c.width=c.height=S; const x=c.getContext("2d"); x.fillStyle="#FFFFFF"; x.fillRect(0,0,S,S); const sc=Math.min(S/img.width,S/img.height),w=img.width*sc,h=img.height*sc; x.drawImage(img,(S-w)/2,(S-h)/2,w,h); pendingLogoData=c.toDataURL("image/jpeg",0.82); document.getElementById("prov-logo-preview").src=pendingLogoData; }; img.src=ev.target.result; };
+  reader.readAsDataURL(file);
+});
+document.getElementById("prov-profile-save")?.addEventListener("click", async ()=>{
+  const desc=(document.getElementById("prov-desc-input").value||"").trim();
+  if(!SBX()){ toast("Sin conexión"); return; }
+  try{
+    const upd={ description: desc||null };
+    if(pendingLogoData) upd.logo_url=pendingLogoData;
+    await SBX().from("providers").update(upd).eq("id",provider.id);
+    Object.assign(provider, upd); localStorage.setItem("origen_provider",JSON.stringify(provider));
+    pendingLogoData=null; toast("Perfil actualizado");
+  }catch(_){ toast("No se pudo guardar"); }
+});
 document.getElementById("prov-hours-save")?.addEventListener("click", async ()=>{
   const val=(document.getElementById("prov-hours-input").value||"").trim();
   if(!SBX()){ toast("Sin conexión"); return; }
@@ -430,7 +482,11 @@ function renderProdView(){
     const approved=p.active;
     return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3 flex items-center gap-3">
       <div class="w-14 h-14 rounded-lg overflow-hidden bg-earth-cream flex-shrink-0"><img src="${p.image_url||'assets/products/generic.svg'}" onerror="this.src='assets/products/generic.svg'" class="w-full h-full object-contain p-1"></div>
-      <div class="flex-grow min-w-0"><p class="font-semibold text-primary truncate">${p.name}</p><p class="text-sm text-secondary">${bs(p.price)} · ${p.category||""}</p></div>
+      <div class="flex-grow min-w-0">
+          <p class="font-semibold text-primary truncate">${p.name}</p>
+          <p class="text-sm text-secondary">${bs(p.price)} · ${p.category||""}</p>
+          ${(p.categories&&p.categories.length)?`<div class="flex flex-wrap gap-1 mt-1">${p.categories.map(c=>`<span class="text-[10px] bg-primary-container/60 text-leaf-green px-1.5 py-0.5 rounded-full font-semibold">${c}</span>`).join("")}</div>`:""}
+        </div>
       <span class="${approved?'bg-secondary-container text-on-secondary-container':'bg-tertiary-fixed/40 text-secondary'} text-[10px] font-bold uppercase px-2 py-1 rounded-full">${approved?'Activo':'En revisión'}</span>
       <button data-del-prod="${p.id}" data-del-name="${escapeAttr(p.name)}" class="text-on-surface-variant hover:text-error p-1.5 active:scale-90 transition-transform" aria-label="Eliminar"><span class="material-symbols-outlined text-[20px]">delete</span></button>
     </div>`;
@@ -574,7 +630,10 @@ function renderBranches(){
     <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-3">
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-secondary">store</span>
-        <div class="flex-grow min-w-0"><p class="font-semibold text-primary truncate">${b.name||"Sucursal"}</p><p class="text-xs text-on-surface-variant truncate">${b.zone||""}${b.lat?` · ${Number(b.lat).toFixed(4)}, ${Number(b.lng).toFixed(4)}`:" · Sin ubicación"}</p></div>
+        <div class="flex-grow min-w-0">
+            <div class="flex items-center gap-2 flex-wrap"><p class="font-semibold text-primary truncate">${b.name||"Sucursal"}</p>${b.zone?`<span class="bg-primary-container text-leaf-green text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full">${b.zone}</span>`:""}</div>
+            <p class="text-xs text-on-surface-variant truncate mt-0.5">${b.address||"Sin dirección definida"}</p>
+          </div>
       </div>
       <div class="flex gap-2 mt-3">
         <button data-branch-stock="${b.id}" class="flex-1 bg-secondary-container text-on-secondary-container text-sm font-semibold py-2 rounded-lg flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[18px]">inventory</span>Stock</button>
@@ -683,7 +742,7 @@ function setupRealtime(){
 }
 
 // Modal producto
-document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin"].forEach(id=>document.getElementById(id).value=""); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
+document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin"].forEach(id=>document.getElementById(id).value=""); ["pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].forEach(id=>{const cb=document.getElementById(id);if(cb)cb.checked=false;}); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
 document.getElementById("pv-close").addEventListener("click", ()=>document.getElementById("prov-modal").classList.add("hidden"));
 document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") document.getElementById("prov-modal").classList.add("hidden"); });
 document.getElementById("pv-img").addEventListener("change", e=>{
@@ -697,8 +756,9 @@ document.getElementById("pv-save").addEventListener("click", async ()=>{
   const price=parseFloat(document.getElementById("pv-price").value);
   if(!name||isNaN(price)){ document.getElementById("pv-error").classList.remove("hidden"); return; }
   if(!SBX()) return;
+  const cats=["pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].map(id=>document.getElementById(id)).filter(cb=>cb&&cb.checked).map(cb=>cb.value);
   const row={ name, price, unit:document.getElementById("pv-unit").value.trim()||"1u", origin:document.getElementById("pv-origin").value.trim()||"Bolivia",
-    category:document.getElementById("pv-cat").value, tag:"Orgánico", image_url:pendingImg, active:false, in_sub:false, provider_id:provider.id, provider_name:provider.business };
+    category:document.getElementById("pv-cat").value, categories:cats, tag:"Orgánico", image_url:pendingImg, active:false, in_sub:false, provider_id:provider.id, provider_name:provider.business };
   const ins=await SBX().from("products").insert(row);
   document.getElementById("prov-modal").classList.add("hidden");
   if(ins.error) toast("Error al enviar"); else { toast("Producto enviado para aprobación"); loadProducts(); }

@@ -446,9 +446,13 @@
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors">search</span>
         <input id="catalog-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar en esta tienda..." type="text">
       </div>
-      <div id="store-hours-banner" class="hidden items-center gap-2 mb-4 px-1 text-sm" style="color:#27500A;">
+      <div id="store-hours-banner" class="hidden items-center gap-2 mb-2 px-1 text-sm" style="color:#27500A;">
         <span class="material-symbols-outlined text-[18px]" style="color:#4CAF50;">schedule</span>
         <span id="store-hours-text" class="font-label-md"></span>
+      </div>
+      <div id="store-addr-banner" class="hidden items-center gap-2 mb-4 px-1 text-sm" style="color:#27500A;">
+        <span class="material-symbols-outlined text-[18px]" style="color:#4CAF50;">place</span>
+        <span id="store-addr-text" class="font-label-md"></span>
       </div>
       <div id="catalog-chips" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-margin-mobile px-margin-mobile"></div>
     </header>
@@ -1375,7 +1379,7 @@ const bs = n => "Bs. " + Number(n).toFixed(2).replace(/\.00$/, "");
 /* ============ NUBE: productos en Supabase ============ */
 const SBX = () => window.ORIGEN_SB;
 const isUuid = s => typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}/.test(s);
-const mapDbProduct = r => ({ id: r.id, name: r.name, price: Number(r.price), unit: r.unit || "", origin: r.origin || "", cat: r.category || "Despensa", tag: r.tag || "Orgánico", img: r.image_url || "assets/products/generic.svg", active: r.active !== false, inSub: !!r.in_sub, providerName: r.provider_name || null });
+const mapDbProduct = r => ({ id: r.id, name: r.name, price: Number(r.price), unit: r.unit || "", origin: r.origin || "", cat: r.category || "Despensa", tag: r.tag || "Orgánico", img: r.image_url || "assets/products/generic.svg", active: r.active !== false, inSub: !!r.in_sub, providerName: r.provider_name || null, categories: r.categories || [] });
 const toDbProduct = p => ({ name: p.name, price: p.price, unit: p.unit, origin: p.origin, category: p.cat, tag: p.tag, image_url: p.img, active: p.active, in_sub: p.inSub });
 async function cloudSeedIfEmpty() {
   if (!SBX()) return;
@@ -2191,6 +2195,7 @@ function productCardCatalog(p) {
     <div class="p-4 flex flex-col flex-grow">
       <h3 class="font-headline-sm text-[16px] text-on-surface mb-1 leading-tight">${p.name}</h3>
       <p class="font-label-sm text-on-surface-variant mb-1">${p.unit} • ${p.origin}</p>
+      ${(p.categories&&p.categories.length)?`<div class="flex flex-wrap gap-1 mb-1">${p.categories.map(c=>`<span class="text-[10px] bg-sprout-green/30 text-deep-forest px-1.5 py-0.5 rounded-full font-semibold">${c}</span>`).join("")}</div>`:""}
       <p class="text-secondary font-label-md mt-auto">${bs(p.price)}</p>
       <button data-add="${p.id}" class="mt-3 w-full bg-secondary text-on-secondary h-10 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
         <span class="material-symbols-outlined text-[20px]">add</span><span class="font-label-md">Añadir</span>
@@ -2407,6 +2412,14 @@ function renderCatalog() {
   const hours = meta && meta.business_hours ? meta.business_hours : null;
   const hoursBanner = document.getElementById("store-hours-banner");
   if (hoursBanner) { if (hours) { document.getElementById("store-hours-text").textContent = hours; hoursBanner.classList.remove("hidden"); hoursBanner.classList.add("flex"); } else { hoursBanner.classList.add("hidden"); hoursBanner.classList.remove("flex"); } }
+  // Dirección: toma la sucursal más próxima al cliente o la primera disponible
+  const addrBanner = document.getElementById("store-addr-banner");
+  if (addrBanner) {
+    const branch = meta ? (CLOUD_BRANCHES || []).find(b => b.provider_id === meta.id && b.address) : null;
+    const addr = branch ? (branch.zone ? branch.zone + " · " + branch.address : branch.address) : null;
+    if (addr) { document.getElementById("store-addr-text").textContent = addr; addrBanner.classList.remove("hidden"); addrBanner.classList.add("flex"); }
+    else { addrBanner.classList.add("hidden"); addrBanner.classList.remove("flex"); }
+  }
   const present = STORE_CATEGORIES.filter(c => c === "Todos" || all.some(p => p.cat === c));
   if (!present.includes(activeCat)) activeCat = "Todos";
   document.getElementById("catalog-chips").innerHTML = present.map(c => {

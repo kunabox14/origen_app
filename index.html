@@ -15,11 +15,17 @@
 <meta name="apple-mobile-web-app-title" content="ORIGEN">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon-180.png">
 
+<!-- Preconnect: abre TCP+TLS antes de que el parser llegue a los scripts CDN -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+<link rel="preconnect" href="https://fjlqwhcxwjasngbdgwia.supabase.co" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
+
 <!-- Supabase (backend real) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-config.js"></script>
-<!-- Escáner QR (respaldo si el navegador no tiene BarcodeDetector) -->
-<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- jsQR se carga bajo demanda cuando el usuario abre el escáner (ver loadJsQR()) -->
 
 <!-- Fuentes oficiales: EB Garamond (titulares) + Hanken Grotesk (cuerpo) -->
 <link href="https://fonts.googleapis.com" rel="preconnect">
@@ -2690,6 +2696,10 @@ function stopScanner() {
   if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; }
   const v = document.getElementById("scan-video"); if (v) v.srcObject = null;
 }
+function loadJsQR() {
+  if (window.jsQR) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+}
 async function runScanner() {
   scanBusy = false;
   document.getElementById("scan-status").classList.remove("hidden");
@@ -2697,6 +2707,7 @@ async function runScanner() {
   const title = document.getElementById("scan-title"), sub = document.getElementById("scan-sub");
   title.textContent = "Buscando código…";
   sub.textContent = "Permite el acceso a la cámara y apunta al código del producto.";
+  if (!("BarcodeDetector" in window)) loadJsQR().catch(() => {}); // carga jsQR solo si es necesario
   const video = document.getElementById("scan-video");
   try {
     scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });

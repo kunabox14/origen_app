@@ -2341,7 +2341,14 @@ function renderStores() {
   let html = "";
   // Favoritas (acceso rápido) — siempre arriba si hay
   const favs = stores.filter(s => isFavStore(s.name));
-  if (favs.length && !q) html += `<div class="mb-6"><h2 class="font-headline-sm text-headline-sm text-primary mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-leaf-green" style="font-variation-settings:'FILL' 1">favorite</span>Tus favoritas</h2>${grid2(favs)}</div>`;
+  if (favs.length && !q) {
+    html += `<div class="mb-6"><h2 class="font-headline-sm text-headline-sm text-primary mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-leaf-green" style="font-variation-settings:'FILL' 1">favorite</span>Tus favoritas</h2>${grid2(favs)}</div>`;
+  } else if (!q) {
+    html += `<div class="mb-6 rounded-2xl border border-dashed flex flex-col items-center gap-3 py-8 px-4 text-center" style="border-color:#97C459;background:#EAF3DE;">
+      <span class="material-symbols-outlined" style="font-size:2.5rem;color:#4CAF50;font-variation-settings:'FILL' 1">favorite</span>
+      <p class="text-sm leading-snug" style="color:#27500A;max-width:18rem;">Marca tus tiendas favoritas con <span style="color:#D4537E">❤</span> para tenerlas a mano</p>
+    </div>`;
+  }
   // Filtro de zona
   if (storeZone !== "Todas") stores = stores.filter(s => s.zone === storeZone);
   if (!stores.length) { list.innerHTML = html + `<p class="text-center text-on-surface-variant py-12">No hay tiendas en esta zona.</p>`; return; }

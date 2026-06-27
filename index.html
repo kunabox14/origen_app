@@ -1146,7 +1146,7 @@
       <p class="font-label-md text-leaf-green uppercase tracking-wider mb-1">Total a pagar</p>
       <p id="checkout-total" class="font-display-lg text-display-lg-mobile">Bs. 0</p>
       <p id="checkout-breakdown" class="font-label-sm text-on-primary-container mt-1"></p>
-      <p class="font-label-sm text-on-primary-container/70 mt-0.5">Entrega: Viernes 24 Junio · 09:00 – 11:00</p>
+      <p id="checkout-delivery-line" class="font-label-sm text-on-primary-container/70 mt-0.5"></p>
     </div>
 
     <div>
@@ -2969,6 +2969,12 @@ function renderCheckout() {
   document.getElementById("checkout-total").textContent = bs(total);
   document.getElementById("checkout-breakdown").innerHTML =
     `Productos ${bs(t.sub - t.disc)} · Servicio ${bs(t.service)} · Delivery ${bs(t.delivery)} (~${t.km.toFixed(1).replace(".0", "")} km)`;
+  const dlEl = document.getElementById("checkout-delivery-line");
+  if (dlEl && orderDetails) {
+    const d = orderDetails;
+    const dateLabel = d.date ? new Date(d.date + "T12:00:00").toLocaleDateString("es-BO", { weekday: "long", day: "numeric", month: "long" }) : "";
+    dlEl.textContent = "Entrega: " + dateLabel + (d.window ? " · " + d.window : "");
+  }
   // Métodos según ajustes del admin
   const methods = [];
   if (paySettings.qr) methods.push({ id: "qr", icon: "qr_code_2", label: "QR Simple" });

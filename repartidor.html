@@ -199,6 +199,7 @@ let rider = sessionStorage.getItem("origen_rider") || null;
 // NUBE (Supabase): el repartidor lee/escribe pedidos en la nube; localStorage es respaldo.
 const SBX = () => window.ORIGEN_SB;
 let CLOUD_ORDERS = null; // null = aún no cargado de la nube → usa localStorage
+let CLOUD_EARN = []; // entregas completadas del rider (para Ganancias; se excluyen del listado)
 const mapOrder = r => ({
   id: r.code, dbId: r.id, status: r.status, method: r.method, assignedTo: r.assigned_rider || null,
   customer: { name: r.customer_name || "Cliente", address: r.address || "", zone: r.zone || "Zona Sur" },
@@ -211,7 +212,15 @@ const loadOrders = () => CLOUD_ORDERS !== null ? CLOUD_ORDERS : JSON.parse(local
 const saveOrders = o => localStorage.setItem("origen_orders", JSON.stringify(o));
 async function hydrateRiderOrders() {
   if (!SBX()) return;
-  try { const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false }); if (!error && data) CLOUD_ORDERS = data.map(mapOrder); } catch (e) {}
+  try {
+    const { data, error } = await SBX().from("orders").select("*, order_items(*)").order("created_at", { ascending: false });
+    if (!error && data) {
+      const mapped = data.map(mapOrder);
+      // Separa entregados del rider (para Ganancias) y los excluye del listado principal
+      if (rider) CLOUD_EARN = mapped.filter(o => o.assignedTo === rider && o.status === "Entregado");
+      CLOUD_ORDERS = mapped.filter(o => o.status !== "Entregado");
+    }
+  } catch (e) {}
 }
 
 let toastT;
@@ -380,7 +389,7 @@ document.getElementById("rider-pending-back").addEventListener("click", async ()
 });
 
 // APP
-const TABS=[{id:"new",label:"Nuevos",icon:"fiber_new"},{id:"mine",label:"Mi ruta",icon:"local_shipping"},{id:"done",label:"Entregados",icon:"check_circle"},{id:"earn",label:"Ganancias",icon:"payments"}];
+const TABS=[{id:"new",label:"Nuevos",icon:"fiber_new"},{id:"mine",label:"Mi ruta",icon:"local_shipping"},{id:"earn",label:"Ganancias",icon:"payments"}];
 let tab="new";
 const feeOf = o => o.deliveryFee != null ? o.deliveryFee : 0;
 async function enterApp(){
@@ -424,31 +433,29 @@ function renderApp(){
     return `<button data-rtab="${t.id}" class="flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-full text-[13px] font-semibold transition-colors ${on?"bg-secondary text-on-secondary":"bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}${badge}</button>`;
   }).join("");
   const c=document.getElementById("rider-content");
-  if(tab==="earn"){ c.innerHTML = renderEarn(all); return; }
+  if(tab==="earn"){ c.innerHTML = renderEarn(); return; }
   let list=[];
   if(tab==="new") list = all.filter(o=>o.status==="Nuevo");
-  if(tab==="mine") list = all.filter(o=>o.assignedTo===rider && o.status!=="Entregado" && o.status!=="Nuevo");
-  if(tab==="done") list = all.filter(o=>o.assignedTo===rider && o.status==="Entregado");
-  if(!list.length){ c.innerHTML=`<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inbox</span><p class="mt-3">${tab==="new"?"No hay pedidos nuevos por ahora.":tab==="mine"?"No tienes entregas en curso.":"Aún no has entregado pedidos."}</p></div>`; return; }
+  if(tab==="mine") list = all.filter(o=>o.assignedTo===rider && o.status!=="Nuevo");
+  if(!list.length){ c.innerHTML=`<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">inbox</span><p class="mt-3">${tab==="new"?"No hay pedidos nuevos por ahora.":"No tienes entregas en curso."}</p></div>`; return; }
   c.innerHTML = list.map(orderCard).join("");
 }
 // Tarjeta "Pedido activo": la entrega en curso del repartidor
 function renderRiderActive(all){
   const el=document.getElementById("rider-active"); if(!el) return;
   const active = all.find(o=>o.assignedTo===rider && ["Asignado","Recogido","En camino"].indexOf(o.status)>-1);
-  const o = active || all.filter(o=>o.assignedTo===rider && o.status==="Entregado")[0];
-  if(!o){ el.innerHTML=""; return; }
-  const inProgress=!!active;
+  if(!active){ el.innerHTML=""; return; }
+  const o = active;
   el.innerHTML=`<div class="bg-primary-container text-on-primary rounded-2xl p-5">
-    <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-leaf-green">${inProgress?"local_shipping":"check_circle"}</span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">${inProgress?"Pedido en camino":"Última entrega"}</span></div>
+    <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-leaf-green">local_shipping</span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">Pedido en camino</span></div>
     <p class="font-headline text-xl">${o.id} · ${o.status}</p>
     <p class="text-sm text-on-primary-container">${o.customer.name} · ${o.customer.address}</p>
-    ${inProgress?`<button data-go-mine class="mt-3 w-full bg-leaf-green text-primary-container font-semibold py-2.5 rounded-lg active:scale-[0.98] transition-transform">Continuar entrega</button>`:""}
+    <button data-go-mine class="mt-3 w-full bg-leaf-green text-primary-container font-semibold py-2.5 rounded-lg active:scale-[0.98] transition-transform">Continuar entrega</button>
   </div>`;
 }
 // Ganancias del repartidor: suma de tarifas de delivery
-function renderEarn(all){
-  const mine = all.filter(o=>o.assignedTo===rider && o.status==="Entregado");
+function renderEarn(){
+  const mine = CLOUD_EARN;
   const totalAll = mine.reduce((s,o)=>s+feeOf(o),0);
   const card = mine.filter(o=>o.method==="card");
   const cardTotal = card.reduce((s,o)=>s+feeOf(o),0);
@@ -481,8 +488,7 @@ document.addEventListener("click", e=>{
   const act=e.target.closest("[data-advance]"); if(act){ advance(act.dataset.advance); return; }
   const ch=e.target.closest("[data-chat]"); if(ch){ const o=loadOrders().find(x=>x.id===ch.dataset.chat); openRiderChat(ch.dataset.chat, o?o.customer.name:"Cliente"); return; }
   if(e.target.closest("#rider-payout")){
-    const all=loadOrders();
-    const total=all.filter(o=>o.assignedTo===rider && o.status==="Entregado" && o.method==="card").reduce((s,o)=>s+feeOf(o),0);
+    const total=CLOUD_EARN.filter(o=>o.method==="card").reduce((s,o)=>s+feeOf(o),0);
     toast("Solicitud enviada: "+bs(total));
   }
 });

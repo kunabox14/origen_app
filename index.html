@@ -2082,7 +2082,16 @@ const cartSubtotal = () => cart.reduce((s, i) => { const p = findProduct(i.id); 
 // Si el admin borró un producto que estaba en el carrito, lo quitamos.
 function pruneCart() { const before = cart.length; cart = cart.filter(i => findProduct(i.id)); if (cart.length !== before) { saveCart(); syncCart(); } }
 
+const productStore = id => { const p = findProduct(id); return p ? (p.providerName || "Origen") : null; };
+const cartStoreName = () => cart.length ? productStore(cart[0].id) : null;
 function addToCart(id) {
+  const store = productStore(id); if (!store) return;
+  const cur = cartStoreName();
+  // Un pedido = una sola tienda. Si intenta mezclar, ofrecemos vaciar y empezar con la nueva.
+  if (cur && cur !== store) {
+    showMessage({ icon: "storefront", title: "Una tienda por pedido", text: `Tu canasta tiene productos de "${cur}". Para pedir de "${store}" vaciaremos tu canasta actual.`, confirmLabel: "Vaciar y agregar", cancel: true, onConfirm: () => { cart = [{ id, qty: 1 }]; saveCart(); syncCart(); showToast("Canasta nueva · " + store); if (current === "basket") renderBasket(); } });
+    return;
+  }
   const line = cart.find(i => i.id === id);
   if (line) line.qty++; else cart.push({ id, qty: 1 });
   saveCart(); syncCart(); showToast("Agregado a tu canasta");
@@ -2206,18 +2215,24 @@ const clientGeoNow = () => (typeof orderType !== "undefined" && orderType === "r
 const STORE_CATEGORIES = ["Todos", "Superfoods", "Despensa", "Snacks", "Bebidas", "Carnes vegetales", "Granos"];
 // Agrupa los productos activos por tienda; los productos sin proveedor → tienda oficial "Origen".
 function storeList() {
-  const map = {};
-  activeProducts().forEach(p => { const key = p.providerName || "Origen"; if (!map[key]) map[key] = { name: key, products: [] }; map[key].products.push(p); });
-  return Object.values(map).map(s => {
-    const isOrigen = s.name === "Origen";
-    const meta = isOrigen ? null : providerMeta(s.name);
+  // Productos activos agrupados por tienda
+  const byStore = {};
+  activeProducts().forEach(p => { const key = p.providerName || "Origen"; (byStore[key] = byStore[key] || []).push(p); });
+  // Las tiendas son los PROVEEDORES APROBADOS + la tienda oficial "Origen" (así aparecen apenas el admin los aprueba, aunque aún no tengan productos)
+  const seen = {};
+  const stores = [{ name: "Origen", isOrigen: true, meta: null, products: byStore["Origen"] || [] }];
+  (CLOUD_PROVIDERS || []).forEach(meta => { const name = meta.business || meta.name; if (!name || seen[name]) return; seen[name] = 1; stores.push({ name, isOrigen: false, meta, products: byStore[name] || [] }); });
+  // Productos cuyo proveedor no está en la lista (compatibilidad) → su propia tienda
+  Object.keys(byStore).forEach(name => { if (name !== "Origen" && !seen[name]) { seen[name] = 1; stores.push({ name, isOrigen: false, meta: providerMeta(name), products: byStore[name] }); } });
+  return stores.map(s => {
+    const meta = s.meta;
     const isNew = meta && meta.created_at ? (Date.now() - new Date(meta.created_at).getTime()) < 30 * 864e5 : false;
-    const featured = isOrigen || (meta && meta.featured === true) || isNew;
+    const featured = s.isOrigen || (meta && meta.featured === true) || isNew;
     return {
       name: s.name, count: s.products.length, products: s.products,
-      logo: isOrigen ? "assets/origen-logo.svg" : (meta && meta.logo_url) || null,
-      description: isOrigen ? "Selección oficial Origen" : (meta && meta.description) || "Productos orgánicos seleccionados",
-      featured, isNew, isOrigen
+      logo: s.isOrigen ? "assets/origen-logo.svg" : (meta && meta.logo_url) || null,
+      description: s.isOrigen ? "Selección oficial Origen" : (meta && meta.description) || "Productos orgánicos seleccionados",
+      featured, isNew, isOrigen: s.isOrigen
     };
   }).sort((a, b) => (b.featured - a.featured) || (b.count - a.count));
 }
@@ -2255,6 +2270,8 @@ function renderStores() {
   const list = document.getElementById("stores-list");
   list.innerHTML = stores.length ? stores.map(storeCardWide).join("") : `<p class="text-center text-on-surface-variant py-12">No encontramos tiendas.</p>`;
 }
+// Refresca proveedores/productos al entrar a Tiendas (por si el admin acaba de aprobar una tienda)
+async function refreshStores() { await hydrateProviders(); await hydrateProducts(); await hydrateBranches(); if (current === "stores") renderStores(); }
 let activeStore = null;
 function openStore(name) { activeStore = name; activeCat = "Todos"; const cs = document.getElementById("catalog-search"); if (cs) cs.value = ""; navigate("catalog"); }
 
@@ -2505,7 +2522,7 @@ function navigate(screen) {
   });
 
   if (screen === "home") renderHome();
-  if (screen === "stores") renderStores();
+  if (screen === "stores") { renderStores(); refreshStores(); }
   if (screen === "catalog") renderCatalog();
   if (screen === "basket") renderBasket();
   if (screen === "scanner") runScanner();
@@ -2636,9 +2653,10 @@ document.addEventListener("click", e => {
   const rebuy = e.target.closest("[data-rebuy]");
   if (rebuy) {
     try {
-      const items = JSON.parse(rebuy.dataset.rebuy);
-      items.forEach(it => { if (findProduct(it.id)) { const line = cart.find(c => c.id === it.id); if (line) line.qty += it.qty; else cart.push({ id: it.id, qty: it.qty }); } });
-      saveCart(); syncCart(); navigate("basket"); showToast("Productos añadidos a tu canasta");
+      const items = JSON.parse(rebuy.dataset.rebuy).filter(it => findProduct(it.id));
+      // Reemplaza la canasta (un pedido = una tienda)
+      cart = items.map(it => ({ id: it.id, qty: it.qty }));
+      saveCart(); syncCart(); navigate("basket"); showToast("Canasta lista para volver a comprar");
     } catch (e) {}
     return;
   }

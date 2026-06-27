@@ -97,7 +97,11 @@
         <input id="prov-c-manager" placeholder="Nombre del encargado" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
         <input id="prov-c-business" placeholder="Nombre de la tienda / marca" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
         <input id="prov-c-phone" type="tel" placeholder="WhatsApp" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-        <button id="prov-c-pick" type="button" class="w-full border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">map</span>Ubicación del negocio en el mapa <span class="text-error">*</span></button>
+        <span class="text-sm text-on-surface-variant">Ubicación del negocio <span class="text-error">*</span></span>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="prov-c-gps" type="button" class="border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">my_location</span>Mi ubicación</button>
+          <button id="prov-c-pick" type="button" class="border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">map</span>En el mapa</button>
+        </div>
         <div id="prov-c-loc-display" class="hidden bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
           <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
           <p id="prov-c-loc-text" class="text-on-surface text-sm leading-snug"></p>
@@ -297,7 +301,17 @@ async function handleProviderSession(user){
   show("prov-complete");
 }
 let completeGeo=null;
-document.getElementById("prov-c-pick").addEventListener("click", ()=>openMap(completeGeo, (addr,pos)=>{ completeGeo=pos; document.getElementById("prov-c-loc-text").textContent=addr; document.getElementById("prov-c-loc-display").classList.remove("hidden"); }));
+function setCompleteLoc(addr,pos){ completeGeo=pos; document.getElementById("prov-c-loc-text").textContent=addr; document.getElementById("prov-c-loc-display").classList.remove("hidden"); }
+document.getElementById("prov-c-pick").addEventListener("click", ()=>openMap(completeGeo, setCompleteLoc));
+document.getElementById("prov-c-gps").addEventListener("click", ()=>{
+  if(!navigator.geolocation){ toast("GPS no disponible"); return; }
+  toast("Obteniendo tu ubicación…");
+  navigator.geolocation.getCurrentPosition(async p=>{
+    const pos={lat:p.coords.latitude,lng:p.coords.longitude}; let addr=pos.lat.toFixed(5)+", "+pos.lng.toFixed(5);
+    const ok=await loadMaps(); if(ok&&window.google){ try{ await new Promise(r=>new google.maps.Geocoder().geocode({location:pos},(res,st)=>{ if(st==="OK"&&res&&res[0]) addr=res[0].formatted_address; r(); })); }catch(_){} }
+    setCompleteLoc(addr,pos); toast("Ubicación fijada");
+  }, ()=>toast("No pudimos obtener tu ubicación"), {enableHighAccuracy:true});
+});
 document.getElementById("prov-c-submit").addEventListener("click", async ()=>{
   const manager=document.getElementById("prov-c-manager").value.trim();
   const business=document.getElementById("prov-c-business").value.trim();
@@ -657,7 +671,7 @@ if("serviceWorker" in navigator){ window.addEventListener("load",()=>navigator.s
 renderAuthMode();
 (async ()=>{
   // Si ya hay proveedor guardado (correo o sesión previa), entra.
-  if(provider){ await refreshProvider(); route(); return; }
+  if(provider){ try{ await refreshProvider(); }catch(_){} route(); return; }
   // Sesión real de Google (incluye la vuelta del OAuth) → verifica/registra.
   let hadSession=false;
   if(SBX()){

@@ -466,7 +466,12 @@
   </header>
 
   <main class="flex-grow pt-6 pb-48 px-margin-mobile w-full">
-    <h1 class="font-headline-md text-headline-md text-primary mb-6">Tu canasta</h1>
+    <div class="flex items-center justify-between mb-6">
+      <h1 class="font-headline-md text-headline-md text-primary">Tu canasta</h1>
+      <button id="btn-clear-basket" class="hidden items-center gap-1 text-sm text-error font-label-md hover:opacity-80 active:scale-95 transition-all" onclick="clearBasket()">
+        <span class="material-symbols-outlined text-[18px]">delete_sweep</span>Vaciar
+      </button>
+    </div>
     <section id="basket-items" class="space-y-4 mb-10"></section>
 
     <div id="basket-filled" class="hidden">
@@ -2129,6 +2134,9 @@ function changeQty(id, delta) {
   saveCart(); syncCart(); renderBasket();
 }
 function removeFromCart(id) { cart = cart.filter(i => i.id !== id); saveCart(); syncCart(); renderBasket(); }
+function clearBasket() {
+  showMessage({ icon: "delete_sweep", title: "¿Vaciar canasta?", text: "Se eliminarán todos los productos de tu canasta.", confirmLabel: "Vaciar", cancel: true, onConfirm: () => { cart = []; saveCart(); syncCart(); renderBasket(); showToast("Canasta vaciada"); } });
+}
 
 function syncCart() {
   const n = cartCount();
@@ -2516,16 +2524,19 @@ function renderBasket() {
   const filled = document.getElementById("basket-filled");
   const empty = document.getElementById("basket-empty");
   const bar = document.getElementById("basket-bar");
+  const btnClear = document.getElementById("btn-clear-basket");
   if (!cart.length) {
     items.innerHTML = "";
     filled.classList.add("hidden");
     bar.classList.add("hidden");
     empty.classList.remove("hidden"); empty.classList.add("flex");
+    if (btnClear) { btnClear.classList.add("hidden"); btnClear.classList.remove("flex"); }
     return;
   }
   empty.classList.add("hidden"); empty.classList.remove("flex");
   filled.classList.remove("hidden");
   bar.classList.remove("hidden");
+  if (btnClear) { btnClear.classList.remove("hidden"); btnClear.classList.add("flex"); }
   items.innerHTML = cart.map(basketRow).join("");
   const t = cartTotals();
   document.getElementById("sum-subtotal").textContent = bs(t.sub);

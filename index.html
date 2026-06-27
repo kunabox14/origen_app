@@ -956,6 +956,7 @@
       <p class="text-on-surface-variant mt-1">Tu ticket es <b id="sup-ticket" class="text-secondary"></b>. Te responderemos a tu correo.</p>
       <button data-nav="account" class="mt-5 border border-outline-variant text-on-surface font-label-md py-3 px-6 rounded-xl">Volver a mi cuenta</button>
     </div>
+    <div id="my-tickets"></div>
   </main>
 </section>
 
@@ -1202,6 +1203,7 @@
     <div id="admin-sub" class="admin-panel hidden"></div>
     <div id="admin-users" class="admin-panel hidden"></div>
     <div id="admin-orders" class="admin-panel hidden"></div>
+    <div id="admin-pending" class="admin-panel hidden"></div>
     <div id="admin-deliveries" class="admin-panel hidden"></div>
     <div id="admin-providers" class="admin-panel hidden"></div>
     <div id="admin-riders" class="admin-panel hidden"></div>
@@ -2113,12 +2115,15 @@ function addToCart(id) {
     return;
   }
   const line = cart.find(i => i.id === id);
+  const have = line ? line.qty : 0;
+  if (have + 1 > productMaxQty(id)) { showToast("Sin más stock disponible"); return; }
   if (line) line.qty++; else cart.push({ id, qty: 1 });
   saveCart(); syncCart(); showToast("Agregado a tu canasta");
 }
 function changeQty(id, delta) {
   const line = cart.find(i => i.id === id);
   if (!line) return;
+  if (delta > 0 && line.qty + delta > productMaxQty(id)) { showToast("Sin más stock disponible"); return; }
   line.qty += delta;
   if (line.qty <= 0) cart = cart.filter(i => i.id !== id);
   saveCart(); syncCart(); renderBasket();
@@ -2146,12 +2151,16 @@ function showToast(msg) {
 
 /* ============ Render: tarjeta de producto ============ */
 function productCardCatalog(p) {
+  const si = productStockInfo(p.id);
+  const stockBadge = (si.tracked && si.total === 1) ? '<span class="bg-error text-on-error px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Última unidad</span>'
+    : (si.tracked && si.total > 1 && si.total <= 3) ? `<span class="bg-tertiary-fixed/70 text-secondary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Quedan ${si.total}</span>` : "";
   return `
   <div class="product-card bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col group">
     <div class="aspect-square relative overflow-hidden bg-earth-cream">
       <img alt="${p.name}" class="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" src="${p.img}" onerror="imgFail(this)">
       <div class="absolute top-2 left-2 flex flex-col gap-1">
         <span class="bg-sprout-green text-deep-forest px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Suscríbete -12%</span>
+        ${stockBadge}
       </div>
     </div>
     <div class="p-4 flex flex-col flex-grow">
@@ -2206,9 +2215,17 @@ async function hydrateBranches() {
   } catch (e) {}
 }
 const stockAt = (branchId, productId) => { const e = CLOUD_INVENTORY.find(x => x.branch_id === branchId && x.product_id === productId); return e ? e.stock : 0; };
+// Stock total de un producto (suma de sus sucursales). Sin registros de inventario = no rastreado (Origen / siempre disponible).
+function productStockInfo(id) {
+  const rows = (CLOUD_INVENTORY || []).filter(x => x.product_id === id);
+  if (!rows.length) return { tracked: false, total: Infinity };
+  return { tracked: true, total: rows.reduce((s, r) => s + (r.stock || 0), 0) };
+}
+const productAvailable = id => { const i = productStockInfo(id); return !i.tracked || i.total > 0; };
+const productMaxQty = id => { const i = productStockInfo(id); return i.tracked ? i.total : Infinity; };
 // Mejor sucursal para los items de una tienda: con stock completo y la más cercana al cliente.
 function selectBranchForStore(storeName, items, clientGeo) {
-  const warehouse = { name: "Almacén Origen", lat: WAREHOUSE.lat, lng: WAREHOUSE.lng, distanceKm: clientGeo ? haversine(WAREHOUSE, clientGeo) : null, full: true };
+  const warehouse = { name: "Almacén Origen", branchId: null, lat: WAREHOUSE.lat, lng: WAREHOUSE.lng, distanceKm: clientGeo ? haversine(WAREHOUSE, clientGeo) : null, full: true };
   if (storeName === "Origen") return warehouse;
   const meta = providerMeta(storeName); if (!meta) return warehouse;
   const branches = CLOUD_BRANCHES.filter(b => b.provider_id === meta.id && b.lat != null);
@@ -2220,24 +2237,36 @@ function selectBranchForStore(storeName, items, clientGeo) {
   }));
   scored.sort((a, b) => (b.full - a.full) || (a.dist - b.dist)); // primero las que tienen el pedido completo; luego la más cercana
   const best = scored[0];
-  return { name: best.branch.name, lat: Number(best.branch.lat), lng: Number(best.branch.lng), distanceKm: clientGeo ? best.dist : null, full: best.full };
+  return { name: best.branch.name, branchId: best.branch.id, lat: Number(best.branch.lat), lng: Number(best.branch.lng), distanceKm: clientGeo ? best.dist : null, full: best.full };
 }
 // Pickup del carrito completo: agrupa por tienda, elige sucursal por tienda; distancia = el tramo más largo.
 function selectPickup(clientGeo) {
   const groups = {};
   cart.forEach(l => { const p = findProduct(l.id); if (!p) return; const store = p.providerName || "Origen"; (groups[store] = groups[store] || []).push({ id: l.id, qty: l.qty }); });
-  const picks = Object.keys(groups).map(store => Object.assign({ store }, selectBranchForStore(store, groups[store], clientGeo)));
+  const picks = Object.keys(groups).map(store => Object.assign({ store, items: groups[store] }, selectBranchForStore(store, groups[store], clientGeo)));
   if (!picks.length) return null;
   const dists = picks.map(p => p.distanceKm).filter(d => d != null);
   return { picks, primary: picks[0], maxDist: dists.length ? Math.max(...dists) : null };
+}
+// Descuenta el stock de la sucursal elegida al confirmar el pedido (los productos en 0 quedan invisibles).
+async function decrementStock(picks) {
+  if (!SBX() || !picks) return;
+  for (const pk of picks) {
+    if (!pk.branchId) continue;
+    for (const it of (pk.items || [])) {
+      const cur = stockAt(pk.branchId, it.id);
+      if (cur > 0) { try { await SBX().from("branch_inventory").update({ stock: Math.max(0, cur - it.qty) }).eq("branch_id", pk.branchId).eq("product_id", it.id); } catch (_) {} }
+    }
+  }
+  await hydrateBranches();
 }
 const clientGeoNow = () => (typeof orderType !== "undefined" && orderType === "regalo") ? (typeof giftGeo !== "undefined" ? giftGeo : null) : JSON.parse(localStorage.getItem("origen_geo") || "null");
 const STORE_CATEGORIES = ["Todos", "Superfoods", "Despensa", "Snacks", "Bebidas", "Carnes vegetales", "Granos"];
 // Agrupa los productos activos por tienda; los productos sin proveedor → tienda oficial "Origen".
 function storeList() {
-  // Productos activos agrupados por tienda
+  // Productos activos y CON stock agrupados por tienda
   const byStore = {};
-  activeProducts().forEach(p => { const key = p.providerName || "Origen"; (byStore[key] = byStore[key] || []).push(p); });
+  activeProducts().forEach(p => { if (!productAvailable(p.id)) return; const key = p.providerName || "Origen"; (byStore[key] = byStore[key] || []).push(p); });
   // Las tiendas son los PROVEEDORES APROBADOS + la tienda oficial "Origen" (así aparecen apenas el admin los aprueba, aunque aún no tengan productos)
   const seen = {};
   const stores = [{ name: "Origen", isOrigen: true, meta: null, products: byStore["Origen"] || [] }];
@@ -2338,7 +2367,8 @@ function renderCatalog() {
     const stores = storeList(); if (stores.length) { activeStore = stores[0].name; } else { navigate("stores"); return; }
   }
   const storeName = activeStore;
-  const all = activeProducts().filter(p => (p.providerName || "Origen") === storeName);
+  // Solo productos con al menos 1 unidad en stock (los agotados quedan invisibles)
+  const all = activeProducts().filter(p => (p.providerName || "Origen") === storeName && productAvailable(p.id));
   document.getElementById("store-view-name").textContent = storeName;
   document.getElementById("store-view-sub").textContent = all.length + " producto" + (all.length !== 1 ? "s" : "");
   const present = STORE_CATEGORIES.filter(c => c === "Todos" || all.some(p => p.cat === c));
@@ -2591,7 +2621,7 @@ function navigate(screen) {
   if (screen === "settings") renderSettings();
   if (screen === "yapas") renderYapas();
   if (screen === "chat") openChat();
-  if (screen === "support") { document.getElementById("support-form").classList.remove("hidden"); document.getElementById("sup-success").classList.add("hidden"); document.getElementById("sup-error").classList.add("hidden"); }
+  if (screen === "support") { document.getElementById("support-form").classList.remove("hidden"); document.getElementById("sup-success").classList.add("hidden"); document.getElementById("sup-error").classList.add("hidden"); loadMyTickets(); }
   if (screen === "auth") { renderAuth(); renderGoogleAccounts(); }
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();
@@ -2951,6 +2981,7 @@ function createOrder(method) {
   saveOrders();
   lastOrderId = id;
   cart = []; saveCart(); syncCart();
+  if (t.pickup) decrementStock(t.pickup.picks); // descuenta stock de la sucursal (agotados → invisibles)
   cloudCreateOrder(order); // a la nube → el repartidor lo recibe en su dispositivo
   return id;
 }
@@ -3091,6 +3122,7 @@ const ADMIN_TABS = [
   { id: "sub", label: "Suscripción", icon: "autorenew" },
   { id: "users", label: "Suscriptores", icon: "group" },
   { id: "orders", label: "Pedidos", icon: "receipt_long" },
+  { id: "pending", label: "Por entregar", icon: "pending_actions" },
   { id: "deliveries", label: "Entregas", icon: "local_shipping" },
   { id: "providers", label: "Proveedores", icon: "storefront" },
   { id: "riders", label: "Repartidores", icon: "delivery_dining" },
@@ -3106,7 +3138,7 @@ function renderAdmin() {
     const on = t.id === adminTab;
     return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
   }).join("");
-  ["dashboard", "products", "sub", "users", "orders", "deliveries", "providers", "riders", "pay", "support"].forEach(id =>
+  ["dashboard", "products", "sub", "users", "orders", "pending", "deliveries", "providers", "riders", "pay", "support"].forEach(id =>
     document.getElementById("admin-" + id).classList.toggle("hidden", id !== adminTab));
   if (adminTab === "support") renderAdminSupport();
   if (adminTab === "providers") renderAdminProviders();
@@ -3116,6 +3148,7 @@ function renderAdmin() {
   if (adminTab === "sub") renderAdminSub();
   if (adminTab === "users") renderAdminUsers();
   if (adminTab === "orders") renderAdminOrders();
+  if (adminTab === "pending") renderAdminPending();
   if (adminTab === "deliveries") renderAdminDeliveries();
   if (adminTab === "pay") renderAdminPay();
 }
@@ -3205,6 +3238,33 @@ function renderAdminOrders() {
         <p class="font-headline-sm text-[18px] text-secondary mt-2">${bs(o.total)}</p>
       </div>`).join("")}</div>`;
 }
+// Tienda responsable de un pedido (single-store): por el proveedor de sus productos
+function orderStoreName(o) {
+  for (const it of (o.items || [])) { const p = findProduct(it.id); if (p) return p.providerName || "Origen"; }
+  return o.pickup ? o.pickup.name : "—";
+}
+// Pagados pendientes de entrega (incluye programaciones prepagadas) — Update
+function renderAdminPending() {
+  const el = document.getElementById("admin-pending");
+  const pend = orders.filter(o => o.status !== "Entregado" && o.status !== "Cancelado");
+  if (!pend.length) { el.innerHTML = `<div class="text-center py-16 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">pending_actions</span><p class="mt-3">No hay pedidos pagados por entregar.</p></div>`; return; }
+  el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-1">Pagados · por entregar (${pend.length})</h2>
+    <p class="font-body-md text-on-surface-variant mb-4">Pedidos pagados pendientes de entrega, incluidas las entregas programadas pagadas por adelantado.</p>
+    <div class="space-y-3">${pend.map(o => {
+      const store = orderStoreName(o);
+      const sched = o.type === "programada" || o.freq;
+      return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-2"><span class="font-body-md font-bold text-primary">${o.id}</span><span class="bg-secondary-container text-on-secondary-container text-label-sm font-label-md px-2 py-0.5 rounded-full">${o.status}</span></div>
+        <div class="flex items-center gap-1.5 mb-1 text-secondary"><span class="material-symbols-outlined text-[18px]">storefront</span><span class="font-label-md font-semibold truncate">${store}</span>${o.pickup && o.pickup.name ? `<span class="text-on-surface-variant font-label-sm truncate">· recoge en ${o.pickup.name}</span>` : ""}</div>
+        <p class="font-label-sm text-on-surface-variant">${o.customer.name} · ${o.customer.zone}${o.references ? " · " + o.references : ""}</p>
+        <p class="font-label-sm text-on-surface-variant mt-1">${o.items.map(i => i.qty + "× " + i.name).join(", ")}</p>
+        <div class="flex items-center justify-between mt-2">
+          <span class="font-headline-sm text-[16px] text-secondary">${bs(o.total)}</span>
+          ${sched ? `<span class="bg-tertiary-fixed/40 text-secondary text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Programado · prepagado</span>` : `<span class="font-label-sm text-on-surface-variant">${o.deliveryDate || ""} · ${o.window || ""}</span>`}
+        </div>
+      </div>`;
+    }).join("")}</div>`;
+}
 function renderAdminUsers() {
   const active = users.filter(u => u.status === "Activa").length;
   document.getElementById("admin-users").innerHTML = `
@@ -3280,7 +3340,8 @@ function approvalRow(item, kind, title, sub) {
     <div class="flex justify-between items-start gap-2"><div class="min-w-0"><p class="font-semibold text-primary truncate">${title}</p><p class="font-label-sm text-on-surface-variant truncate">${sub}</p></div><span class="${badge} text-[10px] font-bold uppercase px-2 py-1 rounded-full h-fit flex-shrink-0">${item.status}</span></div>
     ${docs ? `<div class="flex flex-wrap gap-2 mt-2">${docs}</div>` : ""}
     ${item.status !== "aprobado" ? `<div class="flex gap-2 mt-3"><button data-approve="${kind}:${item.id}" class="flex-1 bg-leaf-green text-white font-label-md py-2 rounded-lg active:scale-95 transition-transform">Aprobar</button>${item.status !== "rechazado" ? `<button data-reject="${kind}:${item.id}" class="flex-1 border border-error text-error font-label-md py-2 rounded-lg active:scale-95 transition-transform">Rechazar</button>` : ""}</div>` : ""}
-    ${kind === "providers" && item.status === "aprobado" ? `<button data-pub-all="${item.id}" class="mt-3 w-full bg-secondary-container text-on-secondary-container font-label-md py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[18px]">inventory_2</span>Publicar todos los productos</button>` : ""}
+    ${kind === "providers" ? `<button data-view-store="${escA(title)}" class="mt-3 w-full border border-secondary text-secondary font-label-md py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[18px]">storefront</span>Ver tienda / catálogo</button>` : ""}
+    ${kind === "providers" && item.status === "aprobado" ? `<button data-pub-all="${item.id}" class="mt-2 w-full bg-secondary-container text-on-secondary-container font-label-md py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[18px]">inventory_2</span>Publicar todos los productos</button>` : ""}
     <button data-del-table="${kind}" data-del-id="${item.id}" data-del-label="${escA(title)}" class="mt-2 w-full text-error/80 hover:text-error font-label-sm py-1.5 flex items-center justify-center gap-1 active:scale-95"><span class="material-symbols-outlined text-[16px]">delete</span>Eliminar ${kind === "providers" ? "tienda" : "repartidor"}</button>
   </div>`;
 }
@@ -3317,6 +3378,8 @@ document.addEventListener("click", async e => {
     } });
     return;
   }
+  const vs = e.target.closest("[data-view-store]");
+  if (vs) { openStore(vs.dataset.viewStore); return; }
   const pub = e.target.closest("[data-pub-all]");
   if (pub) {
     if (!SBX()) return;
@@ -3338,16 +3401,56 @@ async function renderAdminSupport() {
   let tickets = [];
   if (SBX()) { try { const { data } = await SBX().from("support_tickets").select("*").order("created_at", { ascending: false }); tickets = data || []; } catch (e) {} }
   if (!tickets.length) { el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Tickets de soporte</h2><div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">support_agent</span><p class="mt-3">No hay tickets todavía.</p></div>`; return; }
+  const escH = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mb-4">Tickets de soporte (${tickets.length})</h2>
-    <div class="space-y-3">${tickets.map(t => `
-      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
-        <div class="flex justify-between items-center mb-1"><span class="font-body-md font-bold text-primary">${t.ticket_no || t.id.slice(0, 6)}</span><span class="bg-sprout-green/20 text-secondary text-label-sm font-label-md px-2 py-0.5 rounded-full">${t.status || "Abierto"}</span></div>
-        <p class="font-body-md font-semibold text-primary">${t.subject || ""}</p>
-        <p class="font-label-sm text-on-surface-variant mb-1">${t.name || ""} · ${t.user_email || ""}</p>
-        <p class="font-label-sm text-on-surface-variant">${(t.body || "").slice(0, 160)}</p>
+    <div class="space-y-3">${tickets.map(t => {
+      const st = t.status || "Abierto";
+      const done = st === "Resuelto" || st === "Cerrado";
+      return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-1"><span class="font-body-md font-bold text-primary">${t.ticket_no || t.id.slice(0, 6)}</span><span class="${done ? "bg-secondary-container text-on-secondary-container" : "bg-sprout-green/20 text-secondary"} text-label-sm font-label-md px-2 py-0.5 rounded-full">${st}</span></div>
+        <p class="font-body-md font-semibold text-primary">${escH(t.subject)}</p>
+        <p class="font-label-sm text-on-surface-variant mb-1">${escH(t.name)} · ${escH(t.user_email)}</p>
+        <p class="font-label-sm text-on-surface-variant whitespace-pre-line">${escH(t.body)}</p>
         <p class="font-label-sm text-on-surface-variant/60 mt-1">${new Date(t.created_at).toLocaleString("es-BO")}</p>
-      </div>`).join("")}</div>`;
+        <div class="mt-3 border-t border-outline-variant/20 pt-3">
+          <label class="font-label-sm text-on-surface-variant">Respuesta al usuario</label>
+          <textarea data-tk-reply="${t.id}" rows="2" class="mt-1 w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary text-sm" placeholder="Escribe tu respuesta…">${escH(t.admin_reply)}</textarea>
+          <div class="flex gap-2 mt-2">
+            <select data-tk-status="${t.id}" class="h-10 px-2 rounded-lg border border-outline-variant bg-surface-container-low text-sm">${["Abierto", "En proceso", "Resuelto", "Cerrado"].map(s => `<option ${s === st ? "selected" : ""}>${s}</option>`).join("")}</select>
+            <button data-tk-save="${t.id}" class="flex-1 bg-leaf-green text-white font-label-md py-2 rounded-lg active:scale-95 transition-transform">Guardar respuesta</button>
+          </div>
+        </div>
+      </div>`;
+    }).join("")}</div>`;
 }
+// Tickets del usuario actual (ve el estado y la respuesta del equipo)
+async function loadMyTickets() {
+  const el = document.getElementById("my-tickets"); if (!el) return;
+  const u = currentUser(); if (!u || !u.email || !SBX()) { el.innerHTML = ""; return; }
+  const escH = s => String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  try {
+    const { data } = await SBX().from("support_tickets").select("*").eq("user_email", u.email).order("created_at", { ascending: false });
+    const tk = data || [];
+    if (!tk.length) { el.innerHTML = ""; return; }
+    el.innerHTML = `<h2 class="font-headline-sm text-headline-sm text-primary mt-2 mb-3">Mis tickets</h2>
+      <div class="space-y-3">${tk.map(t => { const st = t.status || "Abierto"; const done = st === "Resuelto" || st === "Cerrado"; return `<div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-4">
+        <div class="flex justify-between items-center mb-1"><span class="font-label-md font-bold text-primary">${t.ticket_no || ""}</span><span class="${done ? "bg-secondary-container text-on-secondary-container" : "bg-sprout-green/20 text-secondary"} text-label-sm px-2 py-0.5 rounded-full">${st}</span></div>
+        <p class="font-body-md font-semibold text-primary">${escH(t.subject)}</p>
+        <p class="font-label-sm text-on-surface-variant">${escH(t.body)}</p>
+        ${t.admin_reply ? `<div class="mt-2 bg-secondary-container/40 rounded-lg p-3"><p class="font-label-sm font-bold text-on-secondary-container mb-0.5">Respuesta de Origen</p><p class="font-label-sm text-on-surface whitespace-pre-line">${escH(t.admin_reply)}</p></div>` : ""}
+      </div>`; }).join("")}</div>`;
+  } catch (_) { el.innerHTML = ""; }
+}
+// Guardar respuesta / estado de un ticket
+document.addEventListener("click", async e => {
+  const sv = e.target.closest("[data-tk-save]"); if (!sv || !SBX()) return;
+  const id = sv.dataset.tkSave;
+  const reply = (document.querySelector(`[data-tk-reply="${id}"]`) || {}).value || "";
+  const status = (document.querySelector(`[data-tk-status="${id}"]`) || {}).value || "Abierto";
+  sv.disabled = true; sv.textContent = "Guardando…";
+  try { await SBX().from("support_tickets").update({ admin_reply: reply, status, replied_at: new Date().toISOString() }).eq("id", id); showToast("Ticket actualizado"); renderAdminSupport(); }
+  catch (_) { showToast("No se pudo guardar"); sv.disabled = false; sv.textContent = "Guardar respuesta"; }
+});
 function renderAdminPay() {
   document.getElementById("admin-pay").innerHTML = `
     <h2 class="font-headline-sm text-headline-sm text-primary mb-1">Métodos de pago</h2>

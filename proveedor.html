@@ -97,6 +97,8 @@
         <input id="prov-c-manager" placeholder="Nombre del encargado" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
         <input id="prov-c-business" placeholder="Nombre de la tienda / marca" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
         <input id="prov-c-phone" type="tel" placeholder="WhatsApp" class="w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+        <label class="block"><span class="text-sm text-on-surface-variant">Zona de la sucursal <span class="text-error">*</span></span>
+          <select id="prov-c-zone" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary"><option>Zona Sur</option><option>Miraflores</option><option>Sopocachi</option><option>Centro</option><option>San Miguel</option><option>Calacoto</option><option>Obrajes</option></select></label>
         <span class="text-sm text-on-surface-variant">Ubicación del negocio <span class="text-error">*</span></span>
         <div class="grid grid-cols-2 gap-2">
           <button id="prov-c-gps" type="button" class="border border-secondary text-secondary font-semibold py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99]"><span class="material-symbols-outlined text-[20px]">my_location</span>Mi ubicación</button>
@@ -135,6 +137,7 @@
     </header>
     <main class="px-5 py-5">
       <div id="prov-active" class="mb-5"></div>
+      <div id="prov-stock-alert" class="mb-5"></div>
       <div id="prov-myloc" class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5 flex items-center gap-3">
         <span class="material-symbols-outlined text-secondary">my_location</span>
         <div class="flex-grow min-w-0"><p class="text-xs text-on-surface-variant">Dirección de mi negocio</p><p id="prov-myloc-text" class="font-semibold text-primary truncate">Sin definir</p></div>
@@ -323,9 +326,13 @@ document.getElementById("prov-c-submit").addEventListener("click", async ()=>{
   const btn=document.getElementById("prov-c-submit"); btn.disabled=true; btn.textContent="Enviando…";
   try{
     const addr=document.getElementById("prov-c-loc-text").textContent;
+    const zone=document.getElementById("prov-c-zone").value;
     const ins=await SBX().from("providers").insert({ name:manager, business, email:googleProfile.email, phone, status:"pendiente", lat:completeGeo.lat, lng:completeGeo.lng, address:addr }).select().single();
     if(ins.error){ toast("No se pudo registrar"); btn.disabled=false; btn.textContent="Enviar para aprobación"; return; }
-    provider=ins.data; localStorage.setItem("origen_provider",JSON.stringify(provider)); route();
+    provider=ins.data; localStorage.setItem("origen_provider",JSON.stringify(provider));
+    // Crea su sucursal "Casa matriz" con la zona elegida (para catalogarla por zona)
+    try{ await SBX().from("branches").insert({ provider_id:provider.id, name:"Casa matriz", zone, lat:completeGeo.lat, lng:completeGeo.lng, address:addr }); }catch(_){}
+    route();
   }catch(_){ toast("No se pudo registrar"); }
   btn.disabled=false; btn.textContent="Enviar para aprobación";
 });
@@ -379,7 +386,7 @@ async function logout(){ localStorage.removeItem("origen_provider"); provider=nu
 async function enterApp(){
   document.getElementById("prov-bizname").textContent = provider.business||"";
   renderMyLoc();
-  show("prov-app"); await loadProducts(); await loadBranches(); setupRealtime();
+  show("prov-app"); await loadProducts(); await loadBranches(); loadStockAlerts(); setupRealtime();
 }
 function renderMyLoc(){ const el=document.getElementById("prov-myloc-text"); if(el) el.textContent=(provider&&provider.address)||"Sin definir"; }
 document.getElementById("prov-myloc-edit").addEventListener("click", ()=>openMap(provider&&provider.lat?{lat:Number(provider.lat),lng:Number(provider.lng)}:null, async (addr,pos)=>{
@@ -450,6 +457,24 @@ document.getElementById("confirm-ok").addEventListener("click", async ()=>{
     toast("Producto eliminado"); await loadProducts(); // el catálogo del cliente se actualiza por realtime
   }catch(_){ toast("No se pudo eliminar"); }
 });
+// Alerta de stock bajo (< 3 u.) — los productos en 0 quedan invisibles en el catálogo
+async function loadStockAlerts(){
+  const el=document.getElementById("prov-stock-alert"); if(!el||!SBX()) return;
+  try{
+    const branchIds=(PROV_BRANCHES||[]).map(b=>b.id);
+    if(!branchIds.length){ el.innerHTML=""; return; }
+    const inv=(await SBX().from("branch_inventory").select("product_id,stock").in("branch_id",branchIds)).data||[];
+    const totals={}; inv.forEach(r=>{ totals[r.product_id]=(totals[r.product_id]||0)+(r.stock||0); });
+    const nameOf=id=>{ const p=(PROV_PRODUCTS||[]).find(x=>x.id===id); return p?p.name:"Producto"; };
+    const low=Object.keys(totals).filter(id=>totals[id]<3).map(id=>({name:nameOf(id),stock:totals[id]})).sort((a,b)=>a.stock-b.stock);
+    if(!low.length){ el.innerHTML=""; return; }
+    el.innerHTML=`<div class="bg-error/10 border-2 border-error/40 rounded-2xl p-4">
+      <div class="flex items-center gap-2 mb-2"><span class="material-symbols-outlined text-error">warning</span><span class="font-bold text-error">Stock bajo · repón pronto</span></div>
+      <div class="space-y-1">${low.map(p=>`<div class="flex justify-between items-center text-sm"><span class="text-primary truncate pr-2">${p.name}</span><span class="font-bold ${p.stock===0?'text-error':'text-secondary'} whitespace-nowrap">${p.stock===0?'Agotado':p.stock+' u.'}</span></div>`).join("")}</div>
+      <p class="text-xs text-on-surface-variant mt-2">Edita el stock en tus sucursales. Los productos en 0 no aparecen en tu tienda.</p>
+    </div>`;
+  }catch(_){ el.innerHTML=""; }
+}
 // Banner prioritario de pedidos por preparar (Update 2)
 function provHaversine(a,b){ const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180; const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
 const prepLabel = s => s==="listo" ? "Listo para recoger" : s==="preparando" ? "En preparación" : "Pendiente";
@@ -623,7 +648,7 @@ document.getElementById("stock-close").addEventListener("click", ()=>document.ge
 document.getElementById("stock-save").addEventListener("click", async ()=>{
   if(!stockBranchId) return;
   const rows=[...document.querySelectorAll("[data-stock-prod]")].map(inp=>({ branch_id:stockBranchId, product_id:inp.dataset.stockProd, stock:Math.max(0,parseInt(inp.value||"0",10)) }));
-  try{ if(rows.length) await SBX().from("branch_inventory").upsert(rows,{onConflict:"branch_id,product_id"}); toast("Stock actualizado"); document.getElementById("stock-modal").classList.add("hidden"); }catch(_){ toast("No se pudo guardar"); }
+  try{ if(rows.length) await SBX().from("branch_inventory").upsert(rows,{onConflict:"branch_id,product_id"}); toast("Stock actualizado"); document.getElementById("stock-modal").classList.add("hidden"); loadStockAlerts(); }catch(_){ toast("No se pudo guardar"); }
 });
 document.addEventListener("click", e=>{
   const st=e.target.closest("[data-branch-stock]"); if(st){ openStockModal(st.dataset.branchStock); return; }
@@ -636,6 +661,7 @@ function setupRealtime(){
   try{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); }catch(_){}
   SBX().channel("prov-products").on("postgres_changes",{event:"*",schema:"public",table:"products"},loadProducts).subscribe();
   SBX().channel("prov-branches").on("postgres_changes",{event:"*",schema:"public",table:"branches"},loadBranches).subscribe();
+  SBX().channel("prov-inventory").on("postgres_changes",{event:"*",schema:"public",table:"branch_inventory"},loadStockAlerts).subscribe();
   // Update 2/3: pedidos entrantes en tiempo real → refresca el banner del proveedor
   SBX().channel("prov-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, ()=>loadProviderOrders()).subscribe();
   SBX().channel("prov-order-items").on("postgres_changes",{event:"*",schema:"public",table:"order_items"}, ()=>loadProviderOrders()).subscribe();

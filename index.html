@@ -317,7 +317,7 @@
 <!-- ===================== HOME ===================== -->
 <section id="screen-home" class="screen pb-28">
   <nav class="bg-background sticky top-0 w-full z-40 h-16 flex justify-between items-center px-margin-mobile border-b border-outline-variant/10">
-    <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
+    <button data-menu class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
     <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
     <button data-nav="basket" class="basket-btn relative text-secondary active:scale-95 transition-transform">
       <span class="material-symbols-outlined">shopping_basket</span>
@@ -404,7 +404,7 @@
 <section id="screen-stores" class="screen pb-28">
   <nav class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
     <div class="flex items-center gap-3">
-      <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
+      <button data-menu class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
       <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
     </div>
     <button data-nav="basket" class="basket-btn relative text-secondary active:scale-95 transition-transform">
@@ -419,12 +419,8 @@
       <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors">search</span>
       <input id="stores-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar tiendas..." type="text">
     </div>
-    <section id="stores-featured-wrap" class="hidden mb-8">
-      <h2 class="font-headline-sm text-headline-sm text-primary mb-3">Tiendas destacadas</h2>
-      <div id="stores-featured" class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-margin-mobile px-margin-mobile"></div>
-    </section>
-    <h2 class="font-headline-sm text-headline-sm text-primary mb-3">Todas las tiendas</h2>
-    <div id="stores-list" class="space-y-4"></div>
+    <div id="stores-zones" class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-5 -mx-margin-mobile px-margin-mobile"></div>
+    <div id="stores-list"></div>
   </main>
 </section>
 
@@ -593,7 +589,7 @@
 <!-- ===================== SCANNER ===================== -->
 <section id="screen-scanner" class="screen overflow-hidden" style="min-height:100dvh">
   <header class="bg-background w-full h-16 flex justify-between items-center px-margin-mobile">
-    <button class="text-secondary p-2"><span class="material-symbols-outlined">menu</span></button>
+    <button data-menu class="text-secondary p-2"><span class="material-symbols-outlined">menu</span></button>
     <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
     <button data-nav="basket" class="basket-btn relative text-secondary p-2">
       <span class="material-symbols-outlined">shopping_basket</span>
@@ -748,7 +744,7 @@
 <section id="screen-account" class="screen pb-28">
   <header class="bg-background sticky top-0 w-full z-40 flex justify-between items-center px-margin-mobile h-16 border-b border-outline-variant/10">
     <div class="flex items-center gap-3">
-      <button class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
+      <button data-menu class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">menu</span></button>
       <img src="assets/origen-logo.svg" alt="Origen" class="h-7 w-auto object-contain">
     </div>
     <button data-nav="basket" class="basket-btn relative text-secondary">
@@ -1271,6 +1267,30 @@
     <p id="picker-addr" class="font-body-md text-primary mt-1 min-h-[24px]"></p>
     <button id="picker-confirm" class="mt-3 w-full bg-leaf-green text-white font-label-md py-3.5 rounded-xl active:scale-95 transition-transform">Confirmar ubicación</button>
   </div>
+</div>
+
+<!-- ===================== MENÚ (drawer lateral) ===================== -->
+<div id="menu-overlay" class="hidden fixed inset-0 z-[125]">
+  <div class="absolute inset-0 bg-deep-forest/40 backdrop-blur-sm" data-menu-close></div>
+  <nav class="absolute left-0 top-0 h-full w-72 max-w-[82%] bg-background shadow-xl p-5 flex flex-col overflow-y-auto no-scrollbar">
+    <div class="flex items-center justify-between mb-6">
+      <img src="assets/origen-logo.svg" class="h-7" alt="Origen">
+      <button data-menu-close class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <a data-nav="home" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">home</span> Inicio</a>
+    <a data-nav="stores" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">storefront</span> Tiendas</a>
+    <a data-nav="orders" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">receipt_long</span> Mis pedidos</a>
+    <a data-nav="favorites" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">favorite</span> Favoritos</a>
+    <a data-nav="plans" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">autorenew</span> Suscripción</a>
+    <a data-nav="yapas" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">redeem</span> Recompensas</a>
+    <a data-nav="support" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">support_agent</span> Ayuda y soporte</a>
+    <a data-nav="account" data-menu-close class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container text-on-surface"><span class="material-symbols-outlined text-secondary">person</span> Mi cuenta</a>
+    <a id="menu-admin" data-nav="admin" data-menu-close class="hidden items-center gap-3 px-3 py-3 rounded-xl bg-primary-container text-on-primary mt-2"><span class="material-symbols-outlined text-leaf-green">admin_panel_settings</span> Panel de administrador</a>
+    <div class="mt-auto pt-6 flex gap-3 text-label-sm text-on-surface-variant/70">
+      <a href="privacy-policy.html" target="_blank" rel="noopener" class="hover:text-secondary">Privacidad</a>
+      <a href="terms-of-service.html" target="_blank" rel="noopener" class="hover:text-secondary">Términos</a>
+    </div>
+  </nav>
 </div>
 
 <!-- ===================== BOTTOM NAV (persistente) ===================== -->
@@ -2228,47 +2248,83 @@ function storeList() {
     const meta = s.meta;
     const isNew = meta && meta.created_at ? (Date.now() - new Date(meta.created_at).getTime()) < 30 * 864e5 : false;
     const featured = s.isOrigen || (meta && meta.featured === true) || isNew;
+    const branch = meta ? (CLOUD_BRANCHES || []).find(b => b.provider_id === meta.id && b.zone) : null;
+    const zone = s.isOrigen ? "Centro" : (branch && branch.zone) || "Otras zonas";
     return {
-      name: s.name, count: s.products.length, products: s.products,
+      name: s.name, count: s.products.length, products: s.products, zone,
       logo: s.isOrigen ? "assets/origen-logo.svg" : (meta && meta.logo_url) || null,
       description: s.isOrigen ? "Selección oficial Origen" : (meta && meta.description) || "Productos orgánicos seleccionados",
       featured, isNew, isOrigen: s.isOrigen
     };
   }).sort((a, b) => (b.featured - a.featured) || (b.count - a.count));
 }
+/* Tiendas favoritas (acceso rápido) */
+const getFavStores = () => JSON.parse(localStorage.getItem("origen_fav_stores") || "[]");
+const isFavStore = name => getFavStores().indexOf(name) > -1;
+function toggleFavStore(name) {
+  let f = getFavStores(); const i = f.indexOf(name);
+  if (i > -1) f.splice(i, 1); else f.push(name);
+  localStorage.setItem("origen_fav_stores", JSON.stringify(f));
+  if (current === "stores") renderStores();
+  showToast(i > -1 ? "Quitada de favoritas" : "Agregada a favoritas");
+}
 function storeInitials(name) { return name.split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase(); }
-function storeCardWide(s) {
-  const badges = [];
-  if (s.isNew) badges.push('<span class="bg-sprout-green text-deep-forest text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Nueva</span>');
-  if (s.featured && !s.isNew) badges.push('<span class="bg-secondary-container text-on-secondary-container text-[10px] font-bold uppercase px-2 py-0.5 rounded-full">Destacada</span>');
-  return `<button data-store="${encodeURIComponent(s.name)}" class="w-full text-left bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 flex items-center gap-4 hover:border-secondary transition-colors active:scale-[0.99]">
-    <div class="w-14 h-14 rounded-xl bg-earth-cream flex items-center justify-center overflow-hidden flex-shrink-0">${s.logo ? `<img src="${s.logo}" class="w-full h-full object-contain p-1.5" onerror="imgFail(this)">` : `<span class="font-headline-sm text-secondary">${storeInitials(s.name)}</span>`}</div>
-    <div class="flex-grow min-w-0">
-      <div class="flex items-center gap-2 flex-wrap"><p class="font-headline-sm text-[16px] text-primary truncate">${s.name}</p>${badges.join("")}</div>
-      <p class="font-label-sm text-on-surface-variant truncate">${s.description}</p>
-      <p class="font-label-sm text-secondary mt-0.5">${s.count} producto${s.count !== 1 ? "s" : ""} · Visitar tienda</p>
-    </div>
-    <span class="material-symbols-outlined text-secondary flex-shrink-0">chevron_right</span>
-  </button>`;
+// Tarjeta de tienda para grilla de 2 columnas, con estrella de favorita
+function storeCardGrid(s) {
+  const fav = isFavStore(s.name);
+  const badge = s.isNew ? '<span class="bg-sprout-green text-deep-forest text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full">Nueva</span>'
+    : (s.featured ? '<span class="bg-secondary-container text-on-secondary-container text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full">Destacada</span>' : "");
+  return `<div class="relative bg-surface-container-lowest border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col">
+    <button data-fav-store="${encodeURIComponent(s.name)}" class="absolute top-2 right-2 z-10 w-8 h-8 rounded-full bg-surface/80 backdrop-blur flex items-center justify-center active:scale-90 transition-transform" aria-label="Favorita">
+      <span class="material-symbols-outlined text-[20px] ${fav ? "text-leaf-green" : "text-outline-variant"}" style="font-variation-settings:'FILL' ${fav ? 1 : 0}">favorite</span>
+    </button>
+    <button data-store="${encodeURIComponent(s.name)}" class="text-left flex flex-col flex-grow active:scale-[0.99] transition-transform">
+      <div class="aspect-[4/3] bg-earth-cream flex items-center justify-center overflow-hidden">${s.logo ? `<img src="${s.logo}" class="w-full h-full object-contain p-4" onerror="imgFail(this)">` : `<span class="font-headline-md text-secondary">${storeInitials(s.name)}</span>`}</div>
+      <div class="p-3 flex-grow flex flex-col">
+        <div class="flex items-start gap-1 mb-0.5">${badge}</div>
+        <p class="font-headline-sm text-[15px] text-primary leading-tight">${s.name}</p>
+        <p class="font-label-sm text-on-surface-variant mt-0.5 line-clamp-1">${s.description}</p>
+        <p class="font-label-sm text-secondary mt-auto pt-1">${s.count} producto${s.count !== 1 ? "s" : ""}</p>
+      </div>
+    </button>
+  </div>`;
 }
-function storeCardFeatured(s) {
-  return `<button data-store="${encodeURIComponent(s.name)}" class="min-w-[170px] w-[170px] flex-shrink-0 text-left bg-primary-container text-on-primary rounded-2xl p-4 active:scale-[0.98] transition-transform">
-    <div class="w-12 h-12 rounded-xl bg-earth-cream flex items-center justify-center overflow-hidden mb-3">${s.logo ? `<img src="${s.logo}" class="w-full h-full object-contain p-1.5" onerror="imgFail(this)">` : `<span class="font-headline-sm text-secondary">${storeInitials(s.name)}</span>`}</div>
-    <p class="font-headline-sm text-[15px] leading-tight">${s.name}</p>
-    <p class="font-label-sm text-leaf-green mt-1">${s.isNew ? "Nueva tienda" : "Destacada"}</p>
-    <p class="font-label-sm text-on-primary-container mt-2">${s.count} producto${s.count !== 1 ? "s" : ""}</p>
-    <span class="mt-3 inline-flex items-center gap-1 text-leaf-green font-label-md">Visitar tienda <span class="material-symbols-outlined text-[18px]">arrow_forward</span></span>
-  </button>`;
-}
+const grid2 = arr => `<div class="grid grid-cols-2 gap-3">${arr.map(storeCardGrid).join("")}</div>`;
+let storeZone = "Todas"; // zona seleccionada en el filtro
 function renderStores() {
   const q = (document.getElementById("stores-search").value || "").toLowerCase();
-  const stores = storeList().filter(s => s.name.toLowerCase().includes(q));
-  const featured = stores.filter(s => s.featured).slice(0, 8);
-  const fw = document.getElementById("stores-featured-wrap");
-  if (featured.length && !q) { fw.classList.remove("hidden"); document.getElementById("stores-featured").innerHTML = featured.map(storeCardFeatured).join(""); }
-  else fw.classList.add("hidden");
+  const all = storeList();
+  // Zona por defecto: la del cliente, si la tenemos y hay tiendas ahí
+  const u = currentUser();
+  if (storeZone === "Todas" && u && u.zone && all.some(s => s.zone === u.zone)) storeZone = u.zone;
+  // Chips de zonas (ordenadas; la zona del cliente primero)
+  const zones = [...new Set(all.map(s => s.zone))];
+  if (u && u.zone) zones.sort((a, b) => (b === u.zone) - (a === u.zone) || a.localeCompare(b)); else zones.sort();
+  const chips = ["Todas", ...zones];
+  document.getElementById("stores-zones").innerHTML = chips.map(z => {
+    const on = z === storeZone;
+    const near = (u && z === u.zone) ? ' · cerca de ti' : "";
+    return `<button data-zone="${encodeURIComponent(z)}" class="flex-none px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary shadow-sm" : "bg-surface-container-high text-on-surface-variant hover:bg-outline-variant"}">${z === "Todas" ? "Todas" : z}${z !== "Todas" ? near : ""}</button>`;
+  }).join("");
+  // Filtro por búsqueda
+  let stores = all.filter(s => s.name.toLowerCase().includes(q));
   const list = document.getElementById("stores-list");
-  list.innerHTML = stores.length ? stores.map(storeCardWide).join("") : `<p class="text-center text-on-surface-variant py-12">No encontramos tiendas.</p>`;
+  let html = "";
+  // Favoritas (acceso rápido) — siempre arriba si hay
+  const favs = stores.filter(s => isFavStore(s.name));
+  if (favs.length && !q) html += `<div class="mb-6"><h2 class="font-headline-sm text-headline-sm text-primary mb-3 flex items-center gap-1"><span class="material-symbols-outlined text-leaf-green" style="font-variation-settings:'FILL' 1">favorite</span>Tus favoritas</h2>${grid2(favs)}</div>`;
+  // Filtro de zona
+  if (storeZone !== "Todas") stores = stores.filter(s => s.zone === storeZone);
+  if (!stores.length) { list.innerHTML = html + `<p class="text-center text-on-surface-variant py-12">No hay tiendas en esta zona.</p>`; return; }
+  if (storeZone === "Todas") {
+    // Agrupadas por zona, cada grupo en 2 columnas (scroll vertical)
+    const byZone = {}; stores.forEach(s => { (byZone[s.zone] = byZone[s.zone] || []).push(s); });
+    const order = Object.keys(byZone).sort((a, b) => (u && u.zone ? (b === u.zone) - (a === u.zone) : 0) || a.localeCompare(b));
+    order.forEach(z => { html += `<div class="mb-6"><h2 class="font-headline-sm text-headline-sm text-primary mb-3">Tiendas en ${z}</h2>${grid2(byZone[z])}</div>`; });
+  } else {
+    html += `<div class="mb-6"><h2 class="font-headline-sm text-headline-sm text-primary mb-3">Tiendas en ${storeZone}</h2>${grid2(stores)}</div>`;
+  }
+  list.innerHTML = html;
 }
 // Refresca proveedores/productos al entrar a Tiendas (por si el admin acaba de aprobar una tienda)
 async function refreshStores() { await hydrateProviders(); await hydrateProducts(); await hydrateBranches(); if (current === "stores") renderStores(); }
@@ -2664,10 +2720,23 @@ document.addEventListener("click", e => {
 
 document.getElementById("catalog-search").addEventListener("input", renderCatalog);
 document.getElementById("stores-search").addEventListener("input", renderStores);
-// Abrir una tienda al tocar su tarjeta
+// Favoritas, filtro de zona y abrir tienda
 document.addEventListener("click", e => {
+  const fav = e.target.closest("[data-fav-store]");
+  if (fav) { toggleFavStore(decodeURIComponent(fav.dataset.favStore)); return; }
+  const zn = e.target.closest("[data-zone]");
+  if (zn) { storeZone = decodeURIComponent(zn.dataset.zone); renderStores(); return; }
   const st = e.target.closest("[data-store]");
   if (st) { openStore(decodeURIComponent(st.dataset.store)); }
+});
+// Menú lateral
+document.addEventListener("click", e => {
+  if (e.target.closest("[data-menu]")) {
+    const adm = document.getElementById("menu-admin"); const on = isAdmin();
+    adm.classList.toggle("hidden", !on); adm.classList.toggle("flex", on);
+    document.getElementById("menu-overlay").classList.remove("hidden"); return;
+  }
+  if (e.target.closest("[data-menu-close]")) { document.getElementById("menu-overlay").classList.add("hidden"); }
 });
 
 // Registro → bienvenida → home
@@ -3206,10 +3275,12 @@ function approvalRow(item, kind, title, sub) {
   const chip = (url, icon, label) => url ? `<a href="${url}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 bg-surface-container-high text-secondary font-label-sm px-2.5 py-1 rounded-full"><span class="material-symbols-outlined text-[16px]">${icon}</span>${label}</a>` : "";
   const mapUrl = (item.lat != null && item.lng != null) ? `https://www.google.com/maps?q=${item.lat},${item.lng}` : null;
   const docs = [chip(item.id_doc_url, "badge", "Carnet"), chip(item.copy_doc_url, "description", "Factura luz/agua"), chip(mapUrl, "place", "Ubicación")].filter(Boolean).join("");
+  const escA = s => String(s || "").replace(/"/g, "&quot;");
   return `<div class="bg-surface-container-lowest border border-outline-variant/30 rounded-xl p-4">
     <div class="flex justify-between items-start gap-2"><div class="min-w-0"><p class="font-semibold text-primary truncate">${title}</p><p class="font-label-sm text-on-surface-variant truncate">${sub}</p></div><span class="${badge} text-[10px] font-bold uppercase px-2 py-1 rounded-full h-fit flex-shrink-0">${item.status}</span></div>
     ${docs ? `<div class="flex flex-wrap gap-2 mt-2">${docs}</div>` : ""}
     ${item.status !== "aprobado" ? `<div class="flex gap-2 mt-3"><button data-approve="${kind}:${item.id}" class="flex-1 bg-leaf-green text-white font-label-md py-2 rounded-lg active:scale-95 transition-transform">Aprobar</button>${item.status !== "rechazado" ? `<button data-reject="${kind}:${item.id}" class="flex-1 border border-error text-error font-label-md py-2 rounded-lg active:scale-95 transition-transform">Rechazar</button>` : ""}</div>` : ""}
+    <button data-del-table="${kind}" data-del-id="${item.id}" data-del-label="${escA(title)}" class="mt-2 w-full text-error/80 hover:text-error font-label-sm py-1.5 flex items-center justify-center gap-1 active:scale-95"><span class="material-symbols-outlined text-[16px]">delete</span>Eliminar ${kind === "providers" ? "tienda" : "repartidor"}</button>
   </div>`;
 }
 async function renderAdminProviders() {
@@ -3227,15 +3298,30 @@ async function renderAdminRiders() {
   let rows = []; if (SBX()) { try { const { data } = await SBX().from("riders").select("*").order("created_at", { ascending: false }); rows = data || []; } catch (e) {} }
   const pend = rows.filter(r => r.status === "pendiente").length;
   el.innerHTML = `<div class="flex items-center justify-between mb-4"><h2 class="font-headline-sm text-headline-sm text-primary">Repartidores (${rows.length})</h2>${pend ? `<span class="bg-tertiary-fixed/40 text-secondary font-label-sm px-3 py-1 rounded-full">${pend} por revisar</span>` : ""}</div>
+    <a href="repartidor.html" target="_blank" class="mb-4 w-full border border-primary-container text-primary-container font-label-md py-3 rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined">delivery_dining</span> Abrir app de repartidor</a>
     <div class="space-y-3">${rows.length ? rows.map(r => approvalRow(r, "riders", r.name, (r.zone || "") + (r.email ? " · " + r.email : "") + (r.phone ? " · " + r.phone : ""))).join("") : `<div class="text-center py-12 text-on-surface-variant"><span class="material-symbols-outlined text-5xl text-outline-variant">delivery_dining</span><p class="mt-3">Aún no hay repartidores registrados.</p></div>`}</div>`;
 }
 document.addEventListener("click", async e => {
+  const del = e.target.closest("[data-del-table]");
+  if (del) {
+    const table = del.dataset.delTable, id = del.dataset.delId, label = del.dataset.delLabel || "";
+    showMessage({ icon: "delete", danger: true, cancel: true, title: "Eliminar", text: `¿Eliminar "${label}"? Esta acción no se puede deshacer.`, confirmLabel: "Eliminar", onConfirm: async () => {
+      if (!SBX()) return;
+      try {
+        if (table === "providers") { try { await SBX().from("products").delete().eq("provider_id", id); } catch (_) {} } // borra también sus productos del catálogo
+        await SBX().from(table).delete().eq("id", id);
+        showToast("Eliminado");
+        if (table === "providers") { await hydrateProviders(); await hydrateProducts(); renderAdminProviders(); } else renderAdminRiders();
+      } catch (_) { showToast("No se pudo eliminar"); }
+    } });
+    return;
+  }
   const ap = e.target.closest("[data-approve]"), rj = e.target.closest("[data-reject]");
   const node = ap || rj; if (!node || !SBX()) return;
   const [table, id] = (ap ? ap.dataset.approve : rj.dataset.reject).split(":");
   try { await SBX().from(table).update({ status: ap ? "aprobado" : "rechazado" }).eq("id", id); } catch (er) {}
   showToast(ap ? "Aprobado" : "Rechazado");
-  if (table === "providers") renderAdminProviders(); else renderAdminRiders();
+  if (table === "providers") { await hydrateProviders(); renderAdminProviders(); } else renderAdminRiders();
 });
 async function renderAdminSupport() {
   const el = document.getElementById("admin-support");

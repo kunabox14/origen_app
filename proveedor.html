@@ -401,7 +401,7 @@ document.getElementById("prov-myloc-edit").addEventListener("click", ()=>openMap
   try{ await SBX().from("providers").update({ lat:pos.lat, lng:pos.lng, address:addr }).eq("id",provider.id); provider.lat=pos.lat; provider.lng=pos.lng; provider.address=addr; localStorage.setItem("origen_provider",JSON.stringify(provider)); renderMyLoc(); toast("Ubicación actualizada"); }catch(_){ toast("No se pudo actualizar"); }
 }));
 function renderMyHours(){ const el=document.getElementById("prov-hours-input"); if(el) el.value=(provider&&provider.business_hours)||""; }
-document.getElementById("prov-hours-save").addEventListener("click", async ()=>{
+document.getElementById("prov-hours-save")?.addEventListener("click", async ()=>{
   const val=(document.getElementById("prov-hours-input").value||"").trim();
   if(!SBX()){ toast("Sin conexión"); return; }
   try{ await SBX().from("providers").update({ business_hours: val||null }).eq("id",provider.id); provider.business_hours=val||null; localStorage.setItem("origen_provider",JSON.stringify(provider)); toast("Horario actualizado"); }catch(_){ toast("No se pudo guardar"); }

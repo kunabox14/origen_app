@@ -143,6 +143,14 @@
         <div class="flex-grow min-w-0"><p class="text-xs text-on-surface-variant">Dirección de mi negocio</p><p id="prov-myloc-text" class="font-semibold text-primary truncate">Sin definir</p></div>
         <button id="prov-myloc-edit" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95">Actualizar</button>
       </div>
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5 flex items-center gap-3">
+        <span class="material-symbols-outlined text-secondary">schedule</span>
+        <div class="flex-grow min-w-0">
+          <p class="text-xs text-on-surface-variant mb-1">Horario de atención</p>
+          <input id="prov-hours-input" class="font-semibold text-primary w-full bg-transparent outline-none text-sm placeholder:text-on-surface-variant/50" placeholder="Ej: Lun–Sáb 8:00–18:00">
+        </div>
+        <button id="prov-hours-save" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95 ml-2">Guardar</button>
+      </div>
       <div class="grid grid-cols-2 gap-3 mb-5">
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
         <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
@@ -385,13 +393,19 @@ async function logout(){ localStorage.removeItem("origen_provider"); provider=nu
 // DASHBOARD
 async function enterApp(){
   document.getElementById("prov-bizname").textContent = provider.business||"";
-  renderMyLoc();
+  renderMyLoc(); renderMyHours();
   show("prov-app"); await loadProducts(); await loadBranches(); loadStockAlerts(); setupRealtime();
 }
 function renderMyLoc(){ const el=document.getElementById("prov-myloc-text"); if(el) el.textContent=(provider&&provider.address)||"Sin definir"; }
 document.getElementById("prov-myloc-edit").addEventListener("click", ()=>openMap(provider&&provider.lat?{lat:Number(provider.lat),lng:Number(provider.lng)}:null, async (addr,pos)=>{
   try{ await SBX().from("providers").update({ lat:pos.lat, lng:pos.lng, address:addr }).eq("id",provider.id); provider.lat=pos.lat; provider.lng=pos.lng; provider.address=addr; localStorage.setItem("origen_provider",JSON.stringify(provider)); renderMyLoc(); toast("Ubicación actualizada"); }catch(_){ toast("No se pudo actualizar"); }
 }));
+function renderMyHours(){ const el=document.getElementById("prov-hours-input"); if(el) el.value=(provider&&provider.business_hours)||""; }
+document.getElementById("prov-hours-save").addEventListener("click", async ()=>{
+  const val=(document.getElementById("prov-hours-input").value||"").trim();
+  if(!SBX()){ toast("Sin conexión"); return; }
+  try{ await SBX().from("providers").update({ business_hours: val||null }).eq("id",provider.id); provider.business_hours=val||null; localStorage.setItem("origen_provider",JSON.stringify(provider)); toast("Horario actualizado"); }catch(_){ toast("No se pudo guardar"); }
+});
 async function loadProducts(){
   if(!SBX()) return;
   const r=await SBX().from("products").select("*").eq("provider_id",provider.id).order("created_at",{ascending:false});

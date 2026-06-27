@@ -446,6 +446,10 @@
         <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline-variant group-focus-within:text-secondary transition-colors">search</span>
         <input id="catalog-search" class="w-full h-12 pl-12 pr-4 rounded-xl border border-outline-variant bg-surface-container-low focus:ring-1 focus:ring-secondary focus:border-secondary transition-all font-body-md text-on-surface outline-none" placeholder="Buscar en esta tienda..." type="text">
       </div>
+      <div id="store-hours-banner" class="hidden items-center gap-2 mb-4 px-1 text-sm" style="color:#27500A;">
+        <span class="material-symbols-outlined text-[18px]" style="color:#4CAF50;">schedule</span>
+        <span id="store-hours-text" class="font-label-md"></span>
+      </div>
       <div id="catalog-chips" class="flex gap-3 overflow-x-auto no-scrollbar pb-2 -mx-margin-mobile px-margin-mobile"></div>
     </header>
     <section id="catalog-grid" class="grid grid-cols-2 gap-4"></section>
@@ -2386,6 +2390,10 @@ function renderCatalog() {
   const all = activeProducts().filter(p => (p.providerName || "Origen") === storeName && productAvailable(p.id));
   document.getElementById("store-view-name").textContent = storeName;
   document.getElementById("store-view-sub").textContent = all.length + " producto" + (all.length !== 1 ? "s" : "");
+  const meta = providerMeta(storeName);
+  const hours = meta && meta.business_hours ? meta.business_hours : null;
+  const hoursBanner = document.getElementById("store-hours-banner");
+  if (hoursBanner) { if (hours) { document.getElementById("store-hours-text").textContent = hours; hoursBanner.classList.remove("hidden"); hoursBanner.classList.add("flex"); } else { hoursBanner.classList.add("hidden"); hoursBanner.classList.remove("flex"); } }
   const present = STORE_CATEGORIES.filter(c => c === "Todos" || all.some(p => p.cat === c));
   if (!present.includes(activeCat)) activeCat = "Todos";
   document.getElementById("catalog-chips").innerHTML = present.map(c => {

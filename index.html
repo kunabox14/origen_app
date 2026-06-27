@@ -1205,16 +1205,37 @@
 </section>
 
 <!-- ===================== ADMIN · PANEL ===================== -->
+<!-- Admin: overlay + sidebar lateral -->
+<div id="admin-sidebar-overlay" class="hidden fixed inset-0 z-[90] bg-deep-forest/50 backdrop-blur-sm transition-opacity"></div>
+<aside id="admin-sidebar" class="fixed top-0 left-0 h-full w-72 z-[100] bg-surface flex flex-col shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full">
+  <div class="bg-primary-container text-on-primary px-6 pt-10 pb-6 flex items-center gap-3">
+    <span class="material-symbols-outlined text-leaf-green" style="font-size:28px">admin_panel_settings</span>
+    <div>
+      <p class="font-headline text-[17px] leading-none">Panel ORIGEN</p>
+      <p class="text-xs text-leaf-green mt-0.5">Administrador</p>
+    </div>
+  </div>
+  <nav class="flex-grow px-3 py-3 space-y-0.5 overflow-y-auto no-scrollbar" id="admin-sidenav"></nav>
+  <div class="px-3 pb-6 border-t border-outline-variant/30 pt-3">
+    <button id="admin-sidebar-logout" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors text-sm font-semibold">
+      <span class="material-symbols-outlined">logout</span>Cerrar sesión
+    </button>
+  </div>
+</aside>
+
 <section id="screen-admin" class="screen flex flex-col" style="min-height:100dvh">
   <header class="bg-primary-container text-on-primary sticky top-0 w-full z-40 flex items-center justify-between px-margin-mobile h-16">
-    <div class="flex items-center gap-2">
-      <span class="material-symbols-outlined text-leaf-green">admin_panel_settings</span>
-      <h1 class="font-headline-sm text-headline-sm">Panel ORIGEN</h1>
+    <div class="flex items-center gap-3">
+      <button id="admin-menu-btn" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 active:scale-95 transition-all" aria-label="Abrir menú">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-leaf-green">admin_panel_settings</span>
+        <h1 class="font-headline-sm text-headline-sm" id="admin-section-title">Panel ORIGEN</h1>
+      </div>
     </div>
     <button id="admin-logout" class="text-on-primary-container hover:text-white flex items-center gap-1 font-label-sm"><span class="material-symbols-outlined text-[20px]">logout</span> Salir</button>
   </header>
-
-  <nav id="admin-tabs" class="bg-background sticky top-16 z-30 flex gap-1 px-2 py-2 border-b border-outline-variant/20 overflow-x-auto no-scrollbar"></nav>
 
   <main class="flex-grow px-margin-mobile py-6 w-full">
     <div id="admin-dashboard" class="admin-panel"></div>
@@ -3246,14 +3267,27 @@ const ADMIN_TABS = [
   { id: "support", label: "Soporte", icon: "support_agent" }
 ];
 let adminTab = "dashboard";
+function openAdminSidebar() {
+  const nav = document.getElementById("admin-sidenav");
+  nav.innerHTML = ADMIN_TABS.map(t => {
+    const on = t.id === adminTab;
+    return `<button data-atab="${t.id}" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm transition-colors ${on ? "bg-secondary text-on-secondary" : "text-on-surface hover:bg-surface-container-high"}"><span class="material-symbols-outlined text-[20px]">${t.icon}</span>${t.label}</button>`;
+  }).join("");
+  document.getElementById("admin-sidebar").classList.replace("-translate-x-full", "translate-x-0");
+  document.getElementById("admin-sidebar-overlay").classList.remove("hidden");
+}
+function closeAdminSidebar() {
+  document.getElementById("admin-sidebar").classList.replace("translate-x-0", "-translate-x-full");
+  document.getElementById("admin-sidebar-overlay").classList.add("hidden");
+}
 function renderAdmin() {
   if (!isAdmin()) { navigate("account"); return; }
   if ("Notification" in window && Notification.permission === "default") { try { Notification.requestPermission(); } catch (e) {} }
   if (adminSeen === null) adminSeen = new Set(orders.map(o => o.id));
-  document.getElementById("admin-tabs").innerHTML = ADMIN_TABS.map(t => {
-    const on = t.id === adminTab;
-    return `<button data-atab="${t.id}" class="flex-none flex items-center gap-1.5 px-4 py-2 rounded-full font-label-md text-label-md transition-colors ${on ? "bg-secondary text-on-secondary" : "bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}</button>`;
-  }).join("");
+  // Actualiza título de sección en el header
+  const cur = ADMIN_TABS.find(t => t.id === adminTab);
+  const titleEl = document.getElementById("admin-section-title");
+  if (titleEl && cur) titleEl.textContent = cur.label;
   ["dashboard", "products", "sub", "users", "orders", "pending", "deliveries", "providers", "riders", "pay", "support"].forEach(id =>
     document.getElementById("admin-" + id).classList.toggle("hidden", id !== adminTab));
   if (adminTab === "support") renderAdminSupport();
@@ -3269,8 +3303,11 @@ function renderAdmin() {
   if (adminTab === "pay") renderAdminPay();
 }
 document.addEventListener("click", e => {
+  if (e.target.closest("#admin-menu-btn")) { openAdminSidebar(); return; }
+  if (e.target.closest("#admin-sidebar-overlay")) { closeAdminSidebar(); return; }
+  if (e.target.closest("#admin-sidebar-logout")) { closeAdminSidebar(); navigate("account"); return; }
   const t = e.target.closest("[data-atab]");
-  if (t) { adminTab = t.dataset.atab; renderAdmin(); }
+  if (t) { adminTab = t.dataset.atab; closeAdminSidebar(); renderAdmin(); }
 });
 
 function statCard(icon, value, label, tint) {

@@ -144,10 +144,41 @@
   </section>
 
   <!-- APP repartidor -->
+  <!-- Repartidor: overlay + sidebar lateral -->
+  <div id="rider-sidebar-overlay" class="hidden fixed inset-0 z-[90] bg-deep-forest/50 backdrop-blur-sm transition-opacity"></div>
+  <aside id="rider-sidebar" class="fixed top-0 left-0 h-full w-72 z-[100] bg-surface flex flex-col shadow-2xl transition-transform duration-300 ease-in-out -translate-x-full">
+    <div class="bg-primary-container text-on-primary px-6 pt-10 pb-6 flex items-center gap-3">
+      <span class="material-symbols-outlined text-leaf-green" style="font-size:32px">delivery_dining</span>
+      <div>
+        <p class="font-headline text-[18px] leading-none">Repartidor</p>
+        <p id="rider-sidebar-name" class="text-xs text-leaf-green mt-0.5"></p>
+      </div>
+    </div>
+    <nav class="flex-grow px-3 py-4 space-y-1">
+      <button data-rtab="new" class="rider-sideitem w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-colors text-on-surface hover:bg-surface-container-high">
+        <span class="material-symbols-outlined text-[22px]">fiber_new</span><span>Nuevos</span>
+        <span id="rider-badge-new" class="ml-auto hidden bg-error text-on-error text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center"></span>
+      </button>
+      <button data-rtab="mine" class="rider-sideitem w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-colors text-on-surface hover:bg-surface-container-high">
+        <span class="material-symbols-outlined text-[22px]">local_shipping</span><span>Mi ruta</span>
+      </button>
+      <button data-rtab="earn" class="rider-sideitem w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold text-sm transition-colors text-on-surface hover:bg-surface-container-high">
+        <span class="material-symbols-outlined text-[22px]">payments</span><span>Ganancias</span>
+      </button>
+    </nav>
+    <div class="px-3 pb-8 border-t border-outline-variant/30 pt-3">
+      <button id="rider-sidebar-logout" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high transition-colors text-sm font-semibold">
+        <span class="material-symbols-outlined">logout</span>Cerrar sesión
+      </button>
+    </div>
+  </aside>
+
   <section id="rider-app" class="scr pb-24">
     <header class="bg-primary-container text-on-primary sticky top-0 z-40 flex items-center justify-between px-5 h-16">
-      <div class="flex items-center gap-2">
-        <span class="material-symbols-outlined text-leaf-green">delivery_dining</span>
+      <div class="flex items-center gap-3">
+        <button id="rider-menu-btn" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 active:scale-95 transition-all" aria-label="Abrir menú">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
         <div><p class="font-headline text-lg leading-none">Origen Repartidor</p><p id="rider-name" class="text-xs text-leaf-green"></p></div>
       </div>
       <button id="rider-logout" class="text-on-primary/70 hover:text-white flex items-center gap-1 text-sm"><span class="material-symbols-outlined text-[20px]">logout</span></button>
@@ -160,9 +191,12 @@
 
     <div id="rider-active" class="px-5 pt-4"></div>
 
-    <nav id="rider-tabs" class="bg-background sticky top-16 z-30 flex gap-1 px-2 py-2 border-b border-outline-variant/20"></nav>
+    <div class="px-5 pt-4 pb-1 flex items-center gap-2">
+      <span id="rider-section-icon" class="material-symbols-outlined text-secondary text-[20px]">fiber_new</span>
+      <h2 id="rider-section-title" class="font-semibold text-primary text-[15px]">Nuevos pedidos</h2>
+    </div>
 
-    <main class="px-5 py-5">
+    <main class="px-5 py-4">
       <div id="rider-content"></div>
     </main>
   </section>
@@ -423,15 +457,33 @@ function setupRiderRealtime(){
   // Al volver al foco (móvil: cambio de app) → re-hidrata inmediatamente
   document.addEventListener("visibilitychange", async ()=>{ if(!document.hidden && rider && SBX()){ await hydrateRiderOrders(); checkNew(); renderApp(); } });
 }
+const SECTION_META = { new:{icon:"fiber_new",title:"Nuevos pedidos"}, mine:{icon:"local_shipping",title:"Mi ruta"}, earn:{icon:"payments",title:"Ganancias"} };
+function openRiderSidebar(){
+  document.getElementById("rider-sidebar").classList.replace("-translate-x-full","translate-x-0");
+  document.getElementById("rider-sidebar-overlay").classList.remove("hidden");
+  document.getElementById("rider-sidebar-name").textContent = rider || "";
+}
+function closeRiderSidebar(){
+  document.getElementById("rider-sidebar").classList.replace("translate-x-0","-translate-x-full");
+  document.getElementById("rider-sidebar-overlay").classList.add("hidden");
+}
 function renderApp(){
   const all = loadOrders();
   renderRiderActive(all);
   const newCount = all.filter(o=>o.status==="Nuevo").length;
-  document.getElementById("rider-tabs").innerHTML = TABS.map(t=>{
-    const on=t.id===tab;
-    const badge = (t.id==="new" && newCount) ? `<span class="ml-1 bg-error text-on-error text-[10px] font-bold w-4 h-4 rounded-full inline-flex items-center justify-center">${newCount}</span>` : "";
-    return `<button data-rtab="${t.id}" class="flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-full text-[13px] font-semibold transition-colors ${on?"bg-secondary text-on-secondary":"bg-surface-container-high text-on-surface-variant"}"><span class="material-symbols-outlined text-[18px]">${t.icon}</span>${t.label}${badge}</button>`;
-  }).join("");
+  // Actualiza estado activo en sidebar
+  document.querySelectorAll(".rider-sideitem").forEach(b=>{
+    const on = b.dataset.rtab === tab;
+    b.classList.toggle("bg-secondary",on); b.classList.toggle("text-on-secondary",on);
+    b.classList.toggle("text-on-surface",!on); b.classList.toggle("hover:bg-surface-container-high",!on);
+  });
+  // Badge "Nuevos"
+  const badge = document.getElementById("rider-badge-new");
+  if(badge){ badge.textContent=newCount; badge.classList.toggle("hidden",!newCount); }
+  // Título de sección
+  const meta = SECTION_META[tab]||SECTION_META.new;
+  const si=document.getElementById("rider-section-icon"); const st=document.getElementById("rider-section-title");
+  if(si) si.textContent=meta.icon; if(st) st.textContent=meta.title;
   const c=document.getElementById("rider-content");
   if(tab==="earn"){ c.innerHTML = renderEarn(); return; }
   let list=[];
@@ -483,7 +535,10 @@ function renderEarn(){
   `;
 }
 document.addEventListener("click", e=>{
-  const t=e.target.closest("[data-rtab]"); if(t){ tab=t.dataset.rtab; renderApp(); return; }
+  if(e.target.closest("#rider-menu-btn")){ openRiderSidebar(); return; }
+  if(e.target.closest("#rider-sidebar-overlay")){ closeRiderSidebar(); return; }
+  if(e.target.closest("#rider-sidebar-logout")){ closeRiderSidebar(); document.getElementById("rider-logout").click(); return; }
+  const t=e.target.closest("[data-rtab]"); if(t){ tab=t.dataset.rtab; closeRiderSidebar(); renderApp(); return; }
   if(e.target.closest("[data-go-mine]")){ tab="mine"; renderApp(); return; }
   const act=e.target.closest("[data-advance]"); if(act){ advance(act.dataset.advance); return; }
   const ch=e.target.closest("[data-chat]"); if(ch){ const o=loadOrders().find(x=>x.id===ch.dataset.chat); openRiderChat(ch.dataset.chat, o?o.customer.name:"Cliente"); return; }

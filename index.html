@@ -2148,7 +2148,7 @@ function addToCart(id) {
   const have = line ? line.qty : 0;
   if (have + 1 > productMaxQty(id)) { showToast("Sin más stock disponible"); return; }
   if (line) line.qty++; else cart.push({ id, qty: 1 });
-  saveCart(); syncCart(); showToast("Agregado a tu canasta");
+  saveCart(); syncCart(); updateCardCtrl(id); showToast("Agregado a tu canasta");
 }
 function changeQty(id, delta) {
   const line = cart.find(i => i.id === id);
@@ -2156,7 +2156,23 @@ function changeQty(id, delta) {
   if (delta > 0 && line.qty + delta > productMaxQty(id)) { showToast("Sin más stock disponible"); return; }
   line.qty += delta;
   if (line.qty <= 0) cart = cart.filter(i => i.id !== id);
-  saveCart(); syncCart(); renderBasket();
+  saveCart(); syncCart(); renderBasket(); updateCardCtrl(id);
+}
+function updateCardCtrl(id) {
+  const el = document.getElementById("card-ctrl-" + id);
+  if (!el) return;
+  const line = cart.find(i => i.id === id);
+  const qty = line ? line.qty : 0;
+  const max = productMaxQty(id);
+  if (qty > 0) {
+    el.innerHTML = `<div class="flex items-center justify-between border border-secondary rounded-lg h-10 overflow-hidden">
+      <button data-qty-minus="${id}" class="w-10 h-10 flex-none flex items-center justify-center text-secondary active:bg-secondary/10 transition-colors"><span class="material-symbols-outlined text-[20px]">remove</span></button>
+      <span class="font-label-md text-on-surface tabular-nums">${qty}</span>
+      <button data-qty-plus="${id}" class="w-10 h-10 flex-none flex items-center justify-center text-secondary active:bg-secondary/10 transition-colors ${qty >= max ? "opacity-30 pointer-events-none" : ""}"><span class="material-symbols-outlined text-[20px]">add</span></button>
+    </div>`;
+  } else {
+    el.innerHTML = `<button data-add="${id}" class="w-full bg-secondary text-on-secondary h-10 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span><span class="font-label-md">Añadir</span></button>`;
+  }
 }
 function removeFromCart(id) { cart = cart.filter(i => i.id !== id); saveCart(); syncCart(); renderBasket(); }
 function clearBasket() {
@@ -2203,9 +2219,13 @@ function productCardCatalog(p) {
       <p class="font-label-sm text-on-surface-variant mb-1">${p.unit} • ${p.origin}</p>
       ${(p.categories&&p.categories.length)?`<div class="flex flex-wrap gap-1 mb-1">${p.categories.map(c=>`<span class="text-[10px] bg-sprout-green/30 text-deep-forest px-1.5 py-0.5 rounded-full font-semibold">${c}</span>`).join("")}</div>`:""}
       <p class="text-secondary font-label-md mt-auto">${bs(p.price)}</p>
-      <button data-add="${p.id}" class="mt-3 w-full bg-secondary text-on-secondary h-10 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-        <span class="material-symbols-outlined text-[20px]">add</span><span class="font-label-md">Añadir</span>
-      </button>
+      <div class="mt-3" id="card-ctrl-${p.id}">${(()=>{
+        const line = cart.find(i => i.id === p.id);
+        const qty = line ? line.qty : 0;
+        const max = productMaxQty(p.id);
+        if (qty > 0) return `<div class="flex items-center justify-between border border-secondary rounded-lg h-10 overflow-hidden"><button data-qty-minus="${p.id}" class="w-10 h-10 flex-none flex items-center justify-center text-secondary active:bg-secondary/10 transition-colors"><span class="material-symbols-outlined text-[20px]">remove</span></button><span class="font-label-md text-on-surface tabular-nums">${qty}</span><button data-qty-plus="${p.id}" class="w-10 h-10 flex-none flex items-center justify-center text-secondary active:bg-secondary/10 transition-colors ${qty>=max?"opacity-30 pointer-events-none":""}"><span class="material-symbols-outlined text-[20px]">add</span></button></div>`;
+        return `<button data-add="${p.id}" class="w-full bg-secondary text-on-secondary h-10 rounded-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span><span class="font-label-md">Añadir</span></button>`;
+      })()}</div>
     </div>
   </div>`;
 }
@@ -2779,6 +2799,11 @@ document.addEventListener("click", e => {
 
   const add = e.target.closest("[data-add]");
   if (add) { addToCart(add.dataset.add); return; }
+
+  const qplus = e.target.closest("[data-qty-plus]");
+  if (qplus) { addToCart(qplus.dataset.qtyPlus); return; }
+  const qminus = e.target.closest("[data-qty-minus]");
+  if (qminus) { changeQty(qminus.dataset.qtyMinus, -1); return; }
 
   const inc = e.target.closest("[data-inc]");
   if (inc) { changeQty(inc.dataset.inc, 1); return; }

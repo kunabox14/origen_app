@@ -215,6 +215,11 @@
         <input id="pv-unit" placeholder="Unidad (500g)" class="flex-1 h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
       </div>
       <input id="pv-origin" placeholder="Origen (Valle Central)" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      <div class="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-secondary/40 bg-secondary-container/20">
+        <span class="material-symbols-outlined text-secondary text-[20px]">inventory_2</span>
+        <input id="pv-stock" type="number" min="1" step="1" placeholder="Stock disponible *" class="flex-1 bg-transparent outline-none font-semibold text-primary placeholder:text-on-surface-variant/60 text-sm">
+        <span class="text-xs text-secondary font-semibold whitespace-nowrap">unidades</span>
+      </div>
       <select id="pv-cat" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Superfoods</option><option>Despensa</option><option>Snacks</option><option>Bebidas</option><option>Carnes vegetales</option><option>Granos</option></select>
       <div>
         <p class="text-sm text-on-surface-variant mb-2">Tipo de producción <span class="text-on-surface-variant/60">(selecciona los que apliquen)</span></p>
@@ -226,7 +231,7 @@
           <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Industrial" id="pvc-industrial" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🏭 Industrial</span></label>
         </div>
       </div>
-      <p id="pv-error" class="hidden text-error text-sm">Completa nombre y precio.</p>
+      <p id="pv-error" class="hidden text-error text-sm">Completa nombre, precio y stock disponible.</p>
       <button id="pv-save" class="w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
     </div>
   </div>
@@ -747,7 +752,7 @@ function setupRealtime(){
 }
 
 // Modal producto
-document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin"].forEach(id=>document.getElementById(id).value=""); ["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].forEach(id=>{const cb=document.getElementById(id);if(cb)cb.checked=false;}); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
+document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin","pv-stock"].forEach(id=>document.getElementById(id).value=""); ["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].forEach(id=>{const cb=document.getElementById(id);if(cb)cb.checked=false;}); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
 document.getElementById("pv-close").addEventListener("click", ()=>document.getElementById("prov-modal").classList.add("hidden"));
 document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") document.getElementById("prov-modal").classList.add("hidden"); });
 document.getElementById("pv-img").addEventListener("change", e=>{
@@ -759,14 +764,20 @@ document.getElementById("pv-img").addEventListener("change", e=>{
 document.getElementById("pv-save").addEventListener("click", async ()=>{
   const name=document.getElementById("pv-name").value.trim();
   const price=parseFloat(document.getElementById("pv-price").value);
-  if(!name||isNaN(price)){ document.getElementById("pv-error").classList.remove("hidden"); return; }
+  const stock=parseInt(document.getElementById("pv-stock").value,10);
+  if(!name||isNaN(price)||!stock||stock<1){ document.getElementById("pv-error").classList.remove("hidden"); return; }
   if(!SBX()) return;
   const cats=["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].map(id=>document.getElementById(id)).filter(cb=>cb&&cb.checked).map(cb=>cb.value);
   const row={ name, price, unit:document.getElementById("pv-unit").value.trim()||"1u", origin:document.getElementById("pv-origin").value.trim()||"Bolivia",
     category:document.getElementById("pv-cat").value, categories:cats, tag:"Orgánico", image_url:pendingImg, active:false, in_sub:false, provider_id:provider.id, provider_name:provider.business };
-  const ins=await SBX().from("products").insert(row);
+  const ins=await SBX().from("products").insert(row).select().single();
   document.getElementById("prov-modal").classList.add("hidden");
-  if(ins.error) toast("Error al enviar"); else { toast("Producto enviado para aprobación"); loadProducts(); }
+  if(ins.error){ toast("Error al enviar"); return; }
+  // Siembra branch_inventory con el stock real indicado por el proveedor
+  if(ins.data && PROV_BRANCHES && PROV_BRANCHES.length){
+    try{ await SBX().from("branch_inventory").upsert(PROV_BRANCHES.map(b=>({ branch_id:b.id, product_id:ins.data.id, stock })), { onConflict:"branch_id,product_id" }); }catch(_){}
+  }
+  toast("Producto enviado para aprobación"); loadProducts();
 });
 
 // PWA

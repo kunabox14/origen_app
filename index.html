@@ -558,7 +558,7 @@
         <h2 class="font-headline-sm text-headline-sm text-primary mb-6">Resumen del Pedido</h2>
         <div class="space-y-4">
           <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md">Subtotal productos</span><span id="sum-subtotal" class="font-label-md">Bs. 0</span></div>
-          <div id="row-discount" class="flex justify-between items-center text-secondary"><span class="font-body-md">Descuento Suscriptor (12%)</span><span id="sum-discount" class="font-label-md">- Bs. 0</span></div>
+          <div id="row-discount" class="flex justify-between items-center text-secondary"><span id="discount-label" class="font-body-md">Descuento Suscriptor (12%)</span><span id="sum-discount" class="font-label-md">- Bs. 0</span></div>
           <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md">Tarifa de servicio (uso de la app)</span><span id="sum-service" class="font-label-md">Bs. 5</span></div>
           <div class="flex justify-between items-center text-on-surface-variant"><span class="font-body-md flex items-center gap-1">Costo de delivery <span id="sum-km" class="text-[11px] text-on-surface-variant/60"></span></span><span id="sum-delivery" class="font-label-md">Bs. 0</span></div>
           <hr class="border-outline-variant/30 my-4">
@@ -1988,6 +1988,7 @@ function renderSchedule() {
 }
 // Opciones de pago de la suscripción recurrente
 let schedPayMode = localStorage.getItem("origen_sched_paymode") || "now";
+let schedPrepaidBonus = false; // true cuando el usuario eligió "Pagar ahora" → +3% sobre el 12%
 const SCHED_PAY = [
   { id: "now", title: "Pagar ahora", desc: "12% suscriptor + 3% bono = 15% de descuento", badge: "Mejor precio", off: "15%" },
   { id: "later", title: "Pagar 2 horas antes", desc: "Solo descuento de suscriptor", badge: "", off: "12%" }
@@ -2047,6 +2048,15 @@ function renderSchedBasket() {
   document.getElementById("sched-count").textContent = count + (count === 1 ? " producto" : " productos");
   document.getElementById("sched-amount").textContent = bs(amount);
 }
+function goPayNow() {
+  const subItems = getSubBasket();
+  if (!subItems.length) { showToast("Agrega productos a tu canasta primero"); return; }
+  cart = subItems.map(l => ({ id: l.id, qty: l.qty }));
+  saveCart(); syncCart();
+  schedPrepaidBonus = true;
+  navigate("basket");
+  showToast("Bono 15% aplicado · paga y confirma");
+}
 function subBasketChange(id, delta) {
   let b = getSubBasket(); const l = b.find(x => x.id === id);
   if (l) { l.qty += delta; if (l.qty <= 0) b = b.filter(x => x.id !== id); }
@@ -2097,8 +2107,9 @@ function deliveryFeeForKm(km) {
 function cartTotals() {
   const sub = cartSubtotal();
   const isSub = subActive();
-  const potentialDisc = sub * DISCOUNT;     // lo que ahorraría un suscriptor
-  const disc = isSub ? potentialDisc : 0;   // el descuento del 12% es un beneficio del suscriptor
+  const discRate = isSub ? (DISCOUNT + (schedPrepaidBonus ? 0.03 : 0)) : 0; // 12% base + 3% bono prepago
+  const potentialDisc = sub * DISCOUNT;     // lo que ahorraría un suscriptor (sin bono)
+  const disc = sub * discRate;              // descuento real aplicado
   // #9/#10: la sucursal elegida define el origen y la distancia → costo de delivery por tramos.
   const pickup = cart.length ? selectPickup(clientGeoNow()) : null;
   const km = (pickup && pickup.maxDist != null) ? pickup.maxDist : deliveryKmFor();
@@ -2553,16 +2564,18 @@ function renderBasket() {
   document.getElementById("sum-delivery").textContent = bs(t.delivery);
   document.getElementById("sum-km").textContent = "(~" + t.km.toFixed(1).replace(".0", "") + " km)";
   document.getElementById("sum-total").textContent = bs(t.total);
-  // Fila de descuento solo visible para suscriptores (a ellos aplica el 12%).
+  // Fila de descuento solo visible para suscriptores
   document.getElementById("row-discount").classList.toggle("hidden", !t.isSub);
-  // Mensaje de ahorro según la suscripción (#4)
+  const discLbl = document.getElementById("discount-label");
+  if (discLbl) discLbl.textContent = schedPrepaidBonus ? "Descuento Suscriptor + Bono (15%)" : "Descuento Suscriptor (12%)";
+  // Mensaje de ahorro según la suscripción
   const title = document.getElementById("basket-benefit-title");
   const msg = document.getElementById("basket-benefit-msg");
   const subMsg = document.getElementById("basket-benefit-sub");
   if (t.isSub) {
-    title.textContent = "Beneficio de suscriptor";
-    msg.innerHTML = 'Gracias a tu suscripción, estás ahorrando <span id="basket-savings">' + bs(t.disc) + '</span>';
-    subMsg.textContent = "Este descuento se aplica automáticamente a tu pedido.";
+    title.textContent = schedPrepaidBonus ? "Bono prepago activo · 15% de descuento" : "Beneficio de suscriptor";
+    msg.innerHTML = 'Gracias a tu suscripción' + (schedPrepaidBonus ? ' y bono prepago' : '') + ', estás ahorrando <span id="basket-savings">' + bs(t.disc) + '</span>';
+    subMsg.textContent = schedPrepaidBonus ? "12% de suscriptor + 3% de bono por pagar adelantado." : "Este descuento se aplica automáticamente a tu pedido.";
   } else {
     title.textContent = "Suscríbete y ahorra";
     msg.innerHTML = 'Si estuvieras suscrito, ahorrarías <span id="basket-savings">' + bs(t.potentialDisc) + '</span> en esta compra';
@@ -2831,7 +2844,13 @@ document.addEventListener("click", e => {
     renderSchedule();
   }
   const pm = e.target.closest("[data-paymode]");
-  if (pm) { schedPayMode = pm.dataset.paymode; localStorage.setItem("origen_sched_paymode", schedPayMode); renderSchedPayOptions(); }
+  if (pm) {
+    schedPayMode = pm.dataset.paymode;
+    localStorage.setItem("origen_sched_paymode", schedPayMode);
+    renderSchedPayOptions();
+    if (schedPayMode === "now") goPayNow();
+    else schedPrepaidBonus = false;
+  }
   if (e.target.id === "msg-modal") closeMessage();
 });
 // Programar suscripción

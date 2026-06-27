@@ -215,6 +215,7 @@
       <div>
         <p class="text-sm text-on-surface-variant mb-2">Tipo de producción <span class="text-on-surface-variant/60">(selecciona los que apliquen)</span></p>
         <div class="flex flex-wrap gap-3">
+          <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Orgánico" id="pvc-organico" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🌱 Orgánico</span></label>
           <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Fresco" id="pvc-fresco" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🌿 Fresco</span></label>
           <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Artesanal" id="pvc-artesanal" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🤝 Artesanal</span></label>
           <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Semiindustrial" id="pvc-semi" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">⚙️ Semiindustrial</span></label>
@@ -742,7 +743,7 @@ function setupRealtime(){
 }
 
 // Modal producto
-document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin"].forEach(id=>document.getElementById(id).value=""); ["pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].forEach(id=>{const cb=document.getElementById(id);if(cb)cb.checked=false;}); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
+document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin"].forEach(id=>document.getElementById(id).value=""); ["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].forEach(id=>{const cb=document.getElementById(id);if(cb)cb.checked=false;}); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
 document.getElementById("pv-close").addEventListener("click", ()=>document.getElementById("prov-modal").classList.add("hidden"));
 document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") document.getElementById("prov-modal").classList.add("hidden"); });
 document.getElementById("pv-img").addEventListener("change", e=>{
@@ -756,7 +757,7 @@ document.getElementById("pv-save").addEventListener("click", async ()=>{
   const price=parseFloat(document.getElementById("pv-price").value);
   if(!name||isNaN(price)){ document.getElementById("pv-error").classList.remove("hidden"); return; }
   if(!SBX()) return;
-  const cats=["pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].map(id=>document.getElementById(id)).filter(cb=>cb&&cb.checked).map(cb=>cb.value);
+  const cats=["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].map(id=>document.getElementById(id)).filter(cb=>cb&&cb.checked).map(cb=>cb.value);
   const row={ name, price, unit:document.getElementById("pv-unit").value.trim()||"1u", origin:document.getElementById("pv-origin").value.trim()||"Bolivia",
     category:document.getElementById("pv-cat").value, categories:cats, tag:"Orgánico", image_url:pendingImg, active:false, in_sub:false, provider_id:provider.id, provider_name:provider.business };
   const ins=await SBX().from("products").insert(row);

@@ -511,7 +511,16 @@ function renderRiderChat(msgs){
 function subscribeRiderChat(){
   if(!SBX() || !rchatCode) return;
   if(rchatChannel) SBX().removeChannel(rchatChannel);
-  rchatChannel=SBX().channel("rchat-"+rchatCode).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"order_code=eq."+rchatCode}, function(){ loadRiderChat(); }).subscribe();
+  rchatChannel=SBX().channel("rchat-"+rchatCode).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"order_code=eq."+rchatCode}, function(payload){
+    var chatOpen = !document.getElementById("chat-modal").classList.contains("hidden");
+    if(chatOpen){ loadRiderChat(); return; }
+    var msg = payload.new;
+    if(msg && msg.sender !== "repartidor"){
+      if("Notification" in window && Notification.permission==="granted" && navigator.serviceWorker && navigator.serviceWorker.controller){
+        navigator.serviceWorker.ready.then(function(reg){ reg.showNotification("Mensaje del cliente", {body: msg.body||"Nuevo mensaje", icon:"./assets/icon-192.png", badge:"./assets/favicon.svg", tag:"rchat-"+rchatCode}); }).catch(function(){});
+      } else { toast("💬 " + (msg.body||"Nuevo mensaje del cliente")); }
+    }
+  }).subscribe();
 }
 async function sendRiderChat(){
   var inp=document.getElementById("rchat-input"); var body=inp.value.trim(); if(!body) return; inp.value="";
@@ -551,7 +560,7 @@ function orderCard(o){
     </div>
     ${s ? `<button data-advance="${o.id}" class="mt-3 w-full bg-leaf-green text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined text-[20px]">${s.icon}</span>${s.label}</button>`
       : `<div class="mt-3 w-full bg-secondary-container text-on-secondary-container font-semibold py-3 rounded-xl flex items-center justify-center gap-2"><span class="material-symbols-outlined text-[20px]">check_circle</span>Entregado</div>`}
-    <button data-chat="${o.id}" class="mt-2 w-full border border-outline-variant text-on-surface font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined text-[20px]">chat</span>Chat con ${escapeHtmlR(o.customer.name.split(" ")[0])}</button>
+    ${o.status!=="Nuevo"?`<button data-chat="${o.id}" class="mt-2 w-full border border-outline-variant text-on-surface font-semibold py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"><span class="material-symbols-outlined text-[20px]">chat</span>Chat con ${escapeHtmlR(o.customer.name.split(" ")[0])}</button>`:""}
   </div>`;
 }
 async function advance(id){

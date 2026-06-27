@@ -3280,6 +3280,7 @@ function approvalRow(item, kind, title, sub) {
     <div class="flex justify-between items-start gap-2"><div class="min-w-0"><p class="font-semibold text-primary truncate">${title}</p><p class="font-label-sm text-on-surface-variant truncate">${sub}</p></div><span class="${badge} text-[10px] font-bold uppercase px-2 py-1 rounded-full h-fit flex-shrink-0">${item.status}</span></div>
     ${docs ? `<div class="flex flex-wrap gap-2 mt-2">${docs}</div>` : ""}
     ${item.status !== "aprobado" ? `<div class="flex gap-2 mt-3"><button data-approve="${kind}:${item.id}" class="flex-1 bg-leaf-green text-white font-label-md py-2 rounded-lg active:scale-95 transition-transform">Aprobar</button>${item.status !== "rechazado" ? `<button data-reject="${kind}:${item.id}" class="flex-1 border border-error text-error font-label-md py-2 rounded-lg active:scale-95 transition-transform">Rechazar</button>` : ""}</div>` : ""}
+    ${kind === "providers" && item.status === "aprobado" ? `<button data-pub-all="${item.id}" class="mt-3 w-full bg-secondary-container text-on-secondary-container font-label-md py-2 rounded-lg flex items-center justify-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[18px]">inventory_2</span>Publicar todos los productos</button>` : ""}
     <button data-del-table="${kind}" data-del-id="${item.id}" data-del-label="${escA(title)}" class="mt-2 w-full text-error/80 hover:text-error font-label-sm py-1.5 flex items-center justify-center gap-1 active:scale-95"><span class="material-symbols-outlined text-[16px]">delete</span>Eliminar ${kind === "providers" ? "tienda" : "repartidor"}</button>
   </div>`;
 }
@@ -3316,12 +3317,20 @@ document.addEventListener("click", async e => {
     } });
     return;
   }
+  const pub = e.target.closest("[data-pub-all]");
+  if (pub) {
+    if (!SBX()) return;
+    try { await SBX().from("products").update({ active: true }).eq("provider_id", pub.dataset.pubAll); await hydrateProducts(); showToast("Productos publicados"); renderAdminProviders(); } catch (_) { showToast("No se pudo publicar"); }
+    return;
+  }
   const ap = e.target.closest("[data-approve]"), rj = e.target.closest("[data-reject]");
   const node = ap || rj; if (!node || !SBX()) return;
   const [table, id] = (ap ? ap.dataset.approve : rj.dataset.reject).split(":");
   try { await SBX().from(table).update({ status: ap ? "aprobado" : "rechazado" }).eq("id", id); } catch (er) {}
+  // Al APROBAR un proveedor, publicamos todos sus productos para que su tienda no quede vacía.
+  if (ap && table === "providers") { try { await SBX().from("products").update({ active: true }).eq("provider_id", id); } catch (_) {} }
   showToast(ap ? "Aprobado" : "Rechazado");
-  if (table === "providers") { await hydrateProviders(); renderAdminProviders(); } else renderAdminRiders();
+  if (table === "providers") { await hydrateProviders(); await hydrateProducts(); renderAdminProviders(); } else renderAdminRiders();
 });
 async function renderAdminSupport() {
   const el = document.getElementById("admin-support");

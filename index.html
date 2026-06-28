@@ -30,9 +30,9 @@
 <!-- Material Symbols: bloquea render deliberadamente (sin íconos la UI queda rota) -->
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
-<!-- Tailwind config DEBE ir ANTES del CDN para que lo lea al ejecutar -->
-<script id="tailwind-config">
-  tailwind.config = {
+<!-- Tailwind config ANTES del CDN → el CDN lee window.tailwind.config al inicializar -->
+<script>
+  window.tailwind = { config: {
     darkMode: "class",
     theme: {
       extend: {
@@ -75,11 +75,11 @@
         }
       }
     }
-  }
+  } };
 </script>
-<!-- Tailwind CDN después del config para que lo aplique correctamente -->
+<!-- Tailwind CDN después del config → encuentra window.tailwind.config al inicializar -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-<!-- Supabase: cargado tras Tailwind; pre-cacheado en SW para visitas de retorno -->
+<!-- Supabase: pre-cacheado en SW para visitas de retorno -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-config.js"></script>
 <!-- jsQR se carga bajo demanda cuando el usuario abre el escáner (ver loadJsQR()) -->

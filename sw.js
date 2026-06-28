@@ -1,5 +1,5 @@
 // Service Worker ORIGEN — cache del shell para que la app funcione offline (PWA instalable).
-const CACHE = "origen-v43";
+const CACHE = "origen-v44";
 const CORE = [
   "./",
   "./index.html",
@@ -10,6 +10,8 @@ const CORE = [
   "./contact.html",
   "./manifest.json",
   "./supabase-config.js",
+  // Supabase JS pre-cacheado en install → no hay petición de red en visitas de retorno
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js",
   "./assets/favicon.svg",
   "./assets/origen-logo.svg",
   "./assets/origen-logo-light.svg",
@@ -68,7 +70,7 @@ self.addEventListener("fetch", e => {
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => {
       const c = res.clone();
-      if (res.ok && (url.origin === self.location.origin || /fonts|tailwind/.test(req.url))) {
+      if (res.ok && (url.origin === self.location.origin || /fonts|tailwind|jsdelivr/.test(req.url))) {
         caches.open(CACHE).then(ca => ca.put(req, c)).catch(() => {});
       }
       return res;

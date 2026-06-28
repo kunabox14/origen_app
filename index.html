@@ -19,22 +19,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
 <link rel="preconnect" href="https://fjlqwhcxwjasngbdgwia.supabase.co" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <link rel="dns-prefetch" href="https://cdn.tailwindcss.com">
 
-<!-- Supabase (backend real) -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase-config.js"></script>
-<!-- jsQR se carga bajo demanda cuando el usuario abre el escáner (ver loadJsQR()) -->
-
-<!-- Fuentes oficiales: EB Garamond (titulares) + Hanken Grotesk (cuerpo) -->
-<link href="https://fonts.googleapis.com" rel="preconnect">
-<link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<!-- Fuentes de texto: no bloquean render (degradan a sistema hasta que carguen) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap"></noscript>
+<!-- Material Symbols: bloquea render deliberadamente (sin íconos la UI queda rota) -->
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
-<!-- Tailwind + sistema de diseño Organic Vitality -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind config DEBE ir ANTES del CDN para que lo lea al ejecutar -->
 <script id="tailwind-config">
   tailwind.config = {
     darkMode: "class",
@@ -81,6 +77,12 @@
     }
   }
 </script>
+<!-- Tailwind CDN después del config para que lo aplique correctamente -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Supabase: cargado tras Tailwind; pre-cacheado en SW para visitas de retorno -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase-config.js"></script>
+<!-- jsQR se carga bajo demanda cuando el usuario abre el escáner (ver loadJsQR()) -->
 
 <style>
   body { background-color: #F5F2EB; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
@@ -3722,11 +3724,11 @@ if ("serviceWorker" in navigator) {
 /* ============ Init ============ */
 syncCart();
 (async () => {
+  // 1. Auth — getSession() lee del almacenamiento local de Supabase (casi instantáneo)
   if (sb) {
     try {
       const { data } = await sb.auth.getSession();
       if (data && data.session) { setCurrentUser(userFromSb(data.session.user)); await refreshAdminRole(); }
-      // Vuelta del login con Google (OAuth) u otro cambio de sesión
       sb.auth.onAuthStateChange(async (event, session) => {
         if (event === "SIGNED_IN" && session) {
           setCurrentUser(userFromSb(session.user));
@@ -3738,7 +3740,24 @@ syncCart();
       });
     } catch (e) { /* sin conexión → modo local */ }
   }
-  // Datos desde la nube (con respaldo local si falla)
+
+  // 2. Params de URL antes de navegar
+  const refBy = new URLSearchParams(location.search).get("ref");
+  if (refBy && !localStorage.getItem("origen_referred_by")) localStorage.setItem("origen_referred_by", refBy);
+  const subReturn = new URLSearchParams(location.search).get("sub") === "ok" && localStorage.getItem("origen_pending_sub");
+  if (subReturn) {
+    localStorage.removeItem("origen_pending_sub");
+    saveBilling({ provider: "stripe", brand: "Stripe", last4: "test", amount: 99, cycle: "mensual", since: new Date().toISOString().slice(0, 10), nextCharge: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10) });
+    setSubStatus("Activa");
+    history.replaceState({}, "", location.pathname);
+  }
+
+  // 3. *** NAVEGAR AHORA *** — muestra la pantalla al instante con datos del localStorage
+  //    No esperar la hidratación de red; los datos del caché local son suficientes para el render inicial.
+  navigate(currentUser() ? "home" : "welcome");
+  if (subReturn) showMessage({ icon: "event_available", title: "¡Suscripción activada!", text: "Tu pago con Stripe se procesó correctamente. Tu suscripción de Bs. 99/mes está activa. Puedes pausar o cancelar cuando quieras.", confirmLabel: "Listo", onConfirm: () => navigate("account") });
+
+  // 4. Hidratar en segundo plano — sin bloquear la UI ya visible
   await cloudSeedIfEmpty();
   await hydrateProducts();
   await hydrateProviders();
@@ -3747,19 +3766,13 @@ syncCart();
   await hydrateUsers();
   await hydratePaySettings();
   setupRealtime();
-  // Captura de referido (?ref=CODE) → se guarda para acreditar el beneficio
-  const refBy = new URLSearchParams(location.search).get("ref");
-  if (refBy && !localStorage.getItem("origen_referred_by")) localStorage.setItem("origen_referred_by", refBy);
-  // Regreso desde el checkout de Stripe (?sub=ok) → activa la suscripción
-  const subReturn = new URLSearchParams(location.search).get("sub") === "ok" && localStorage.getItem("origen_pending_sub");
-  if (subReturn) {
-    localStorage.removeItem("origen_pending_sub");
-    saveBilling({ provider: "stripe", brand: "Stripe", last4: "test", amount: 99, cycle: "mensual", since: new Date().toISOString().slice(0, 10), nextCharge: new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10) });
-    setSubStatus("Activa");
-    history.replaceState({}, "", location.pathname);
-  }
-  navigate(currentUser() ? "home" : "welcome");
-  if (subReturn) showMessage({ icon: "event_available", title: "¡Suscripción activada!", text: "Tu pago con Stripe se procesó correctamente. Tu suscripción de Bs. 99/mes está activa. Puedes pausar o cancelar cuando quieras.", confirmLabel: "Listo", onConfirm: () => navigate("account") });
+
+  // 5. Refrescar la pantalla activa con datos frescos de la nube
+  if (current === "home") renderHome();
+  else if (current === "stores") renderStores();
+  else if (current === "catalog") renderCatalog();
+  else if (current === "tracking") renderTracking();
+  else if (current === "admin") renderAdmin();
 })();
 </script>
 </body>

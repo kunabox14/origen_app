@@ -1,5 +1,5 @@
 // Service Worker ORIGEN — cache del shell para que la app funcione offline (PWA instalable).
-const CACHE = "origen-v45";
+const CACHE = "origen-v46";
 const CORE = [
   "./",
   "./index.html",
@@ -74,6 +74,6 @@ self.addEventListener("fetch", e => {
         caches.open(CACHE).then(ca => ca.put(req, c)).catch(() => {});
       }
       return res;
-    }).catch(() => caches.match("./index.html")))
+    }).catch(() => undefined)) // si un estático falla, deja que el navegador lo maneje (no devolver HTML)
   );
 });

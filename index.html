@@ -30,9 +30,11 @@
 <!-- Material Symbols: bloquea render deliberadamente (sin íconos la UI queda rota) -->
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 
-<!-- Tailwind config ANTES del CDN → el CDN lee window.tailwind.config al inicializar -->
+<!-- Tailwind: el CDN PRIMERO y la config DESPUÉS. El Play CDN sobrescribe window.tailwind al
+     inicializar, así que setear la config antes la borraba (botones/acentos perdían color). -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <script>
-  window.tailwind = { config: {
+  tailwind.config = {
     darkMode: "class",
     theme: {
       extend: {
@@ -75,10 +77,8 @@
         }
       }
     }
-  } };
+  };
 </script>
-<!-- Tailwind CDN después del config → encuentra window.tailwind.config al inicializar -->
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <!-- Supabase: pre-cacheado en SW para visitas de retorno -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase-config.js"></script>

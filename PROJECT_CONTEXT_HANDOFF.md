@@ -294,6 +294,6 @@ Orden a correr en Supabase → SQL Editor (idempotentes):
 `fase2b.sql` → `fase3.sql` → `fase4.sql` → `fase5.sql` → `fase6.sql` (business_hours) →
 `fase7.sql` (products.categories[]).
 
-El usuario confirmó haber corrido hasta `fase5.sql`. **Verificar con el usuario si ya corrió
-`fase6.sql` y `fase7.sql`** (horario de atención y categorías múltiples por producto); si no,
-darle el SQL para pegarlos. Sin correrlos, esas dos funciones degradan sin romper la app.
+✅ **TODAS las migraciones (hasta `fase7.sql`) ya fueron corridas por el usuario en Supabase**
+(confirmado). No hay SQL pendiente de ejecutar. Cualquier feature nuevo que requiera backend
+debe crear un `faseN.sql` nuevo y pedirle al usuario que lo corra.

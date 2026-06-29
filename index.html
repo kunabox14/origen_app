@@ -326,6 +326,20 @@
   </nav>
 
   <main class="px-margin-mobile space-y-8 pt-6">
+    <!-- Modos de compra: separan claramente Compra Suelta y Para Regalar -->
+    <section class="grid grid-cols-2 gap-3">
+      <button data-pmode="directa" class="flex flex-col items-start gap-2 text-left bg-primary-container text-on-primary rounded-2xl p-4 active:scale-[0.99] transition-transform overflow-hidden relative">
+        <span class="material-symbols-outlined text-leaf-green text-[28px]">shopping_basket</span>
+        <span class="font-headline-sm text-headline-sm leading-tight">Compra Suelta</span>
+        <span class="font-label-sm text-on-primary-container/90 leading-snug">Paga solo lo que compras</span>
+      </button>
+      <button data-pmode="regalo" class="flex flex-col items-start gap-2 text-left bg-surface-container-low border border-outline-variant/30 text-primary rounded-2xl p-4 active:scale-[0.99] transition-transform">
+        <span class="material-symbols-outlined text-secondary text-[28px]">redeem</span>
+        <span class="font-headline-sm text-headline-sm leading-tight">Para Regalar</span>
+        <span class="font-label-sm text-on-surface-variant leading-snug">Envía a quien quieras</span>
+      </button>
+    </section>
+
     <!-- Suscripción (Suscribirme / Activa / Pausada) -->
     <!-- Prioridad: pedido activo / último pedido -->
     <section id="home-order-card"></section>
@@ -533,7 +547,7 @@
           <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Fecha</label><input id="order-date" type="date" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary"></div>
           <div class="flex-1"><label class="font-label-sm text-on-surface-variant">Horario</label>
             <select id="order-window" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary">
-              <option>09:00 – 11:00</option><option>11:00 – 13:00</option><option>15:00 – 17:00</option><option>17:00 – 19:00</option>
+              <option>09:00 – 11:00</option><option>11:00 – 13:00</option><option>13:00 – 15:00</option><option>15:00 – 17:00</option><option>17:00 – 19:00</option><option>19:00 – 21:00</option>
             </select></div>
         </div>
         <div id="freq-wrap" class="hidden">
@@ -719,21 +733,35 @@
       <div class="space-y-6">
         <div class="flex justify-between items-center border-b border-outline-variant pb-4">
           <span class="font-label-md text-label-md text-on-surface-variant">Número de pedido</span>
-          <span id="confirm-order-id" class="font-label-md text-label-md text-primary font-bold">#ORG-82910</span>
+          <span id="confirm-order-id" class="font-label-md text-label-md text-primary font-bold">#ORG-00000</span>
+        </div>
+        <div class="flex items-start gap-4">
+          <span class="material-symbols-outlined text-secondary mt-1">storefront</span>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Tienda</span>
+            <span id="confirm-store" class="font-headline-sm text-headline-sm text-primary">—</span>
+          </div>
         </div>
         <div class="flex items-start gap-4">
           <span class="material-symbols-outlined text-secondary mt-1">local_shipping</span>
           <div class="flex flex-col">
             <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Ventana de entrega</span>
-            <span class="font-headline-sm text-headline-sm text-primary">Viernes 24 Junio</span>
-            <span class="font-body-md text-body-md text-on-surface-variant">09:00 — 11:00</span>
+            <span id="confirm-date" class="font-headline-sm text-headline-sm text-primary">—</span>
+            <span id="confirm-window" class="font-body-md text-body-md text-on-surface-variant">—</span>
           </div>
         </div>
         <div class="flex items-start gap-4">
           <span class="material-symbols-outlined text-secondary mt-1">location_on</span>
           <div class="flex flex-col">
             <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Dirección de entrega</span>
-            <span class="font-body-md text-body-md text-primary">Av. Principal 123, Edificio Los Pinos</span>
+            <span id="confirm-address" class="font-body-md text-body-md text-primary">—</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 border-t border-outline-variant pt-4">
+          <span class="material-symbols-outlined text-secondary">verified</span>
+          <div class="flex flex-col">
+            <span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Estado del pago</span>
+            <span id="confirm-pay" class="font-headline-sm text-headline-sm text-secondary">—</span>
           </div>
         </div>
       </div>
@@ -1036,7 +1064,7 @@
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Entrega a domicilio</li>
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Acumula puntos</li>
       </ul>
-      <button data-nav="stores" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Comprar suelto</button>
+      <button data-pmode="directa" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Comprar suelto</button>
     </div>
 
     <!-- Mensual (recomendado) -->
@@ -1067,7 +1095,7 @@
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Selección personalizada</li>
         <li class="flex gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">check</span>Empaque especial</li>
       </ul>
-      <button data-nav="stores" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Armar regalo</button>
+      <button data-pmode="regalo" class="mt-5 w-full border border-primary-container text-primary-container font-label-md py-3.5 rounded-xl active:scale-[0.99] transition-transform">Armar regalo</button>
     </div>
 
     <div class="bg-sprout-green/15 border border-sprout-green/30 rounded-xl p-4 flex gap-3">
@@ -1761,6 +1789,7 @@ function applyLocation(target, addressText, pos) {
     document.getElementById("fav-loc-text").textContent = addressText;
     document.getElementById("fav-loc-display").classList.remove("hidden");
     localStorage.setItem("origen_geo", JSON.stringify(pos));
+    localStorage.setItem("origen_geo_fav", JSON.stringify(pos)); // coords de la favorita (para el default del checkout)
     const s = getSettings(); s.address = addressText; localStorage.setItem("origen_settings", JSON.stringify(s));
     const saved = document.getElementById("settings-saved"); if (saved) { saved.style.opacity = "1"; setTimeout(() => saved.style.opacity = "0", 1500); }
     return;
@@ -2714,6 +2743,12 @@ const ORDER_TYPES = [
   { id: "regalo", label: "Regalo", icon: "redeem" },
   { id: "programada", label: "Programada", icon: "event_repeat" }
 ];
+// Modo de compra elegido en el inicio: preselecciona el tipo de pedido y lleva al catálogo.
+function setPurchaseMode(mode) {
+  orderType = (mode === "regalo") ? "regalo" : "directa";
+  try { renderOrderDetails(); } catch (e) {}
+  navigate("stores");
+}
 function renderOrderDetails() {
   const cont = document.getElementById("order-type"); if (!cont) return;
   cont.innerHTML = ORDER_TYPES.map(t => {
@@ -2724,16 +2759,51 @@ function renderOrderDetails() {
   document.getElementById("freq-wrap").classList.toggle("hidden", orderType !== "programada");
   document.getElementById("addr-wrap").classList.toggle("hidden", orderType === "regalo");
   const u = currentUser(), s = getSettings();
-  // Prefill de la ubicación de entrega si el usuario ya tenía una guardada (dirección + coordenadas).
+  // Prefill de la ubicación de entrega: por defecto la dirección favorita guardada (dirección + coords).
   const addr = document.getElementById("order-address");
   const savedAddr = s.address || (u && u.address) || "";
   if (addr && !addr.value && savedAddr) {
     addr.value = savedAddr;
     document.getElementById("order-loc-text").textContent = savedAddr;
     document.getElementById("order-loc-display").classList.remove("hidden");
+    // Restaura las coordenadas de la dirección favorita para que el costo de delivery sea real.
+    const favGeo = JSON.parse(localStorage.getItem("origen_geo_fav") || "null");
+    if (favGeo) localStorage.setItem("origen_geo", JSON.stringify(favGeo));
   }
-  const date = document.getElementById("order-date"); if (date && !date.value) { const d = new Date(); d.setDate(d.getDate() + 1); date.value = d.toISOString().slice(0, 10); }
+  applyDateBounds(); // fecha mínima = hoy (sin pasadas) + corte del mismo día + horizonte 30 días
   const gm = document.getElementById("gift-message"); if (gm && !gm.value && s.giftmsg) gm.value = s.giftmsg;
+}
+
+// Horarios de entrega disponibles (inicio en horas) — deben coincidir con el <select> #order-window.
+const SLOT_STARTS = [9, 11, 13, 15, 17, 19];
+const ymdLocal = dt => { const z = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
+// Acota el selector de fecha: nunca fechas pasadas, salta al día siguiente si ya pasó el último
+// horario, y limita a 30 días. Sin backend de disponibilidad, "disponibilidad" = horarios vigentes.
+function applyDateBounds() {
+  const date = document.getElementById("order-date"); if (!date) return;
+  const now = new Date();
+  const minDate = new Date(now);
+  if (now.getHours() >= SLOT_STARTS[SLOT_STARTS.length - 1]) minDate.setDate(minDate.getDate() + 1);
+  const minStr = ymdLocal(minDate);
+  const maxDate = new Date(now); maxDate.setDate(maxDate.getDate() + 30);
+  date.min = minStr; date.max = ymdLocal(maxDate);
+  if (!date.value || date.value < minStr) date.value = minStr;
+  date.onchange = refreshWindowOptions;
+  refreshWindowOptions();
+}
+// En el día de hoy bloquea los horarios cuyo inicio ya pasó (con 1 h de margen de preparación).
+function refreshWindowOptions() {
+  const date = document.getElementById("order-date"), sel = document.getElementById("order-window");
+  if (!date || !sel) return;
+  const now = new Date(), isToday = date.value === ymdLocal(now);
+  let firstEnabled = null;
+  Array.from(sel.options).forEach(o => {
+    const start = parseInt(o.value.slice(0, 2), 10);
+    const past = isToday && start <= now.getHours() + 1;
+    o.disabled = past;
+    if (!past && firstEnabled === null) firstEnabled = o.value;
+  });
+  if (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].disabled && firstEnabled) sel.value = firstEnabled;
 }
 
 /* ============ Router ============ */
@@ -2787,7 +2857,26 @@ function navigate(screen) {
   if (screen === "otp") renderOtp();
   if (screen === "checkout") renderCheckout();
   if (screen === "admin") renderAdmin();
-  if (screen === "confirmed") document.getElementById("confirm-order-id").textContent = lastOrderId || ("#ORG-" + Math.floor(10000 + Math.random() * 89999));
+  if (screen === "confirmed") renderConfirmed();
+}
+
+// Llena la pantalla de confirmación con los datos REALES del pedido recién creado (sin placeholders).
+function renderConfirmed() {
+  const o = orders[0] || null;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set("confirm-order-id", (o && o.id) || lastOrderId || "—");
+  if (!o) return;
+  const dateLabel = o.deliveryDate
+    ? new Date(o.deliveryDate + "T12:00:00").toLocaleDateString("es-BO", { weekday: "long", day: "numeric", month: "long" })
+    : "—";
+  set("confirm-store", o.store || cartStoreName() || "Origen");
+  set("confirm-date", dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1));
+  set("confirm-window", o.window || "—");
+  const dest = o.type === "regalo"
+    ? ((o.gift && o.gift.name ? "🎁 " + o.gift.name + " · " : "") + (o.customer.address || "—"))
+    : (o.customer.address || "—");
+  set("confirm-address", dest);
+  set("confirm-pay", "Pagado · " + (o.method === "card" ? "Tarjeta" : "QR Simple"));
 }
 
 /* ============ Escáner real (cámara + QR/código de barras) ============ */
@@ -2877,6 +2966,10 @@ document.addEventListener("click", e => {
 
   const cat = e.target.closest("[data-cat]");
   if (cat) { activeCat = cat.dataset.cat; renderCatalog(); return; }
+
+  // Modo de compra (Compra Suelta / Para Regalar): fija el tipo de pedido y va a Tiendas.
+  const pmode = e.target.closest("[data-pmode]");
+  if (pmode) { setPurchaseMode(pmode.dataset.pmode); return; }
 
   const add = e.target.closest("[data-add]");
   if (add) { addToCart(add.dataset.add); return; }
@@ -3072,6 +3165,7 @@ document.getElementById("basket-confirm").addEventListener("click", () => {
     if (!refs) return fail("Agrega las referencias de entrega.");
   }
   if (!date) return fail("Selecciona la fecha de entrega.");
+  if (date < ymdLocal(new Date())) return fail("La fecha de entrega no puede ser pasada.");
   if (orderType === "programada" && !subActive()) return fail("Solo los suscriptores pueden programar entregas recurrentes.");
   err.classList.add("hidden");
   orderDetails = {
@@ -3150,6 +3244,7 @@ function createOrder(method) {
     items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
     total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
     status: "Nuevo", assignedTo: null, type: d.type || "directa",
+    store: cartStoreName() || "Origen",
     references: d.references || "",
     pickup: pickup ? { name: pickup.name, lat: pickup.lat, lng: pickup.lng } : null,
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,

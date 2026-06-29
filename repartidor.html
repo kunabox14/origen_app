@@ -244,6 +244,7 @@ const mapOrder = r => ({
   customer: { name: r.customer_name || "Cliente", address: r.address || "", zone: r.zone || "Zona Sur" },
   references: r.delivery_refs || "", giftName: r.gift_name || "", type: r.order_type || "directa",
   pickup: r.pickup_branch ? { name: r.pickup_branch, address: r.pickup_address || "", lat: r.pickup_lat, lng: r.pickup_lng } : null,
+  prep: r.prep_status || "pendiente", deliveryDate: r.delivery_date || null,
   window: r.window || "09:00 – 11:00", items: (r.order_items || []).map(i => ({ name: i.name, qty: i.qty })),
   total: Number(r.total), deliveryFee: Number(r.delivery_fee || 0), deliveryKm: Number(r.delivery_km || 0)
 });
@@ -612,6 +613,13 @@ function orderCard(o){
       <span class="bg-sprout-green/20 text-secondary text-xs font-semibold px-2 py-0.5 rounded-full">${o.status}</span>
     </div>
     ${o.pickup?`<p class="text-sm text-secondary flex items-start gap-1 mb-1"><span class="material-symbols-outlined text-[15px] mt-0.5">store</span><span><b>Recoger en:</b> ${escapeHtmlR(o.pickup.name)}${o.pickup.address?` <span class="text-on-surface-variant">· ${escapeHtmlR(o.pickup.address)}</span>`:""}</span></p>`:""}
+    ${(o.status==="Nuevo"||o.status==="Asignado")?(
+      o.prep==="listo"
+        ? `<p class="text-xs font-bold flex items-center gap-1 mb-1 bg-leaf-green/20 text-secondary rounded-lg px-2 py-1.5"><span class="material-symbols-outlined text-[16px]">inventory_2</span>Listo para recoger ahora</p>`
+        : o.prep==="preparando"
+        ? `<p class="text-xs font-semibold flex items-center gap-1 mb-1 bg-tertiary-fixed/40 text-on-surface rounded-lg px-2 py-1.5"><span class="material-symbols-outlined text-[16px]">skillet</span>La tienda está preparando el pedido…</p>`
+        : `<p class="text-xs font-semibold flex items-center gap-1 mb-1 bg-surface-container text-on-surface-variant rounded-lg px-2 py-1.5"><span class="material-symbols-outlined text-[16px]">hourglass_empty</span>La tienda aún no inicia la preparación</p>`
+    ):""}
     <p class="font-semibold text-primary">${o.customer.name}${o.type==="regalo"&&o.giftName?` <span class="text-xs font-normal text-secondary">🎁 para ${escapeHtmlR(o.giftName)}</span>`:""}</p>
     <p class="text-sm text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[15px]">location_on</span>${o.customer.address}</p>
     <p class="text-sm text-on-surface-variant flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[15px]">map</span>${o.customer.zone} · ${o.window}</p>
@@ -654,6 +662,7 @@ let seenNew = new Set();
 function requestNotify(){
   if("Notification" in window && Notification.permission==="default"){ try{ Notification.requestPermission(); }catch(e){} }
   seenNew = new Set(loadOrders().filter(o=>o.status==="Nuevo").map(o=>o.id));
+  seenReady = new Set(loadOrders().filter(o=>o.prep==="listo").map(o=>o.id));
 }
 function notifyOrder(o){
   toast("🔔 Nuevo pedido "+o.id);
@@ -667,7 +676,19 @@ function checkNew(){
   const fresh = loadOrders().filter(o=>o.status==="Nuevo" && !seenNew.has(o.id));
   if(fresh.length) riderLog("nuevos pedidos detectados:", fresh.map(o=>o.id).join(", "));
   fresh.forEach(o=>{ seenNew.add(o.id); notifyOrder(o); }); // seenNew evita notificaciones duplicadas
+  checkReady();
   if(fresh.length) renderApp();
+}
+// Aviso cuando la tienda marca un pedido como LISTO (recoger): notifica al repartidor.
+let seenReady = new Set();
+function checkReady(){
+  const ready = loadOrders().filter(o=>o.prep==="listo" && o.status!=="Entregado" && o.status!=="Cancelado" && !seenReady.has(o.id));
+  ready.forEach(o=>{
+    seenReady.add(o.id);
+    toast("📦 "+o.id+" listo para recoger");
+    try{ if("Notification" in window && Notification.permission==="granted") new Notification("Pedido listo para recoger", { body: o.id+(o.pickup?" · "+o.pickup.name:"")+" · "+o.customer.zone, icon:"assets/icon-192.png" }); }catch(e){}
+  });
+  if(ready.length) renderApp();
 }
 // El cliente crea un pedido en otra pestaña → 'storage' dispara la notificación en vivo
 window.addEventListener("storage", e=>{ if(e.key==="origen_orders" && rider){ checkNew(); renderApp(); } });

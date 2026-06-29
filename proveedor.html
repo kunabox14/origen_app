@@ -39,6 +39,20 @@
   #phone{width:100%;max-width:440px;margin:0 auto;min-height:100vh;min-height:100dvh;background:#F5F2EB;box-shadow:0 30px 80px -20px rgba(10,19,13,.25)}
   @media (min-width:480px){#phone{min-height:900px;margin:24px auto;border-radius:28px;overflow:hidden}}
   .scr:not(.on){display:none !important;}
+  /* Acordeones de gestión del panel (desplegables, sin sobrecarga visual) */
+  details.acc{border:1px solid #c3c8c2;border-radius:1rem;background:#ffffff;overflow:hidden}
+  details.acc+details.acc{margin-top:.75rem}
+  details.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.65rem;padding:1rem;font-weight:600;color:#000804}
+  details.acc>summary::-webkit-details-marker{display:none}
+  details.acc>summary .acc-ico{color:#006e24}
+  details.acc>summary .acc-chev{margin-left:auto;color:#737874;transition:transform .2s}
+  details.acc[open]>summary .acc-chev{transform:rotate(180deg)}
+  .acc-body{padding:0 1rem 1.1rem}
+  /* Carrusel de pedidos (banners horizontales con scroll-snap) */
+  .ord-carousel{display:flex;gap:.75rem;overflow-x:auto;scroll-snap-type:x mandatory;-ms-overflow-style:none;scrollbar-width:none;padding-bottom:.25rem}
+  .ord-carousel::-webkit-scrollbar{display:none}
+  .ord-card{scroll-snap-align:start;flex:0 0 86%;max-width:86%}
+  @media(min-width:480px){.ord-card{flex-basis:78%;max-width:78%}}
 </style>
 </head>
 <body class="text-on-surface">
@@ -144,107 +158,130 @@
       </div>
       <button id="prov-logout" class="text-on-primary/70 hover:text-white flex items-center gap-1 text-sm"><span class="material-symbols-outlined text-[20px]">logout</span></button>
     </header>
-    <main class="px-5 py-5">
-      <div id="prov-active" class="mb-5"></div>
-      <div id="prov-stock-alert" class="mb-5"></div>
-      <div id="prov-myloc" class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5 flex items-center gap-3">
-        <span class="material-symbols-outlined text-secondary">my_location</span>
-        <div class="flex-grow min-w-0"><p class="text-xs text-on-surface-variant">Dirección de mi negocio</p><p id="prov-myloc-text" class="font-semibold text-primary truncate">Sin definir</p></div>
-        <button id="prov-myloc-edit" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95">Actualizar</button>
-      </div>
-      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5 flex items-center gap-3">
-        <span class="material-symbols-outlined text-secondary">schedule</span>
-        <div class="flex-grow min-w-0">
-          <p class="text-xs text-on-surface-variant mb-1">Horario de atención</p>
-          <input id="prov-hours-input" class="font-semibold text-primary w-full bg-transparent outline-none text-sm placeholder:text-on-surface-variant/50" placeholder="Ej: Lun–Sáb 8:00–18:00">
-        </div>
-        <button id="prov-hours-save" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95 ml-2">Guardar</button>
-      </div>
-      <!-- Disponibilidad de entrega: días abiertos, franjas ofrecidas y fechas bloqueadas -->
-      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5">
-        <div class="flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-secondary">event_available</span><p class="font-semibold text-primary text-sm">Disponibilidad de entrega</p></div>
-        <p class="text-xs text-on-surface-variant mb-2">Días que entregas</p>
-        <div id="avail-days" class="flex flex-wrap gap-2 mb-4"></div>
-        <p class="text-xs text-on-surface-variant mb-2">Franjas horarias que ofreces</p>
-        <div id="avail-slots" class="flex flex-wrap gap-2 mb-4"></div>
-        <p class="text-xs text-on-surface-variant mb-2">Fechas bloqueadas (feriados, vacaciones)</p>
-        <div class="flex gap-2 mb-2">
-          <input id="avail-block-date" type="date" class="flex-1 h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary text-sm">
-          <button id="avail-block-add" type="button" class="bg-secondary-container text-on-secondary-container font-semibold px-4 rounded-lg text-sm active:scale-95">Agregar</button>
-        </div>
-        <div id="avail-blocked" class="flex flex-wrap gap-2 mb-4"></div>
-        <button id="avail-save" type="button" class="w-full bg-leaf-green text-white font-semibold py-3 rounded-xl active:scale-95 transition-transform text-sm">Guardar disponibilidad</button>
-      </div>
-      <!-- Perfil de la tienda: logo + descripción -->
-      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5">
-        <div class="flex items-center gap-2 mb-4">
-          <span class="material-symbols-outlined text-secondary">storefront</span>
-          <p class="font-semibold text-primary text-sm">Perfil de la tienda</p>
-        </div>
-        <div class="flex items-center gap-4 mb-4">
-          <div class="w-20 h-20 rounded-xl overflow-hidden bg-earth-cream border border-outline-variant/30 flex-shrink-0">
-            <img id="prov-logo-preview" class="w-full h-full object-contain p-2" src="assets/origen-logo.svg" onerror="this.src='assets/origen-logo.svg'">
+    <main class="px-5 py-5 space-y-4">
+      <!-- Pedidos en curso: carrusel de banners con todo el detalle (lo más importante, arriba) -->
+      <div id="prov-active"></div>
+      <div id="prov-stock-alert"></div>
+
+      <!-- 1) Perfil de la tienda -->
+      <details class="acc" open>
+        <summary><span class="material-symbols-outlined acc-ico">storefront</span>Perfil de la tienda<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <div class="flex items-center gap-4 mb-4">
+            <div class="w-20 h-20 rounded-xl overflow-hidden bg-earth-cream border border-outline-variant/30 flex-shrink-0">
+              <img id="prov-logo-preview" class="w-full h-full object-contain p-2" src="assets/origen-logo.svg" onerror="this.src='assets/origen-logo.svg'">
+            </div>
+            <label class="flex-1 cursor-pointer">
+              <span class="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container font-semibold px-4 py-2.5 rounded-lg text-sm"><span class="material-symbols-outlined text-[18px]">upload</span>Subir logotipo</span>
+              <input id="prov-logo-img" type="file" accept="image/*" class="hidden">
+              <p class="text-xs text-on-surface-variant mt-2">Cuadrado, fondo blanco o transparente.</p>
+            </label>
           </div>
-          <label class="flex-1 cursor-pointer">
-            <span class="inline-flex items-center gap-2 bg-secondary-container text-on-secondary-container font-semibold px-4 py-2.5 rounded-lg text-sm"><span class="material-symbols-outlined text-[18px]">upload</span>Subir logotipo</span>
-            <input id="prov-logo-img" type="file" accept="image/*" class="hidden">
-            <p class="text-xs text-on-surface-variant mt-2">Cuadrado, fondo blanco o transparente.</p>
-          </label>
+          <textarea id="prov-desc-input" rows="3" placeholder="Describe tu tienda, productos y su origen..." class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-sm resize-none mb-3"></textarea>
+          <button id="prov-profile-save" class="w-full bg-secondary text-on-secondary font-semibold py-3 rounded-xl active:scale-95 transition-transform text-sm">Guardar perfil</button>
         </div>
-        <textarea id="prov-desc-input" rows="3" placeholder="Describe tu tienda, productos y su origen..." class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary text-sm resize-none mb-3"></textarea>
-        <button id="prov-profile-save" class="w-full bg-secondary text-on-secondary font-semibold py-3 rounded-xl active:scale-95 transition-transform text-sm">Guardar perfil</button>
-      </div>
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
-        <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
-      </div>
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="font-headline text-2xl text-primary">Mis sucursales</h2>
-        <button id="prov-add-branch" class="bg-leaf-green text-white font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nueva</button>
-      </div>
-      <p class="text-sm text-on-surface-variant mb-3">Cada sucursal tiene su ubicación y su propio stock. El sistema elige la sucursal más cercana con el pedido completo.</p>
-      <div id="prov-branches" class="space-y-3 mb-8"></div>
+      </details>
 
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="font-headline text-2xl text-primary">Mis productos</h2>
-        <button id="prov-add" class="bg-leaf-green text-white font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nuevo</button>
-      </div>
-      <div class="flex bg-surface-container-high rounded-full p-1 mb-4">
-        <button data-prodview="list" class="prod-view-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Gestión</button>
-        <button data-prodview="store" class="prod-view-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Mi tienda</button>
-      </div>
-      <div id="prov-products" class="space-y-3"></div>
-      <div id="prov-store-preview" class="hidden"></div>
+      <!-- 2) Casa matriz · dirección -->
+      <details class="acc">
+        <summary><span class="material-symbols-outlined acc-ico">my_location</span>Casa matriz · Dirección<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <div class="flex items-center gap-3">
+            <div class="flex-grow min-w-0"><p class="text-xs text-on-surface-variant">Dirección de mi negocio</p><p id="prov-myloc-text" class="font-semibold text-primary">Sin definir</p></div>
+            <button id="prov-myloc-edit" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95">Actualizar</button>
+          </div>
+        </div>
+      </details>
 
-      <!-- Reporte de ventas: todas las ventas a través de Origen, con filtros y descarga PDF -->
-      <div class="mt-10 mb-6">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-headline text-2xl text-primary">Mis ventas</h2>
-          <button id="sales-pdf" class="bg-secondary text-on-secondary font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[18px]">download</span>PDF</button>
+      <!-- 3) Mis sucursales (cada una con su dirección) -->
+      <details class="acc">
+        <summary><span class="material-symbols-outlined acc-ico">store</span>Mis sucursales<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <p class="text-sm text-on-surface-variant mb-3">Cada sucursal tiene su ubicación y su propio stock. El sistema elige la sucursal más cercana con el pedido completo.</p>
+          <div id="prov-branches" class="space-y-3 mb-3"></div>
+          <button id="prov-add-branch" class="w-full bg-leaf-green text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nueva sucursal</button>
         </div>
-        <div class="flex bg-surface-container-high rounded-full p-1 mb-3">
-          <button data-salesf="week" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Esta semana</button>
-          <button data-salesf="month" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Este mes</button>
-          <button data-salesf="all" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Global</button>
+      </details>
+
+      <!-- 4) Mis productos -->
+      <details class="acc">
+        <summary><span class="material-symbols-outlined acc-ico">inventory_2</span>Mis productos<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Productos activos</p><p id="prov-active-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
+            <div class="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">En revisión</p><p id="prov-pending-count" class="text-2xl font-bold text-primary mt-1">0</p></div>
+          </div>
+          <div class="flex bg-surface-container-high rounded-full p-1 mb-4">
+            <button data-prodview="list" class="prod-view-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Gestión</button>
+            <button data-prodview="store" class="prod-view-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Mi tienda</button>
+          </div>
+          <div id="prov-products" class="space-y-3"></div>
+          <div id="prov-store-preview" class="hidden"></div>
+          <button id="prov-add" class="mt-4 w-full bg-leaf-green text-white font-semibold py-2.5 rounded-xl flex items-center justify-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[20px]">add</span>Nuevo producto</button>
         </div>
-        <div class="grid grid-cols-2 gap-3 mb-3">
-          <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Pedidos</p><p id="sales-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
-          <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Ingresos por productos</p><p id="sales-total" class="text-2xl font-bold text-secondary mt-1">Bs. 0</p></div>
+      </details>
+
+      <!-- 5) Horarios de atención -->
+      <details class="acc">
+        <summary><span class="material-symbols-outlined acc-ico">schedule</span>Horarios de atención<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <p class="text-xs text-on-surface-variant mb-1">Texto visible para el cliente en tu catálogo</p>
+          <div class="flex items-center gap-2">
+            <input id="prov-hours-input" class="font-semibold text-primary flex-grow h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary text-sm placeholder:text-on-surface-variant/50" placeholder="Ej: Lun–Sáb 8:00–18:00">
+            <button id="prov-hours-save" class="bg-secondary text-on-secondary font-semibold text-sm whitespace-nowrap active:scale-95 px-4 h-11 rounded-lg">Guardar</button>
+          </div>
         </div>
-        <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-3 overflow-x-auto">
-          <table class="w-full text-[13px] border-collapse">
-            <thead><tr class="text-left text-on-surface-variant border-b border-outline-variant/40">
-              <th class="py-2 pr-2 font-semibold whitespace-nowrap">Fecha</th>
-              <th class="py-2 pr-2 font-semibold whitespace-nowrap">Pedido</th>
-              <th class="py-2 pr-2 font-semibold">Cliente</th>
-              <th class="py-2 pr-2 font-semibold text-center">Prod.</th>
-              <th class="py-2 font-semibold text-right whitespace-nowrap">Monto</th>
-            </tr></thead>
-            <tbody id="sales-rows"></tbody>
-          </table>
-          <p id="sales-empty" class="hidden text-center text-on-surface-variant py-8 text-sm">Aún no hay ventas en este período.</p>
+      </details>
+
+      <!-- 6) Disponibilidad de entrega -->
+      <details class="acc">
+        <summary><span class="material-symbols-outlined acc-ico">event_available</span>Disponibilidad de entrega<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <p class="text-xs text-on-surface-variant mb-2">Días que entregas</p>
+          <div id="avail-days" class="flex flex-wrap gap-2 mb-4"></div>
+          <p class="text-xs text-on-surface-variant mb-2">Franjas horarias que ofreces</p>
+          <div id="avail-slots" class="flex flex-wrap gap-2 mb-4"></div>
+          <p class="text-xs text-on-surface-variant mb-2">Fechas bloqueadas (feriados, vacaciones)</p>
+          <div class="flex gap-2 mb-2">
+            <input id="avail-block-date" type="date" class="flex-1 h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary text-sm">
+            <button id="avail-block-add" type="button" class="bg-secondary-container text-on-secondary-container font-semibold px-4 rounded-lg text-sm active:scale-95">Agregar</button>
+          </div>
+          <div id="avail-blocked" class="flex flex-wrap gap-2 mb-4"></div>
+          <button id="avail-save" type="button" class="w-full bg-leaf-green text-white font-semibold py-3 rounded-xl active:scale-95 transition-transform text-sm">Guardar disponibilidad</button>
         </div>
-      </div>
+      </details>
+
+      <!-- 7) Mis ventas -->
+      <details class="acc">
+        <summary><span class="material-symbols-outlined acc-ico">receipt_long</span>Mis ventas<span class="material-symbols-outlined acc-chev">expand_more</span></summary>
+        <div class="acc-body">
+          <div class="flex justify-end mb-3">
+            <button id="sales-pdf" class="bg-secondary text-on-secondary font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform text-sm"><span class="material-symbols-outlined text-[18px]">download</span>Descargar PDF</button>
+          </div>
+          <div class="flex bg-surface-container-high rounded-full p-1 mb-3">
+            <button data-salesf="week" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Esta semana</button>
+            <button data-salesf="month" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Este mes</button>
+            <button data-salesf="all" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Global</button>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div class="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Pedidos</p><p id="sales-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
+            <div class="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Ingresos por productos</p><p id="sales-total" class="text-2xl font-bold text-secondary mt-1">Bs. 0</p></div>
+          </div>
+          <div class="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-3 overflow-x-auto">
+            <table class="w-full text-[13px] border-collapse">
+              <thead><tr class="text-left text-on-surface-variant border-b border-outline-variant/40">
+                <th class="py-2 pr-2 font-semibold whitespace-nowrap">Fecha</th>
+                <th class="py-2 pr-2 font-semibold whitespace-nowrap">Pedido</th>
+                <th class="py-2 pr-2 font-semibold">Cliente</th>
+                <th class="py-2 pr-2 font-semibold text-center">Prod.</th>
+                <th class="py-2 font-semibold text-right whitespace-nowrap">Monto</th>
+              </tr></thead>
+              <tbody id="sales-rows"></tbody>
+            </table>
+            <p id="sales-empty" class="hidden text-center text-on-surface-variant py-8 text-sm">Aún no hay ventas en este período.</p>
+          </div>
+        </div>
+      </details>
     </main>
   </section>
 
@@ -731,8 +768,28 @@ async function loadStockAlerts(){
 }
 // Banner prioritario de pedidos por preparar (Update 2)
 function provHaversine(a,b){ const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180; const x=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2; return 2*R*Math.asin(Math.sqrt(x)); }
-const prepLabel = s => s==="listo" ? "Listo para recoger" : s==="preparando" ? "En preparación" : "Pendiente";
-let provSeenOrders=null;
+const prepLabel = s => s==="listo" ? "Listo para recoger" : s==="preparando" ? "En preparación" : "Por preparar";
+const provEsc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+// Fecha + fin de la ventana de entrega → deadline (ms) para la cuenta regresiva.
+function orderDeadline(o){
+  const win = o.window || "09:00 – 11:00";
+  const end = (win.split(/[–-]/)[1] || win.split(/[–-]/)[0] || "11:00").trim(); // "17:00"
+  const date = o.delivery_date || new Date().toISOString().slice(0,10);
+  const t = new Date(date + "T" + (/^\d{2}:\d{2}$/.test(end) ? end : "11:00") + ":00");
+  return isNaN(t.getTime()) ? null : t.getTime();
+}
+let provSeenOrders=null, provCountdownTimer=null;
+// Actualiza cada segundo todos los contadores regresivos visibles en el carrusel.
+function updateProvCountdowns(){
+  document.querySelectorAll("[data-deadline]").forEach(el=>{
+    const dl=Number(el.dataset.deadline); if(!dl) return;
+    const ms=dl-Date.now();
+    if(ms<=0){ el.textContent="⏰ Tiempo de entrega vencido"; el.style.color="#ffb4ab"; return; }
+    const h=Math.floor(ms/3600000), m=Math.floor((ms%3600000)/60000);
+    el.textContent="Prepara y entrega en "+(h>0?h+"h ":"")+m+"m";
+    el.style.color = ms<=3600000 ? "#EF9F27" : "#5EBC66"; // <1h ámbar, si no verde
+  });
+}
 async function loadProviderOrders(prods){
   const el=document.getElementById("prov-active"); if(!el) return;
   const ids=(prods||PROV_PRODUCTS||[]).map(p=>p.id).filter(Boolean);
@@ -751,35 +808,51 @@ async function loadProviderOrders(prods){
     provSeenOrders=activeIds;
     if(!active.length){
       const last=allOrders[0];
-      el.innerHTML = last ? `<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-4 flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green">check_circle</span><div><p class="text-xs font-bold text-leaf-green uppercase tracking-wider">Último pedido</p><p class="font-semibold">${last.code||""} · ${last.status}</p></div></div>` : "";
+      el.innerHTML = last ? `<div class="bg-secondary-container text-on-secondary-container rounded-2xl p-4 flex items-center gap-2"><span class="material-symbols-outlined text-leaf-green">check_circle</span><div><p class="text-xs font-bold text-leaf-green uppercase tracking-wider">Sin pedidos en curso</p><p class="font-semibold">Último: ${provEsc(last.code||"")} · ${provEsc(last.status)}</p></div></div>` : "";
       return;
     }
-    el.innerHTML = active.map(o=>{
+    const total=active.length;
+    const cards = active.map((o,idx)=>{
       const mine=items.filter(i=>i.order_id===o.id);
       const qty=mine.reduce((s,i)=>s+(i.qty||1),0);
-      const names=mine.map(i=>i.name).filter(Boolean).join(", ");
+      const lines=mine.map(i=>`${i.qty||1}× ${provEsc(i.name||"Producto")}`).join("<br>");
       const prep=o.prep_status||"pendiente";
-      let eta="Repartidor por asignar";
-      if(o.rider_lat!=null && o.pickup_lat!=null){ const min=Math.max(1,Math.round(provHaversine({lat:Number(o.rider_lat),lng:Number(o.rider_lng)},{lat:Number(o.pickup_lat),lng:Number(o.pickup_lng)})/18*60)); eta="Repartidor llega en ~"+min+" min"; }
-      else if(o.assigned_rider){ eta="Repartidor en camino a recoger"; }
+      const isGift=o.order_type==="regalo";
+      const cliente = isGift ? ("🎁 "+provEsc(o.gift_name||"Regalo")) : provEsc(o.customer_name||"Cliente");
+      let eta="Repartidor por asignar", etaIco="schedule";
+      if(o.rider_lat!=null && o.pickup_lat!=null){ const min=Math.max(1,Math.round(provHaversine({lat:Number(o.rider_lat),lng:Number(o.rider_lng)},{lat:Number(o.pickup_lat),lng:Number(o.pickup_lng)})/18*60)); eta="Repartidor llega en ~"+min+" min"; etaIco="two_wheeler"; }
+      else if(o.assigned_rider){ eta="Repartidor en camino a recoger"; etaIco="two_wheeler"; }
       const steps=["pendiente","preparando","listo"];
       const stepBar=steps.map((s,i)=>`<div class="flex-1 h-1.5 rounded-full ${steps.indexOf(prep)>=i?'bg-leaf-green':'bg-white/25'}"></div>`).join("");
+      const dl=orderDeadline(o);
+      const fecha=(()=>{ try{ return new Date((o.delivery_date||new Date().toISOString().slice(0,10))+"T12:00:00").toLocaleDateString("es-BO",{weekday:"short",day:"numeric",month:"short"}); }catch(_){ return o.delivery_date||""; } })();
       const btn = prep==="pendiente"
         ? `<button data-prep="${o.id}" data-prep-to="preparando" class="mt-3 w-full bg-leaf-green text-deep-forest font-bold py-3 rounded-xl active:scale-[0.98] transition-transform">Empezar preparación</button>`
         : prep==="preparando"
-        ? `<button data-prep="${o.id}" data-prep-to="listo" class="mt-3 w-full bg-leaf-green text-deep-forest font-bold py-3 rounded-xl active:scale-[0.98] transition-transform">Marcar como listo</button>`
-        : `<div class="mt-3 w-full bg-leaf-green/20 text-leaf-green font-bold py-3 rounded-xl text-center flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[20px]">inventory_2</span>Listo para recoger</div>`;
-      return `<div class="bg-primary-container text-on-primary rounded-2xl p-5 mb-3 border-2 border-leaf-green shadow-lg">
-        <div class="flex items-center gap-2 mb-1"><span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-leaf-green opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-leaf-green"></span></span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">Tienes un pedido por preparar</span></div>
-        <p class="font-headline text-2xl leading-tight">${o.code||("#"+String(o.id).slice(0,8))}</p>
-        <p class="text-sm text-on-primary-container">${qty} u. de tus productos${o.zone?" · "+o.zone:""}</p>
-        ${names?`<p class="text-xs text-on-primary-container/80 mt-1">${names}</p>`:""}
-        <div class="flex items-center gap-2 mt-3 text-sm text-leaf-green"><span class="material-symbols-outlined text-[18px]">two_wheeler</span>${eta}</div>
+        ? `<button data-prep="${o.id}" data-prep-to="listo" class="mt-3 w-full bg-leaf-green text-deep-forest font-bold py-3 rounded-xl active:scale-[0.98] transition-transform">Marcar como listo · avisar al repartidor</button>`
+        : `<div class="mt-3 w-full bg-leaf-green/20 text-leaf-green font-bold py-3 rounded-xl text-center flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[20px]">inventory_2</span>Listo · repartidor notificado</div>`;
+      return `<div class="ord-card bg-primary-container text-on-primary rounded-2xl p-5 border-2 border-leaf-green shadow-lg">
+        <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center gap-2"><span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-leaf-green opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-leaf-green"></span></span><span class="text-xs font-bold text-leaf-green uppercase tracking-wider">${prep==="listo"?"Listo para recoger":"Pedido por preparar"}</span></div>
+          <span class="text-[11px] text-on-primary-container/70 font-semibold">Pedido ${idx+1} de ${total}</span>
+        </div>
+        <p class="font-headline text-2xl leading-tight">${provEsc(o.code||("#"+String(o.id).slice(0,8)))}</p>
+        <p class="text-sm text-on-primary-container">${cliente}${o.zone?" · "+provEsc(o.zone):""}</p>
+        <div class="mt-2 bg-black/15 rounded-lg px-3 py-2 text-sm leading-snug">${lines||(qty+" u. de tus productos")}</div>
+        <div class="grid grid-cols-2 gap-2 mt-3 text-xs">
+          <div class="flex items-center gap-1 text-on-primary-container"><span class="material-symbols-outlined text-[16px] text-leaf-green">event</span>${provEsc(fecha)}</div>
+          <div class="flex items-center gap-1 text-on-primary-container"><span class="material-symbols-outlined text-[16px] text-leaf-green">schedule</span>${provEsc(o.window||"")}</div>
+        </div>
+        <div class="flex items-center gap-1 mt-2 text-sm font-bold" data-deadline="${dl||""}" style="color:#5EBC66"><span class="material-symbols-outlined text-[18px]">timer</span>—</div>
+        <div class="flex items-center gap-2 mt-2 text-sm text-leaf-green"><span class="material-symbols-outlined text-[18px]">${etaIco}</span>${eta}</div>
         <div class="flex gap-1.5 mt-3">${stepBar}</div>
         <p class="text-[11px] text-on-primary-container/70 mt-1 uppercase tracking-wider">${prepLabel(prep)}</p>
         ${btn}
       </div>`;
     }).join("");
+    el.innerHTML = `<div class="flex items-center justify-between mb-2"><h2 class="font-headline text-xl text-primary">Pedidos en curso</h2><span class="text-xs font-bold bg-leaf-green text-deep-forest px-2 py-0.5 rounded-full">${total}</span></div><div class="ord-carousel">${cards}</div>${total>1?`<p class="text-center text-[11px] text-on-surface-variant mt-1">Desliza para ver todos los pedidos →</p>`:""}`;
+    updateProvCountdowns();
+    if(!provCountdownTimer) provCountdownTimer=setInterval(updateProvCountdowns,1000);
   }catch(_){ el.innerHTML=""; }
 }
 document.addEventListener("click", async e=>{

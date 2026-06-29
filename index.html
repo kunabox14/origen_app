@@ -916,25 +916,52 @@
     <button data-nav="account" class="text-secondary active:scale-95 transition-transform"><span class="material-symbols-outlined">arrow_back</span></button>
     <h1 class="font-headline-sm text-headline-sm text-primary">Configuración</h1>
   </header>
-  <main class="px-margin-mobile pt-6 space-y-6">
-    <div class="bg-surface-container-low border border-outline-variant/30 rounded-xl divide-y divide-outline-variant/20">
-      <label class="flex items-center justify-between px-5 py-4"><span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">notifications</span> Notificaciones push</span><input type="checkbox" data-setting="notifications" class="w-5 h-5 accent-secondary"></label>
-      <label class="flex items-center justify-between px-5 py-4"><span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">campaign</span> Ofertas y novedades</span><input type="checkbox" data-setting="promos" class="w-5 h-5 accent-secondary"></label>
-      <div class="flex items-center justify-between px-5 py-4"><span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">translate</span> Idioma</span>
-        <select data-setting="lang" class="bg-surface-container-high rounded-lg px-3 py-1.5 text-on-surface outline-none"><option value="es">Español</option><option value="en">English</option></select></div>
-    </div>
+  <main class="px-margin-mobile pt-6 space-y-5">
+    <!-- Perfil -->
+    <button data-nav="account" class="w-full flex items-center justify-between bg-surface-container-low border border-outline-variant/30 rounded-xl px-5 py-4 active:scale-[0.99] transition-transform">
+      <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">person</span> Perfil</span>
+      <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+    </button>
+
+    <!-- Dirección favorita (Google Maps, sin escribir a mano) -->
     <div>
       <label class="font-label-sm text-on-surface-variant">Dirección favorita</label>
-      <input data-setting="address" placeholder="Av. Ballivián 1220, Calacoto" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
+      <div class="grid grid-cols-2 gap-2 mt-1">
+        <button id="fav-gps" type="button" class="border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">my_location</span>Mi ubicación</button>
+        <button id="fav-pick" type="button" class="border border-secondary text-secondary font-label-md py-2.5 rounded-lg flex items-center justify-center gap-1.5 active:scale-[0.99] transition-transform"><span class="material-symbols-outlined text-[20px]">map</span>Elegir en mapa</button>
+      </div>
+      <div id="fav-loc-display" class="hidden mt-2 bg-surface-container-low border border-outline-variant rounded-lg px-4 py-3 flex items-start gap-2">
+        <span class="material-symbols-outlined text-secondary text-[20px]">place</span>
+        <p id="fav-loc-text" class="text-on-surface text-sm leading-snug"></p>
+      </div>
+      <input data-setting="address" type="hidden">
+      <p class="text-[11px] text-on-surface-variant/70 mt-1">Se usará automáticamente en tus próximos pedidos y el checkout.</p>
     </div>
+
+    <!-- Mensaje de regalo predeterminado -->
     <div>
       <label class="font-label-sm text-on-surface-variant">Mensaje de regalo predeterminado</label>
       <input data-setting="giftmsg" placeholder="Con cariño, de parte de…" class="mt-1 w-full h-12 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
     </div>
+
+    <!-- Métodos de pago -->
     <button data-nav="plans" class="w-full flex items-center justify-between bg-surface-container-low border border-outline-variant/30 rounded-xl px-5 py-4 active:scale-[0.99] transition-transform">
       <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">credit_card</span> Métodos de pago y tarjetas</span>
       <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
     </button>
+
+    <!-- Seguridad -->
+    <div class="bg-surface-container-low border border-outline-variant/30 rounded-xl p-5">
+      <div class="flex items-center gap-2 mb-1"><span class="material-symbols-outlined text-secondary">lock</span><h3 class="font-label-md text-on-surface font-semibold">Seguridad de pagos</h3></div>
+      <p class="font-label-sm text-on-surface-variant">Tus pagos usan tokenización: no guardamos el número completo de tu tarjeta ni el CVV, solo un token y los últimos 4 dígitos. Cada cobro requiere tu autorización y viaja cifrado por HTTPS.</p>
+    </div>
+
+    <!-- Ayuda y Chat -->
+    <button data-nav="support" class="w-full flex items-center justify-between bg-surface-container-low border border-outline-variant/30 rounded-xl px-5 py-4 active:scale-[0.99] transition-transform">
+      <span class="flex items-center gap-3 text-on-surface"><span class="material-symbols-outlined text-secondary">support_agent</span> Ayuda y Chat</span>
+      <span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+    </button>
+
     <p id="settings-saved" class="text-center font-label-sm text-secondary opacity-0 transition-opacity">Cambios guardados ✓</p>
   </main>
 </section>
@@ -1736,6 +1763,16 @@ function setPicker(lat, lng) {
 }
 // Aplica la ubicación elegida (mapa o GPS) al destino correspondiente, guardando coordenadas.
 function applyLocation(target, addressText, pos) {
+  if (target === "fav") {
+    // Dirección favorita (Configuración): guarda dirección + coordenadas para usarse en checkout
+    const a = document.querySelector('[data-setting="address"]'); if (a) a.value = addressText;
+    document.getElementById("fav-loc-text").textContent = addressText;
+    document.getElementById("fav-loc-display").classList.remove("hidden");
+    localStorage.setItem("origen_geo", JSON.stringify(pos));
+    const s = getSettings(); s.address = addressText; localStorage.setItem("origen_settings", JSON.stringify(s));
+    const saved = document.getElementById("settings-saved"); if (saved) { saved.style.opacity = "1"; setTimeout(() => saved.style.opacity = "0", 1500); }
+    return;
+  }
   if (target === "gift") {
     document.getElementById("gift-address").value = addressText;
     document.getElementById("gift-loc-text").textContent = addressText;
@@ -1751,6 +1788,19 @@ function applyLocation(target, addressText, pos) {
 }
 document.getElementById("pick-location").addEventListener("click", () => openPicker("order"));
 document.getElementById("gift-pick").addEventListener("click", () => openPicker("gift"));
+document.getElementById("fav-pick").addEventListener("click", () => openPicker("fav"));
+document.getElementById("fav-gps").addEventListener("click", () => {
+  if (!navigator.geolocation) { showToast("GPS no disponible en este dispositivo"); return; }
+  showToast("Obteniendo tu ubicación…");
+  navigator.geolocation.getCurrentPosition(async p => {
+    const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+    let addressText = pos.lat.toFixed(5) + ", " + pos.lng.toFixed(5);
+    const ok = await loadMaps();
+    if (ok && window.google) { try { await new Promise(r => new google.maps.Geocoder().geocode({ location: pos }, (res, status) => { if (status === "OK" && res && res[0]) addressText = res[0].formatted_address; r(); })); } catch (e) {} }
+    applyLocation("fav", addressText, pos);
+    showToast("Dirección favorita guardada");
+  }, () => showToast("No pudimos obtener tu ubicación"), { enableHighAccuracy: true });
+});
 document.getElementById("picker-close").addEventListener("click", () => document.getElementById("picker-modal").classList.add("hidden"));
 document.getElementById("picker-modal").addEventListener("click", e => { if (e.target.id === "picker-modal") document.getElementById("picker-modal").classList.add("hidden"); });
 document.getElementById("picker-confirm").addEventListener("click", () => {
@@ -1946,6 +1996,10 @@ function renderSettings() {
     if (el.type === "checkbox") el.checked = !!s[k];
     else el.value = (s[k] != null ? s[k] : (k === "address" && currentUser() ? (currentUser().address || "") : ""));
   });
+  // Mostrar la dirección favorita guardada (seleccionada por mapa)
+  const favText = document.getElementById("fav-loc-text"), favWrap = document.getElementById("fav-loc-display");
+  const addr = s.address || (currentUser() && currentUser().address) || "";
+  if (favText && favWrap) { if (addr) { favText.textContent = addr; favWrap.classList.remove("hidden"); } else favWrap.classList.add("hidden"); }
 }
 // Guardar configuración al cambiar
 document.addEventListener("change", e => {

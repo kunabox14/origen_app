@@ -1,5 +1,5 @@
 // Service Worker ORIGEN — cache del shell para que la app funcione offline (PWA instalable).
-const CACHE = "origen-v47";
+const CACHE = "origen-v48";
 const CORE = [
   "./",
   "./index.html",

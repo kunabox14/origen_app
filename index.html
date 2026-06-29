@@ -1509,17 +1509,18 @@ async function hydratePaySettings() {
   } catch (e) {}
 }
 
-/* ============ Admin (rol real de Supabase) ============ */
+/* ============ Admin ============ */
+// ÚNICO administrador de Origen. Se valida por la cuenta autenticada para que el acceso no se
+// pierda aunque cambie la fila en `profiles` (la BD se sincroniza con fase-admin.sql para RLS).
+const ADMIN_EMAIL = "kunabox14@gmail.com";
 let adminRole = false;
 async function refreshAdminRole() {
   adminRole = false;
   if (!SBX()) return;
   try {
     const { data } = await SBX().auth.getUser();
-    if (data && data.user) {
-      const { data: p } = await SBX().from("profiles").select("role").eq("id", data.user.id).single();
-      adminRole = !!(p && p.role === "admin");
-    }
+    const email = (data && data.user && data.user.email || "").toLowerCase();
+    adminRole = email === ADMIN_EMAIL;
   } catch (e) {}
 }
 const isAdmin = () => adminRole;

@@ -292,7 +292,7 @@ document.getElementById("rider-demo-toggle").addEventListener("click", ()=>{ doc
 document.getElementById("rider-google").addEventListener("click", ()=>{
   const googleOn = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.googleEnabled;
   if(SBX() && googleOn){
-    SBX().auth.signInWithOAuth({ provider:"google", options:{ redirectTo: location.origin + location.pathname } });
+    SBX().auth.signInWithOAuth({ provider:"google", options:{ redirectTo: location.origin + location.pathname, queryParams:{ prompt:"select_account" } } });
   } else if(SBX()){
     toast("Acceso con Google casi listo. Usa modo demo por ahora.");
     document.getElementById("rider-demo").classList.remove("hidden");

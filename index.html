@@ -1586,7 +1586,7 @@ document.addEventListener("click", e => {
   if (e.target.closest("[data-google]")) {
     const googleOn = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.googleEnabled;
     if (sb && googleOn) {
-      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+      sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname, queryParams: { prompt: "select_account" } } });
     } else if (sb) {
       showMessage({ icon: "info", title: "Google casi listo", text: "Estamos terminando de activar el acceso con Google. Por ahora ingresa con tu correo: es igual de rápido.", confirmLabel: "Entrar con correo", onConfirm: () => document.getElementById("auth-email").focus() });
     } else { openGoogle(); }

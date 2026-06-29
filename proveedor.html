@@ -323,7 +323,7 @@ document.getElementById("prov-email-toggle").addEventListener("click", ()=>{ doc
 document.getElementById("prov-google").addEventListener("click", ()=>{
   const googleOn = window.ORIGEN_SB_CONFIG && window.ORIGEN_SB_CONFIG.googleEnabled;
   if(SBX() && googleOn){
-    SBX().auth.signInWithOAuth({ provider:"google", options:{ redirectTo: location.origin + location.pathname } });
+    SBX().auth.signInWithOAuth({ provider:"google", options:{ redirectTo: location.origin + location.pathname, queryParams:{ prompt:"select_account" } } });
   } else if(SBX()){
     toast("Acceso con Google casi listo. Usa el correo por ahora.");
     document.getElementById("prov-email-block").classList.remove("hidden");

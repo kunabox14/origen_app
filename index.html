@@ -550,6 +550,7 @@
               <option>09:00 – 11:00</option><option>11:00 – 13:00</option><option>13:00 – 15:00</option><option>15:00 – 17:00</option><option>17:00 – 19:00</option><option>19:00 – 21:00</option>
             </select></div>
         </div>
+        <p id="order-avail-hint" class="hidden flex items-center gap-1.5 text-label-sm text-on-surface-variant"><span class="material-symbols-outlined text-[16px] text-secondary">event_available</span><span id="order-avail-text"></span></p>
         <div id="freq-wrap" class="hidden">
           <label class="font-label-sm text-on-surface-variant">Frecuencia de la entrega recurrente</label>
           <select id="order-freq" class="mt-1 w-full h-12 px-3 rounded-lg border border-outline-variant bg-surface-container-lowest outline-none focus:border-secondary">
@@ -1721,7 +1722,7 @@ function renderTracking() {
 
 /* ============ Mapa de seguimiento (Google Maps) ============ */
 let mapsLoaded = false, mapsLoading = null, trackMap = null, riderMarker = null, destMarker = null;
-const WAREHOUSE = { lat: -16.5100, lng: -68.1050 }; // Almacén Origen, La Paz
+const WAREHOUSE = { lat: -16.5100, lng: -68.1050, address: "Almacén Origen, La Paz" }; // Almacén Origen, La Paz
 const ZONE_COORDS = { "Zona Sur": { lat: -16.5400, lng: -68.0800 }, "Calacoto": { lat: -16.5450, lng: -68.0790 }, "Miraflores": { lat: -16.4970, lng: -68.1180 }, "Centro": { lat: -16.5000, lng: -68.1330 }, "Sopocachi": { lat: -16.5120, lng: -68.1240 } };
 const destFor = o => (o.lat != null && o.lng != null) ? { lat: Number(o.lat), lng: Number(o.lng) } : (ZONE_COORDS[o.customer.zone] || { lat: -16.5000, lng: -68.1300 });
 function haversine(a, b) { const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180; const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); }
@@ -2391,11 +2392,11 @@ const productAvailable = id => { const i = productStockInfo(id); return !i.track
 const productMaxQty = id => { const i = productStockInfo(id); return i.tracked ? i.total : Infinity; };
 // Mejor sucursal para los items de una tienda: con stock completo y la más cercana al cliente.
 function selectBranchForStore(storeName, items, clientGeo) {
-  const warehouse = { name: "Almacén Origen", branchId: null, lat: WAREHOUSE.lat, lng: WAREHOUSE.lng, distanceKm: clientGeo ? haversine(WAREHOUSE, clientGeo) : null, full: true };
+  const warehouse = { name: "Almacén Origen", branchId: null, address: WAREHOUSE.address, lat: WAREHOUSE.lat, lng: WAREHOUSE.lng, distanceKm: clientGeo ? haversine(WAREHOUSE, clientGeo) : null, full: true };
   if (storeName === "Origen") return warehouse;
   const meta = providerMeta(storeName); if (!meta) return warehouse;
   const branches = CLOUD_BRANCHES.filter(b => b.provider_id === meta.id && b.lat != null);
-  if (!branches.length) return Object.assign({}, warehouse, { name: meta.business || meta.name, full: false });
+  if (!branches.length) return Object.assign({}, warehouse, { name: meta.business || meta.name, address: meta.address || "", full: false });
   const scored = branches.map(b => ({
     branch: b,
     full: items.every(it => stockAt(b.id, it.id) >= it.qty),
@@ -2403,7 +2404,7 @@ function selectBranchForStore(storeName, items, clientGeo) {
   }));
   scored.sort((a, b) => (b.full - a.full) || (a.dist - b.dist)); // primero las que tienen el pedido completo; luego la más cercana
   const best = scored[0];
-  return { name: best.branch.name, branchId: best.branch.id, lat: Number(best.branch.lat), lng: Number(best.branch.lng), distanceKm: clientGeo ? best.dist : null, full: best.full };
+  return { name: best.branch.name, branchId: best.branch.id, address: best.branch.address || "", lat: Number(best.branch.lat), lng: Number(best.branch.lng), distanceKm: clientGeo ? best.dist : null, full: best.full };
 }
 // Pickup del carrito completo: agrupa por tienda, elige sucursal por tienda; distancia = el tramo más largo.
 function selectPickup(clientGeo) {
@@ -2428,6 +2429,7 @@ async function decrementStock(picks) {
 }
 const clientGeoNow = () => (typeof orderType !== "undefined" && orderType === "regalo") ? (typeof giftGeo !== "undefined" ? giftGeo : null) : JSON.parse(localStorage.getItem("origen_geo") || "null");
 const STORE_CATEGORIES = ["Todos", "Superfoods", "Despensa", "Snacks", "Bebidas", "Carnes vegetales", "Granos"];
+const MIN_STORE_PRODUCTS = 6; // una tienda solo es visible con 6+ productos disponibles (Origen exenta)
 // Agrupa los productos activos por tienda; los productos sin proveedor → tienda oficial "Origen".
 function storeList() {
   // Productos activos y CON stock agrupados por tienda
@@ -2451,7 +2453,10 @@ function storeList() {
       description: s.isOrigen ? "Selección oficial Origen" : (meta && meta.description) || "Productos orgánicos seleccionados",
       featured, isNew, isOrigen: s.isOrigen
     };
-  }).sort((a, b) => (b.featured - a.featured) || (b.count - a.count));
+  })
+  // Visible solo con 6+ productos disponibles; la tienda oficial "Origen" queda exenta.
+  .filter(s => s.isOrigen || s.count >= MIN_STORE_PRODUCTS)
+  .sort((a, b) => (b.featured - a.featured) || (b.count - a.count));
 }
 /* Tiendas favoritas (acceso rápido) */
 const getFavStores = () => JSON.parse(localStorage.getItem("origen_fav_stores") || "[]");
@@ -2551,7 +2556,11 @@ function renderCatalog() {
   // Dirección: toma la sucursal más próxima al cliente o la primera disponible
   const addrBanner = document.getElementById("store-addr-banner");
   if (addrBanner) {
-    const branch = meta ? (CLOUD_BRANCHES || []).find(b => b.provider_id === meta.id && b.address) : null;
+    // Sucursal de recojo: la más cercana al cliente entre las de la tienda (con dirección).
+    const geo = clientGeoNow();
+    const branchesWithAddr = meta ? (CLOUD_BRANCHES || []).filter(b => b.provider_id === meta.id && b.address) : [];
+    let branch = branchesWithAddr[0] || null;
+    if (geo && branchesWithAddr.length > 1) branch = branchesWithAddr.slice().sort((a, b) => haversine({ lat: Number(a.lat), lng: Number(a.lng) }, geo) - haversine({ lat: Number(b.lat), lng: Number(b.lng) }, geo))[0];
     const addr = branch ? (branch.zone ? branch.zone + " · " + branch.address : branch.address) : null;
     if (addr) { document.getElementById("store-addr-text").textContent = addr; addrBanner.classList.remove("hidden"); addrBanner.classList.add("flex"); }
     else { addrBanner.classList.add("hidden"); addrBanner.classList.remove("flex"); }
@@ -2774,36 +2783,84 @@ function renderOrderDetails() {
   const gm = document.getElementById("gift-message"); if (gm && !gm.value && s.giftmsg) gm.value = s.giftmsg;
 }
 
-// Horarios de entrega disponibles (inicio en horas) — deben coincidir con el <select> #order-window.
-const SLOT_STARTS = [9, 11, 13, 15, 17, 19];
+// Las 6 franjas horarias estándar (deben coincidir con el SQL de delivery_slots por tienda).
+const ALL_SLOTS = ["09:00 – 11:00", "11:00 – 13:00", "13:00 – 15:00", "15:00 – 17:00", "17:00 – 19:00", "19:00 – 21:00"];
 const ymdLocal = dt => { const z = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000); return z.toISOString().slice(0, 10); };
-// Acota el selector de fecha: nunca fechas pasadas, salta al día siguiente si ya pasó el último
-// horario, y limita a 30 días. Sin backend de disponibilidad, "disponibilidad" = horarios vigentes.
+// Disponibilidad real de la tienda del carrito: días abiertos (0=Dom..6=Sáb), franjas ofrecidas y
+// fechas bloqueadas (feriados). Si faltan datos (sin SQL/offline) → abierto todos los días, 6 franjas.
+function storeAvailability(storeName) {
+  const meta = (storeName && storeName !== "Origen") ? providerMeta(storeName) : null;
+  const openDays = (meta && Array.isArray(meta.open_days) && meta.open_days.length) ? meta.open_days.map(Number) : [0, 1, 2, 3, 4, 5, 6];
+  const slots = (meta && Array.isArray(meta.delivery_slots) && meta.delivery_slots.length) ? meta.delivery_slots.slice() : ALL_SLOTS.slice();
+  const blocked = (meta && Array.isArray(meta.blocked_dates)) ? meta.blocked_dates.map(d => String(d).slice(0, 10)) : [];
+  return { openDays, slots, blocked };
+}
+// ¿La tienda entrega ese día? (día de la semana abierto y fecha no bloqueada)
+function dayAvailable(dateStr, avail) {
+  if (!dateStr) return false;
+  const dow = new Date(dateStr + "T12:00:00").getDay();
+  if (avail.openDays.indexOf(dow) === -1) return false;
+  if (avail.blocked.indexOf(dateStr) !== -1) return false;
+  return true;
+}
+// Primer día disponible desde un punto de partida (avanza saltando días cerrados/feriados).
+function nextAvailableDay(fromDate, avail) {
+  const c = new Date(fromDate); let guard = 0;
+  while (!dayAvailable(ymdLocal(c), avail) && guard < 90) { c.setDate(c.getDate() + 1); guard++; }
+  return c;
+}
+// Acota el selector de fecha según la disponibilidad de la tienda: sin fechas pasadas, salta el
+// mismo día si ya no quedan franjas, evita días cerrados/feriados y limita el horizonte a 30 días.
 function applyDateBounds() {
   const date = document.getElementById("order-date"); if (!date) return;
+  const avail = storeAvailability(cartStoreName());
   const now = new Date();
-  const minDate = new Date(now);
-  if (now.getHours() >= SLOT_STARTS[SLOT_STARTS.length - 1]) minDate.setDate(minDate.getDate() + 1);
-  const minStr = ymdLocal(minDate);
+  // Si hoy ya no quedan franjas vigentes (todas pasaron), el primer candidato es mañana.
+  const slotsHoy = avail.slots.filter(s => parseInt(s.slice(0, 2), 10) > now.getHours() + 1);
+  const start = new Date(now); if (!slotsHoy.length) start.setDate(start.getDate() + 1);
+  const minStr = ymdLocal(nextAvailableDay(start, avail));
   const maxDate = new Date(now); maxDate.setDate(maxDate.getDate() + 30);
   date.min = minStr; date.max = ymdLocal(maxDate);
-  if (!date.value || date.value < minStr) date.value = minStr;
-  date.onchange = refreshWindowOptions;
-  refreshWindowOptions();
+  if (!date.value || date.value < minStr || !dayAvailable(date.value, avail)) date.value = minStr;
+  date.onchange = onOrderDateChange;
+  rebuildWindowOptions(avail);
+  // Pista de disponibilidad de la tienda (días que entrega).
+  const hint = document.getElementById("order-avail-hint"), hintTxt = document.getElementById("order-avail-text");
+  if (hint && hintTxt) {
+    const DOW = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+    const days = avail.openDays.length >= 7 ? "todos los días" : avail.openDays.slice().sort((a, b) => a - b).map(d => DOW[d]).join(", ");
+    hintTxt.textContent = "Esta tienda entrega: " + days + (avail.blocked.length ? " · algunas fechas no disponibles" : "");
+    hint.classList.remove("hidden"); hint.classList.add("flex");
+  }
 }
-// En el día de hoy bloquea los horarios cuyo inicio ya pasó (con 1 h de margen de preparación).
-function refreshWindowOptions() {
+// Al cambiar la fecha: si la tienda no entrega ese día, salta al siguiente disponible y avisa.
+function onOrderDateChange() {
+  const date = document.getElementById("order-date"); if (!date) return;
+  const avail = storeAvailability(cartStoreName());
+  if (date.value && !dayAvailable(date.value, avail)) {
+    const next = nextAvailableDay(new Date(date.value + "T12:00:00"), avail);
+    date.value = ymdLocal(next);
+    showToast("La tienda no entrega ese día · movido al siguiente disponible", "error");
+  }
+  rebuildWindowOptions(avail);
+}
+// Reconstruye el selector de horario con las franjas que ofrece la tienda; en el día de hoy
+// deshabilita las franjas cuyo inicio ya pasó (con 1 h de margen de preparación).
+function rebuildWindowOptions(avail) {
   const date = document.getElementById("order-date"), sel = document.getElementById("order-window");
-  if (!date || !sel) return;
-  const now = new Date(), isToday = date.value === ymdLocal(now);
+  if (!sel) return;
+  avail = avail || storeAvailability(cartStoreName());
+  const slots = (avail.slots && avail.slots.length) ? avail.slots : ALL_SLOTS.slice();
+  const now = new Date(), isToday = date && date.value === ymdLocal(now), prev = sel.value;
+  sel.innerHTML = slots.map(s => `<option>${s}</option>`).join("");
   let firstEnabled = null;
   Array.from(sel.options).forEach(o => {
-    const start = parseInt(o.value.slice(0, 2), 10);
-    const past = isToday && start <= now.getHours() + 1;
+    const past = isToday && parseInt(o.value.slice(0, 2), 10) <= now.getHours() + 1;
     o.disabled = past;
     if (!past && firstEnabled === null) firstEnabled = o.value;
   });
-  if (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].disabled && firstEnabled) sel.value = firstEnabled;
+  if (Array.from(sel.options).some(o => o.value === prev && !o.disabled)) sel.value = prev;
+  else if (firstEnabled) sel.value = firstEnabled;
 }
 
 /* ============ Router ============ */
@@ -3166,6 +3223,9 @@ document.getElementById("basket-confirm").addEventListener("click", () => {
   }
   if (!date) return fail("Selecciona la fecha de entrega.");
   if (date < ymdLocal(new Date())) return fail("La fecha de entrega no puede ser pasada.");
+  const _avail = storeAvailability(cartStoreName());
+  if (!dayAvailable(date, _avail)) return fail("La tienda no realiza entregas en la fecha elegida.");
+  if (_avail.slots.indexOf(win) === -1) return fail("Elige un horario de entrega disponible para la tienda.");
   if (orderType === "programada" && !subActive()) return fail("Solo los suscriptores pueden programar entregas recurrentes.");
   err.classList.add("hidden");
   orderDetails = {
@@ -3239,14 +3299,16 @@ function createOrder(method) {
   const geo = d.type === "regalo" ? giftGeo : JSON.parse(localStorage.getItem("origen_geo") || "null");
   // #7/#9: sucursal de origen elegida (la más cercana con stock completo)
   const pickup = t.pickup && t.pickup.primary ? t.pickup.primary : null;
+  const storeName = cartStoreName() || "Origen";
+  const storeMeta = storeName !== "Origen" ? providerMeta(storeName) : null;
   const order = {
     id, date: new Date().toISOString(), method,
     items: cart.map(l => ({ id: l.id, name: findProduct(l.id).name, qty: l.qty, price: findProduct(l.id).price })),
     total, subtotal: t.sub, discount: t.disc, serviceFee: t.service, deliveryFee: t.delivery, deliveryKm: t.km,
     status: "Nuevo", assignedTo: null, type: d.type || "directa",
-    store: cartStoreName() || "Origen",
+    store: storeName, providerId: storeMeta ? storeMeta.id : null,
     references: d.references || "",
-    pickup: pickup ? { name: pickup.name, lat: pickup.lat, lng: pickup.lng } : null,
+    pickup: pickup ? { name: pickup.name, address: pickup.address || "", lat: pickup.lat, lng: pickup.lng } : null,
     lat: geo ? geo.lat : null, lng: geo ? geo.lng : null,
     gift: d.type === "regalo" ? { name: d.giftName || "", address: d.giftAddress || "", message: d.giftMessage || "" } : null,
     freq: d.type === "programada" ? d.freq : null,
@@ -3274,7 +3336,8 @@ const mapDbOrder = (r, items) => ({
   riderLng: r.rider_lng != null ? Number(r.rider_lng) : null,
   type: r.order_type || "directa",
   references: r.delivery_refs || "",
-  pickup: r.pickup_branch ? { name: r.pickup_branch, lat: r.pickup_lat != null ? Number(r.pickup_lat) : null, lng: r.pickup_lng != null ? Number(r.pickup_lng) : null } : null,
+  pickup: r.pickup_branch ? { name: r.pickup_branch, address: r.pickup_address || "", lat: r.pickup_lat != null ? Number(r.pickup_lat) : null, lng: r.pickup_lng != null ? Number(r.pickup_lng) : null } : null,
+  store: r.store_name || null, providerId: r.provider_id || null,
   lat: r.dest_lat != null ? Number(r.dest_lat) : null,
   lng: r.dest_lng != null ? Number(r.dest_lng) : null,
   gift: (r.gift_message || r.gift_name) ? { name: r.gift_name || "", address: r.address || "", message: r.gift_message || "" } : null,
@@ -3286,7 +3349,7 @@ async function cloudCreateOrder(o) {
   try {
     let userId = null; try { const { data } = await SBX().auth.getUser(); userId = data && data.user ? data.user.id : null; } catch (e) {}
     const row = { code: o.id, user_id: userId, status: o.status, method: o.method, subtotal: o.subtotal, discount: o.discount, service_fee: o.serviceFee, delivery_fee: o.deliveryFee, delivery_km: o.deliveryKm, total: o.total, delivery_date: o.deliveryDate, "window": o.window, address: o.customer.address, zone: o.customer.zone, customer_name: o.customer.name, customer_email: o.customer.email };
-    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null, gift_name: o.gift ? o.gift.name : null, delivery_refs: o.references || null, dest_lat: o.lat, dest_lng: o.lng, pickup_branch: o.pickup ? o.pickup.name : null, pickup_lat: o.pickup ? o.pickup.lat : null, pickup_lng: o.pickup ? o.pickup.lng : null });
+    const full = Object.assign({}, row, { order_type: o.type, gift_message: o.gift ? o.gift.message : null, gift_name: o.gift ? o.gift.name : null, delivery_refs: o.references || null, dest_lat: o.lat, dest_lng: o.lng, pickup_branch: o.pickup ? o.pickup.name : null, pickup_address: o.pickup ? o.pickup.address : null, pickup_lat: o.pickup ? o.pickup.lat : null, pickup_lng: o.pickup ? o.pickup.lng : null, store_name: o.store || null, provider_id: o.providerId || null });
     let res = await SBX().from("orders").insert(full).select().single();
     if (res.error) { console.warn("[Origen] insert full falló:", res.error.message, "→ reintentando sin columnas extra"); res = await SBX().from("orders").insert(row).select().single(); }
     const { data, error } = res;

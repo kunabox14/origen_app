@@ -160,6 +160,21 @@
         </div>
         <button id="prov-hours-save" class="text-secondary font-semibold text-sm whitespace-nowrap active:scale-95 ml-2">Guardar</button>
       </div>
+      <!-- Disponibilidad de entrega: días abiertos, franjas ofrecidas y fechas bloqueadas -->
+      <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5">
+        <div class="flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-secondary">event_available</span><p class="font-semibold text-primary text-sm">Disponibilidad de entrega</p></div>
+        <p class="text-xs text-on-surface-variant mb-2">Días que entregas</p>
+        <div id="avail-days" class="flex flex-wrap gap-2 mb-4"></div>
+        <p class="text-xs text-on-surface-variant mb-2">Franjas horarias que ofreces</p>
+        <div id="avail-slots" class="flex flex-wrap gap-2 mb-4"></div>
+        <p class="text-xs text-on-surface-variant mb-2">Fechas bloqueadas (feriados, vacaciones)</p>
+        <div class="flex gap-2 mb-2">
+          <input id="avail-block-date" type="date" class="flex-1 h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary text-sm">
+          <button id="avail-block-add" type="button" class="bg-secondary-container text-on-secondary-container font-semibold px-4 rounded-lg text-sm active:scale-95">Agregar</button>
+        </div>
+        <div id="avail-blocked" class="flex flex-wrap gap-2 mb-4"></div>
+        <button id="avail-save" type="button" class="w-full bg-leaf-green text-white font-semibold py-3 rounded-xl active:scale-95 transition-transform text-sm">Guardar disponibilidad</button>
+      </div>
       <!-- Perfil de la tienda: logo + descripción -->
       <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4 mb-5">
         <div class="flex items-center gap-2 mb-4">
@@ -200,6 +215,36 @@
       </div>
       <div id="prov-products" class="space-y-3"></div>
       <div id="prov-store-preview" class="hidden"></div>
+
+      <!-- Reporte de ventas: todas las ventas a través de Origen, con filtros y descarga PDF -->
+      <div class="mt-10 mb-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-headline text-2xl text-primary">Mis ventas</h2>
+          <button id="sales-pdf" class="bg-secondary text-on-secondary font-semibold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform"><span class="material-symbols-outlined text-[18px]">download</span>PDF</button>
+        </div>
+        <div class="flex bg-surface-container-high rounded-full p-1 mb-3">
+          <button data-salesf="week" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Esta semana</button>
+          <button data-salesf="month" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Este mes</button>
+          <button data-salesf="all" class="sales-tab flex-1 py-2 rounded-full text-sm font-semibold transition-colors">Global</button>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Pedidos</p><p id="sales-count" class="text-2xl font-bold text-secondary mt-1">0</p></div>
+          <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-4"><p class="text-xs text-on-surface-variant">Ingresos por productos</p><p id="sales-total" class="text-2xl font-bold text-secondary mt-1">Bs. 0</p></div>
+        </div>
+        <div class="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-3 overflow-x-auto">
+          <table class="w-full text-[13px] border-collapse">
+            <thead><tr class="text-left text-on-surface-variant border-b border-outline-variant/40">
+              <th class="py-2 pr-2 font-semibold whitespace-nowrap">Fecha</th>
+              <th class="py-2 pr-2 font-semibold whitespace-nowrap">Pedido</th>
+              <th class="py-2 pr-2 font-semibold">Cliente</th>
+              <th class="py-2 pr-2 font-semibold text-center">Prod.</th>
+              <th class="py-2 font-semibold text-right whitespace-nowrap">Monto</th>
+            </tr></thead>
+            <tbody id="sales-rows"></tbody>
+          </table>
+          <p id="sales-empty" class="hidden text-center text-on-surface-variant py-8 text-sm">Aún no hay ventas en este período.</p>
+        </div>
+      </div>
     </main>
   </section>
 
@@ -436,9 +481,133 @@ async function logout(){ localStorage.removeItem("origen_provider"); provider=nu
 // DASHBOARD
 async function enterApp(){
   document.getElementById("prov-bizname").textContent = provider.business||"";
-  renderMyLoc(); renderMyHours(); renderMyProfile();
-  show("prov-app"); await loadProducts(); await loadBranches(); loadStockAlerts(); setupRealtime();
+  renderMyLoc(); renderMyHours(); renderMyProfile(); renderAvailability();
+  show("prov-app"); await loadProducts(); await loadBranches(); loadStockAlerts(); setupRealtime(); loadSales();
 }
+/* ============ Disponibilidad de entrega (días, franjas, fechas bloqueadas) ============ */
+const ALL_SLOTS = ["09:00 – 11:00","11:00 – 13:00","13:00 – 15:00","15:00 – 17:00","17:00 – 19:00","19:00 – 21:00"];
+const DOW_NAMES = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+let availDays=[], availSlots=[], availBlocked=[];
+function renderAvailability(){
+  // Carga desde el proveedor (o defaults: Lun–Sáb, 6 franjas, sin bloqueos).
+  availDays = (provider && Array.isArray(provider.open_days) && provider.open_days.length) ? provider.open_days.map(Number) : [1,2,3,4,5,6];
+  availSlots = (provider && Array.isArray(provider.delivery_slots) && provider.delivery_slots.length) ? provider.delivery_slots.slice() : ALL_SLOTS.slice();
+  availBlocked = (provider && Array.isArray(provider.blocked_dates)) ? provider.blocked_dates.map(d=>String(d).slice(0,10)) : [];
+  drawAvailDays(); drawAvailSlots(); drawAvailBlocked();
+}
+function chip(on,label,attr){ return `<button type="button" ${attr} class="px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${on?"bg-leaf-green text-white":"bg-surface-container-high text-on-surface-variant"}">${label}</button>`; }
+function drawAvailDays(){ const el=document.getElementById("avail-days"); if(!el) return; el.innerHTML=[1,2,3,4,5,6,0].map(d=>chip(availDays.indexOf(d)>-1,DOW_NAMES[d],`data-availday="${d}"`)).join(""); }
+function drawAvailSlots(){ const el=document.getElementById("avail-slots"); if(!el) return; el.innerHTML=ALL_SLOTS.map(s=>chip(availSlots.indexOf(s)>-1,s,`data-availslot="${encodeURIComponent(s)}"`)).join(""); }
+function drawAvailBlocked(){
+  const el=document.getElementById("avail-blocked"); if(!el) return;
+  if(!availBlocked.length){ el.innerHTML=`<span class="text-xs text-on-surface-variant/70">Sin fechas bloqueadas.</span>`; return; }
+  el.innerHTML=availBlocked.slice().sort().map(d=>`<span class="inline-flex items-center gap-1 bg-error/10 text-error rounded-full pl-3 pr-1.5 py-1 text-sm font-semibold">${d}<button type="button" data-availunblock="${d}" class="w-5 h-5 rounded-full hover:bg-error/20 flex items-center justify-center"><span class="material-symbols-outlined text-[16px]">close</span></button></span>`).join("");
+}
+async function saveAvailability(){
+  if(!provider||!SBX()){ toast("Sin conexión"); return; }
+  if(!availDays.length){ toast("Selecciona al menos un día"); return; }
+  if(!availSlots.length){ toast("Selecciona al menos una franja"); return; }
+  const payload={ open_days:availDays.slice().sort((a,b)=>a-b), delivery_slots:availSlots.slice(), blocked_dates:availBlocked.slice() };
+  try{
+    const { error } = await SBX().from("providers").update(payload).eq("id",provider.id);
+    if(error){ console.warn("[Origen·Proveedor] saveAvailability:",error.message); toast("Falta correr fase8.sql"); return; }
+    Object.assign(provider,payload); localStorage.setItem("origen_provider",JSON.stringify(provider));
+    toast("Disponibilidad actualizada");
+  }catch(_){ toast("No se pudo guardar"); }
+}
+
+/* ============ Reporte de ventas (todas las ventas a través de Origen) ============ */
+let SALES=[], salesFilter="week";
+const SALES_LABEL={ week:"Esta semana", month:"Este mes", all:"Global" };
+function rangeStart(f){ const n=new Date(); if(f==="all") return null; if(f==="month") return new Date(n.getFullYear(),n.getMonth(),1); const dow=(n.getDay()+6)%7; const m=new Date(n.getFullYear(),n.getMonth(),n.getDate()-dow); m.setHours(0,0,0,0); return m; }
+async function loadSales(){
+  SALES=[];
+  const ids=(PROV_PRODUCTS||[]).map(p=>p.id).filter(Boolean);
+  if(!ids.length||!SBX()){ renderSales(); return; }
+  try{
+    const it=await SBX().from("order_items").select("order_id,name,qty,price,product_id").in("product_id",ids);
+    const items=it.data||[]; if(!items.length){ renderSales(); return; }
+    const orderIds=[...new Set(items.map(i=>i.order_id))].filter(Boolean);
+    const or=await SBX().from("orders").select("*").in("id",orderIds).order("created_at",{ascending:false});
+    const orders=(or.data||[]).filter(o=>o.status!=="Cancelado");
+    SALES=orders.map(o=>{
+      const mine=items.filter(i=>i.order_id===o.id);
+      const qty=mine.reduce((s,i)=>s+(i.qty||0),0);
+      const amount=mine.reduce((s,i)=>s+(Number(i.price||0)*(i.qty||0)),0);
+      const isGift=o.order_type==="regalo";
+      const clientPlain=isGift?("Regalo · "+(o.gift_name||"—")):(o.customer_name||"Cliente");
+      const client=isGift?("🎁 "+clientPlain):clientPlain;
+      return { at:o.created_at, code:o.code||("#"+String(o.id).slice(0,8)), client, clientPlain, qty, amount, status:o.status||"", zone:o.zone||"", address:o.address||"", names:mine.map(i=>i.name).filter(Boolean).join(", ") };
+    });
+  }catch(e){ console.warn("[Origen·Proveedor] loadSales:",e); }
+  renderSales();
+}
+function filteredSales(){ const start=rangeStart(salesFilter); return SALES.filter(s=>!start || new Date(s.at)>=start); }
+function fmtDate(at){ try{ return new Date(at).toLocaleDateString("es-BO",{day:"2-digit",month:"short",year:"2-digit"}); }catch(_){ return "—"; } }
+function renderSales(){
+  document.querySelectorAll(".sales-tab").forEach(b=>{ const on=b.dataset.salesf===salesFilter; b.classList.toggle("bg-secondary",on); b.classList.toggle("text-on-secondary",on); b.classList.toggle("text-on-surface-variant",!on); });
+  const rows=filteredSales();
+  const tbody=document.getElementById("sales-rows"), empty=document.getElementById("sales-empty");
+  if(tbody) tbody.innerHTML=rows.map(r=>`<tr class="border-b border-outline-variant/20 align-top">
+    <td class="py-2 pr-2 whitespace-nowrap text-on-surface-variant">${fmtDate(r.at)}</td>
+    <td class="py-2 pr-2 whitespace-nowrap font-semibold text-primary">${r.code}</td>
+    <td class="py-2 pr-2 text-on-surface leading-snug">${r.client}${r.zone?`<br><span class="text-xs text-on-surface-variant">${r.zone}</span>`:""}</td>
+    <td class="py-2 pr-2 text-center text-on-surface">${r.qty}</td>
+    <td class="py-2 text-right font-semibold text-secondary whitespace-nowrap">${bs(r.amount)}</td>
+  </tr>`).join("");
+  if(empty) empty.classList.toggle("hidden",rows.length>0);
+  const total=rows.reduce((s,r)=>s+r.amount,0);
+  const c=document.getElementById("sales-count"), t=document.getElementById("sales-total");
+  if(c) c.textContent=rows.length; if(t) t.textContent=bs(total);
+}
+let _jspdf=null;
+function loadJsPDF(){
+  if(window.jspdf&&window.jspdf.jsPDF) return Promise.resolve(true);
+  if(_jspdf) return _jspdf;
+  _jspdf=new Promise(res=>{ const s=document.createElement("script"); s.src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"; s.onload=()=>res(true); s.onerror=()=>res(false); document.head.appendChild(s); });
+  return _jspdf;
+}
+async function downloadSalesPDF(){
+  const ok=await loadJsPDF();
+  if(!ok||!(window.jspdf&&window.jspdf.jsPDF)){ toast("No se pudo cargar el generador de PDF"); return; }
+  const rows=filteredSales();
+  const { jsPDF }=window.jspdf; const doc=new jsPDF({unit:"pt",format:"a4"});
+  const W=doc.internal.pageSize.getWidth();
+  let y=46;
+  doc.setFont("helvetica","bold"); doc.setFontSize(18); doc.setTextColor(10,19,13);
+  doc.text("Origen · Reporte de ventas",40,y); y+=20;
+  doc.setFont("helvetica","normal"); doc.setFontSize(11); doc.setTextColor(90,90,90);
+  doc.text(((provider&&provider.business)||"")+"  ·  "+SALES_LABEL[salesFilter]+"  ·  "+new Date().toLocaleDateString("es-BO"),40,y); y+=24;
+  doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(10,19,13);
+  doc.text("Fecha",40,y); doc.text("Pedido",120,y); doc.text("Cliente / destino",195,y); doc.text("Prod.",400,y); doc.text("Monto (Bs)",460,y);
+  y+=6; doc.setDrawColor(150); doc.line(40,y,W-40,y); y+=16;
+  doc.setFont("helvetica","normal"); let total=0,qtyTot=0;
+  rows.forEach(r=>{
+    if(y>790){ doc.addPage(); y=46; }
+    doc.text(fmtDate(r.at),40,y);
+    doc.text(String(r.code),120,y);
+    doc.text(doc.splitTextToSize(r.clientPlain||"",195),195,y);
+    doc.text(String(r.qty),405,y,{align:"left"});
+    doc.text(Number(r.amount).toFixed(2),W-40,y,{align:"right"});
+    total+=r.amount; qtyTot+=r.qty; y+=18;
+  });
+  if(!rows.length){ doc.setTextColor(120,120,120); doc.text("Sin ventas en este período.",40,y); y+=18; }
+  y+=4; doc.setDrawColor(150); doc.line(40,y,W-40,y); y+=18;
+  doc.setFont("helvetica","bold"); doc.setTextColor(10,19,13);
+  doc.text(rows.length+" pedidos · "+qtyTot+" productos",40,y);
+  doc.text("Bs. "+total.toFixed(2),W-40,y,{align:"right"});
+  doc.save("origen-ventas-"+salesFilter+".pdf");
+}
+// Delegación de clicks para disponibilidad y ventas
+document.addEventListener("click", e=>{
+  const dy=e.target.closest("[data-availday]"); if(dy){ const d=Number(dy.dataset.availday); const i=availDays.indexOf(d); if(i>-1) availDays.splice(i,1); else availDays.push(d); drawAvailDays(); return; }
+  const sl=e.target.closest("[data-availslot]"); if(sl){ const s=decodeURIComponent(sl.dataset.availslot); const i=availSlots.indexOf(s); if(i>-1) availSlots.splice(i,1); else availSlots.push(s); drawAvailSlots(); return; }
+  const ub=e.target.closest("[data-availunblock]"); if(ub){ const d=ub.dataset.availunblock; availBlocked=availBlocked.filter(x=>x!==d); drawAvailBlocked(); return; }
+  if(e.target.closest("#avail-block-add")){ const inp=document.getElementById("avail-block-date"); const v=inp&&inp.value; if(v && availBlocked.indexOf(v)===-1){ availBlocked.push(v); drawAvailBlocked(); } if(inp) inp.value=""; return; }
+  if(e.target.closest("#avail-save")){ saveAvailability(); return; }
+  const sf=e.target.closest("[data-salesf]"); if(sf){ salesFilter=sf.dataset.salesf; renderSales(); return; }
+  if(e.target.closest("#sales-pdf")){ downloadSalesPDF(); return; }
+});
 function renderMyLoc(){ const el=document.getElementById("prov-myloc-text"); if(el) el.textContent=(provider&&provider.address)||"Sin definir"; }
 document.getElementById("prov-myloc-edit").addEventListener("click", ()=>openMap(provider&&provider.lat?{lat:Number(provider.lat),lng:Number(provider.lng)}:null, async (addr,pos)=>{
   try{ await SBX().from("providers").update({ lat:pos.lat, lng:pos.lng, address:addr }).eq("id",provider.id); provider.lat=pos.lat; provider.lng=pos.lng; provider.address=addr; localStorage.setItem("origen_provider",JSON.stringify(provider)); renderMyLoc(); toast("Ubicación actualizada"); }catch(_){ toast("No se pudo actualizar"); }
@@ -751,8 +920,8 @@ function setupRealtime(){
   SBX().channel("prov-branches").on("postgres_changes",{event:"*",schema:"public",table:"branches"},loadBranches).subscribe();
   SBX().channel("prov-inventory").on("postgres_changes",{event:"*",schema:"public",table:"branch_inventory"},loadStockAlerts).subscribe();
   // Update 2/3: pedidos entrantes en tiempo real → refresca el banner del proveedor
-  SBX().channel("prov-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, ()=>loadProviderOrders()).subscribe();
-  SBX().channel("prov-order-items").on("postgres_changes",{event:"*",schema:"public",table:"order_items"}, ()=>loadProviderOrders()).subscribe();
+  SBX().channel("prov-orders").on("postgres_changes",{event:"*",schema:"public",table:"orders"}, ()=>{ loadProviderOrders(); loadSales(); }).subscribe();
+  SBX().channel("prov-order-items").on("postgres_changes",{event:"*",schema:"public",table:"order_items"}, ()=>{ loadProviderOrders(); loadSales(); }).subscribe();
   SBX().channel("prov-self").on("postgres_changes",{event:"*",schema:"public",table:"providers"}, async ()=>{ await refreshProvider(); if(provider.status!=="aprobado") route(); }).subscribe();
 }
 

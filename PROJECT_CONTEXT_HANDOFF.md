@@ -294,6 +294,14 @@ Orden a correr en Supabase → SQL Editor (idempotentes):
 `fase2b.sql` → `fase3.sql` → `fase4.sql` → `fase5.sql` → `fase6.sql` (business_hours) →
 `fase7.sql` (products.categories[]).
 
-✅ **TODAS las migraciones (hasta `fase7.sql`) ya fueron corridas por el usuario en Supabase**
-(confirmado). No hay SQL pendiente de ejecutar. Cualquier feature nuevo que requiera backend
-debe crear un `faseN.sql` nuevo y pedirle al usuario que lo corra.
+✅ Migraciones corridas hasta `fase7.sql` (confirmado).
+
+⚠️ **`fase8.sql` es NUEVO y debe correrse** (idempotente). Aporta: disponibilidad real por tienda
+(`providers.open_days[]`, `providers.delivery_slots[]`, `providers.blocked_dates[]`) y datos de
+venta en el pedido (`orders.store_name`, `orders.provider_id`, `orders.pickup_address`) para el
+reporte de ventas del proveedor y la dirección de recojo. Sin correrlo, la app NO se rompe (los
+inserts hacen fallback y la disponibilidad cae a sus defaults), pero la disponibilidad por tienda
+y el reporte de ventas no persisten/leen esas columnas.
+
+Cualquier feature nuevo que requiera backend debe crear un `faseN.sql` nuevo y pedirle al usuario
+que lo corra.

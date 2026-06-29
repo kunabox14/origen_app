@@ -657,12 +657,34 @@ function renderMyProfile(){
   if(logo) logo.src=(provider&&provider.logo_url)||"assets/origen-logo.svg";
   if(desc) desc.value=(provider&&provider.description)||"";
 }
+// Procesa una imagen elegida (galería/cámara) y devuelve un data-URL para previsualizar y subir.
+// Redimensiona a un cuadrado vía canvas; si algo falla en el móvil (formato/tamaño/memoria/HEIC),
+// cae a la imagen original para que SIEMPRE se vea y se pueda guardar.
+function processImageFile(file, size, bg, cb){
+  if(!file) return;
+  const showRaw=()=>{ const fr=new FileReader(); fr.onload=ev=>cb(ev.target.result); fr.onerror=()=>toast("No se pudo leer la imagen"); fr.readAsDataURL(file); };
+  let url; try{ url=URL.createObjectURL(file); }catch(_){ showRaw(); return; }
+  const img=new Image();
+  img.onload=()=>{
+    try{
+      const S=size, c=document.createElement("canvas"); c.width=c.height=S; const x=c.getContext("2d");
+      x.fillStyle=bg; x.fillRect(0,0,S,S);
+      const iw=img.naturalWidth||img.width, ih=img.naturalHeight||img.height;
+      if(!iw||!ih) throw new Error("sin dimensiones");
+      const sc=Math.min(S/iw,S/ih), w=iw*sc, h=ih*sc;
+      x.drawImage(img,(S-w)/2,(S-h)/2,w,h);
+      cb(c.toDataURL("image/jpeg",0.85));
+    }catch(_){ showRaw(); }
+    finally{ try{ URL.revokeObjectURL(url); }catch(_){} }
+  };
+  img.onerror=()=>{ try{ URL.revokeObjectURL(url); }catch(_){} showRaw(); };
+  img.src=url;
+}
 let pendingLogoData=null;
 document.getElementById("prov-logo-img").addEventListener("change", e=>{
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{ const img=new Image(); img.onload=()=>{ const S=400,c=document.createElement("canvas"); c.width=c.height=S; const x=c.getContext("2d"); x.fillStyle="#FFFFFF"; x.fillRect(0,0,S,S); const sc=Math.min(S/img.width,S/img.height),w=img.width*sc,h=img.height*sc; x.drawImage(img,(S-w)/2,(S-h)/2,w,h); pendingLogoData=c.toDataURL("image/jpeg",0.82); document.getElementById("prov-logo-preview").src=pendingLogoData; }; img.src=ev.target.result; };
-  reader.readAsDataURL(file);
+  const file=e.target.files && e.target.files[0]; if(!file) return;
+  processImageFile(file, 400, "#FFFFFF", d=>{ pendingLogoData=d; document.getElementById("prov-logo-preview").src=d; });
+  e.target.value=""; // permite volver a elegir la misma imagen
 });
 document.getElementById("prov-profile-save")?.addEventListener("click", async ()=>{
   const desc=(document.getElementById("prov-desc-input").value||"").trim();
@@ -1029,10 +1051,9 @@ document.getElementById("prov-add").addEventListener("click", ()=>openProdModal(
 document.getElementById("pv-close").addEventListener("click", closeProdModal);
 document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") closeProdModal(); });
 document.getElementById("pv-img").addEventListener("change", e=>{
-  const file=e.target.files[0]; if(!file) return;
-  const reader=new FileReader();
-  reader.onload=ev=>{ const img=new Image(); img.onload=()=>{ const S=600,c=document.createElement("canvas"); c.width=c.height=S; const x=c.getContext("2d"); x.fillStyle="#F5F2EB"; x.fillRect(0,0,S,S); const sc=Math.min(S/img.width,S/img.height),w=img.width*sc,h=img.height*sc; x.drawImage(img,(S-w)/2,(S-h)/2,w,h); pendingImg=c.toDataURL("image/jpeg",0.85); document.getElementById("pv-preview").src=pendingImg; }; img.src=ev.target.result; };
-  reader.readAsDataURL(file);
+  const file=e.target.files && e.target.files[0]; if(!file) return;
+  processImageFile(file, 600, "#F5F2EB", d=>{ pendingImg=d; document.getElementById("pv-preview").src=d; });
+  e.target.value=""; // permite volver a elegir la misma imagen
 });
 document.getElementById("pv-save").addEventListener("click", async ()=>{
   const editing=!!editingProductId;

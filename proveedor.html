@@ -290,7 +290,7 @@
 <!-- Modal producto -->
 <div id="prov-modal" class="hidden fixed inset-0 z-[120] flex items-end justify-center bg-deep-forest/40 backdrop-blur-sm">
   <div class="bg-surface w-full max-w-[440px] rounded-t-3xl max-h-[92vh] overflow-y-auto no-scrollbar p-6">
-    <div class="flex items-center justify-between mb-5"><h2 class="font-headline text-2xl text-primary">Nuevo producto</h2><button id="pv-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="flex items-center justify-between mb-5"><h2 id="pv-title" class="font-headline text-2xl text-primary">Nuevo producto</h2><button id="pv-close" class="text-on-surface-variant hover:text-error"><span class="material-symbols-outlined">close</span></button></div>
     <div class="space-y-4">
       <div class="flex items-center gap-4">
         <div class="w-24 h-24 rounded-xl overflow-hidden bg-earth-cream border border-outline-variant/30 flex-shrink-0"><img id="pv-preview" class="w-full h-full object-contain" alt="" src="assets/products/generic.svg"></div>
@@ -302,11 +302,12 @@
         <input id="pv-unit" placeholder="Unidad (500g)" class="flex-1 h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
       </div>
       <input id="pv-origin" placeholder="Origen (Valle Central)" class="w-full h-11 px-4 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary focus:ring-1 focus:ring-secondary">
-      <div class="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-secondary/40 bg-secondary-container/20">
+      <div id="pv-stock-wrap" class="flex items-center gap-2 px-4 py-3 rounded-lg border-2 border-secondary/40 bg-secondary-container/20">
         <span class="material-symbols-outlined text-secondary text-[20px]">inventory_2</span>
         <input id="pv-stock" type="number" min="1" step="1" placeholder="Stock disponible *" class="flex-1 bg-transparent outline-none font-semibold text-primary placeholder:text-on-surface-variant/60 text-sm">
         <span class="text-xs text-secondary font-semibold whitespace-nowrap">unidades</span>
       </div>
+      <p id="pv-stock-note" class="hidden text-xs text-on-surface-variant -mt-1">El stock se ajusta por sucursal desde <b>Mis sucursales → Stock</b>.</p>
       <select id="pv-cat" class="w-full h-11 px-3 rounded-lg border border-outline-variant bg-surface-container-low outline-none focus:border-secondary"><option>Superfoods</option><option>Despensa</option><option>Snacks</option><option>Bebidas</option><option>Carnes vegetales</option><option>Granos</option></select>
       <div>
         <p class="text-sm text-on-surface-variant mb-2">Tipo de producción <span class="text-on-surface-variant/60">(selecciona los que apliquen)</span></p>
@@ -318,7 +319,7 @@
           <label class="flex items-center gap-1.5 cursor-pointer select-none"><input type="checkbox" value="Industrial" id="pvc-industrial" class="rounded accent-leaf-green w-4 h-4"><span class="text-sm text-on-surface">🏭 Industrial</span></label>
         </div>
       </div>
-      <p id="pv-error" class="hidden text-error text-sm">Completa nombre, precio y stock disponible.</p>
+      <p id="pv-error" class="hidden text-error text-sm">Completa los campos obligatorios (nombre y precio; stock al crear).</p>
       <button id="pv-save" class="w-full bg-leaf-green text-white font-semibold py-3.5 rounded-xl active:scale-95 transition-transform">Enviar para aprobación</button>
     </div>
   </div>
@@ -709,6 +710,7 @@ function renderProdView(){
           ${(p.categories&&p.categories.length)?`<div class="flex flex-wrap gap-1 mt-1">${p.categories.map(c=>`<span class="text-[10px] bg-primary-container/60 text-leaf-green px-1.5 py-0.5 rounded-full font-semibold">${c}</span>`).join("")}</div>`:""}
         </div>
       <span class="${approved?'bg-secondary-container text-on-secondary-container':'bg-tertiary-fixed/40 text-secondary'} text-[10px] font-bold uppercase px-2 py-1 rounded-full">${approved?'Activo':'En revisión'}</span>
+      <button data-edit-prod="${p.id}" class="text-on-surface-variant hover:text-secondary p-1.5 active:scale-90 transition-transform" aria-label="Editar"><span class="material-symbols-outlined text-[20px]">edit</span></button>
       <button data-del-prod="${p.id}" data-del-name="${escapeAttr(p.name)}" class="text-on-surface-variant hover:text-error p-1.5 active:scale-90 transition-transform" aria-label="Eliminar"><span class="material-symbols-outlined text-[20px]">delete</span></button>
     </div>`;
   }).join("") : empty;
@@ -726,6 +728,7 @@ function renderProdView(){
 function escapeAttr(s){ return String(s||"").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
 document.addEventListener("click", e=>{
   const tab=e.target.closest("[data-prodview]"); if(tab){ prodView=tab.dataset.prodview; renderProdView(); return; }
+  const edit=e.target.closest("[data-edit-prod]"); if(edit){ const p=(PROV_PRODUCTS||[]).find(x=>String(x.id)===edit.dataset.editProd); if(p) openProdModal(p); return; }
   const del=e.target.closest("[data-del-prod]"); if(del){ askDeleteProduct(del.dataset.delProd, del.dataset.delName||"este producto"); return; }
 });
 // Eliminar producto con confirmación (Update 1)
@@ -998,10 +1001,33 @@ function setupRealtime(){
   SBX().channel("prov-self").on("postgres_changes",{event:"*",schema:"public",table:"providers"}, async ()=>{ await refreshProvider(); if(provider.status!=="aprobado") route(); }).subscribe();
 }
 
-// Modal producto
-document.getElementById("prov-add").addEventListener("click", ()=>{ pendingImg="assets/products/generic.svg"; document.getElementById("pv-preview").src=pendingImg; ["pv-name","pv-price","pv-unit","pv-origin","pv-stock"].forEach(id=>document.getElementById(id).value=""); ["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].forEach(id=>{const cb=document.getElementById(id);if(cb)cb.checked=false;}); document.getElementById("pv-error").classList.add("hidden"); document.getElementById("prov-modal").classList.remove("hidden"); });
-document.getElementById("pv-close").addEventListener("click", ()=>document.getElementById("prov-modal").classList.add("hidden"));
-document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") document.getElementById("prov-modal").classList.add("hidden"); });
+// Modal producto (nuevo o edición — la edición funciona aunque el producto esté en revisión)
+const PV_CAT_MAP = { "pvc-organico":"Orgánico","pvc-fresco":"Fresco","pvc-artesanal":"Artesanal","pvc-semi":"Semiindustrial","pvc-industrial":"Industrial" };
+let editingProductId = null;
+function openProdModal(p){
+  editingProductId = p ? p.id : null;
+  pendingImg = (p && p.image_url) ? p.image_url : "assets/products/generic.svg";
+  document.getElementById("pv-preview").src = pendingImg;
+  document.getElementById("pv-name").value = p ? (p.name||"") : "";
+  document.getElementById("pv-price").value = (p && p.price!=null) ? p.price : "";
+  document.getElementById("pv-unit").value = p ? (p.unit||"") : "";
+  document.getElementById("pv-origin").value = p ? (p.origin||"") : "";
+  document.getElementById("pv-stock").value = "";
+  if(p && p.category) document.getElementById("pv-cat").value = p.category; else document.getElementById("pv-cat").selectedIndex = 0;
+  const pcats = (p && p.categories) || [];
+  Object.keys(PV_CAT_MAP).forEach(id=>{ const cb=document.getElementById(id); if(cb) cb.checked = pcats.indexOf(PV_CAT_MAP[id])>-1; });
+  // En edición el stock se gestiona por sucursal → se oculta el campo y se muestra la nota.
+  document.getElementById("pv-stock-wrap").classList.toggle("hidden", !!editingProductId);
+  document.getElementById("pv-stock-note").classList.toggle("hidden", !editingProductId);
+  document.getElementById("pv-title").textContent = editingProductId ? "Editar producto" : "Nuevo producto";
+  document.getElementById("pv-save").textContent = editingProductId ? "Guardar cambios" : "Enviar para aprobación";
+  document.getElementById("pv-error").classList.add("hidden");
+  document.getElementById("prov-modal").classList.remove("hidden");
+}
+function closeProdModal(){ editingProductId=null; document.getElementById("prov-modal").classList.add("hidden"); }
+document.getElementById("prov-add").addEventListener("click", ()=>openProdModal(null));
+document.getElementById("pv-close").addEventListener("click", closeProdModal);
+document.getElementById("prov-modal").addEventListener("click", e=>{ if(e.target.id==="prov-modal") closeProdModal(); });
 document.getElementById("pv-img").addEventListener("change", e=>{
   const file=e.target.files[0]; if(!file) return;
   const reader=new FileReader();
@@ -1009,16 +1035,26 @@ document.getElementById("pv-img").addEventListener("change", e=>{
   reader.readAsDataURL(file);
 });
 document.getElementById("pv-save").addEventListener("click", async ()=>{
+  const editing=!!editingProductId;
   const name=document.getElementById("pv-name").value.trim();
   const price=parseFloat(document.getElementById("pv-price").value);
   const stock=parseInt(document.getElementById("pv-stock").value,10);
-  if(!name||isNaN(price)||!stock||stock<1){ document.getElementById("pv-error").classList.remove("hidden"); return; }
+  // Al crear, el stock es obligatorio; al editar se gestiona por sucursal (no se pide aquí).
+  if(!name||isNaN(price)||(!editing && (!stock||stock<1))){ document.getElementById("pv-error").classList.remove("hidden"); return; }
   if(!SBX()) return;
   const cats=["pvc-organico","pvc-fresco","pvc-artesanal","pvc-semi","pvc-industrial"].map(id=>document.getElementById(id)).filter(cb=>cb&&cb.checked).map(cb=>cb.value);
-  const row={ name, price, unit:document.getElementById("pv-unit").value.trim()||"1u", origin:document.getElementById("pv-origin").value.trim()||"Bolivia",
-    category:document.getElementById("pv-cat").value, categories:cats, tag:"Orgánico", image_url:pendingImg, active:false, in_sub:false, provider_id:provider.id, provider_name:provider.business };
+  const fields={ name, price, unit:document.getElementById("pv-unit").value.trim()||"1u", origin:document.getElementById("pv-origin").value.trim()||"Bolivia",
+    category:document.getElementById("pv-cat").value, categories:cats, image_url:pendingImg, provider_name:provider.business };
+  if(editing){
+    // Actualiza los datos del producto sin cambiar su estado de aprobación (active) ni el stock.
+    const r=await SBX().from("products").update(fields).eq("id", editingProductId);
+    closeProdModal();
+    if(r.error){ toast("No se pudo guardar"); return; }
+    toast("Producto actualizado"); loadProducts(); return;
+  }
+  const row=Object.assign({ tag:"Orgánico", active:false, in_sub:false, provider_id:provider.id }, fields);
   const ins=await SBX().from("products").insert(row).select().single();
-  document.getElementById("prov-modal").classList.add("hidden");
+  closeProdModal();
   if(ins.error){ toast("Error al enviar"); return; }
   // Siembra branch_inventory con el stock real indicado por el proveedor
   if(ins.data && PROV_BRANCHES && PROV_BRANCHES.length){

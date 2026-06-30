@@ -121,10 +121,65 @@
   #phone { width: 100%; max-width: 440px; margin: 0 auto; position: relative; min-height: 100vh; min-height: 100dvh;
            background: #F5F2EB; box-shadow: 0 30px 80px -20px rgba(10,19,13,0.25); }
   @media (min-width: 480px) { #phone { min-height: 900px; margin: 24px auto; border-radius: 28px; overflow: hidden; } }
+
+  /* ===== Splash de carga (marca Origen) — aparece al instante y se va cuando la app está lista ===== */
+  #origen-splash { position: fixed; inset: 0; z-index: 9999; background: #0A130D; display: flex; align-items: center; justify-content: center; overflow: hidden; transition: opacity .7s ease, visibility .7s ease; }
+  #origen-splash.sp-hide { opacity: 0; visibility: hidden; pointer-events: none; }
+  #origen-splash .sp-glow { position: absolute; left: 50%; top: 50%; width: 70vmin; height: 70vmin; transform: translate(-50%,-50%); background: radial-gradient(circle, rgba(94,188,102,.22), rgba(10,19,13,0) 62%); animation: spGlow 2.6s ease-in-out infinite; }
+  @keyframes spGlow { 0%,100% { opacity:.5; transform: translate(-50%,-50%) scale(.9); } 50% { opacity:1; transform: translate(-50%,-50%) scale(1.08); } }
+  #origen-splash .sp-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 120% at 50% 50%, rgba(10,19,13,0) 48%, rgba(4,9,6,.9) 100%); }
+  #origen-splash .sp-logo-wrap { position: relative; display: flex; flex-direction: column; align-items: center; gap: 26px; z-index: 3; }
+  #origen-splash .sp-logo { width: min(54vw, 250px); height: auto; animation: spLogo 2.6s ease-in-out infinite; filter: drop-shadow(0 0 18px rgba(187,232,91,.22)); }
+  @keyframes spLogo { 0%,100% { transform: scale(.98); opacity:.92; } 50% { transform: scale(1.02); opacity:1; } }
+  #origen-splash .sp-ring { width: 32px; height: 32px; border-radius: 50%; border: 2.5px solid rgba(187,232,91,.22); border-top-color: #BBE85B; animation: spSpin .9s linear infinite; }
+  @keyframes spSpin { to { transform: rotate(360deg); } }
+  #origen-splash .sp-particles span { position: absolute; bottom: 30%; display: block; width: 7px; height: 7px; border-radius: 50%; background: radial-gradient(circle, #D6FFAA, #5EBC66); opacity: 0; filter: blur(.3px); animation: spFloat 4.2s ease-in-out infinite; }
+  @keyframes spFloat { 0% { transform: translateY(30px) scale(.5); opacity:0; } 25% { opacity:.9; } 70% { opacity:.6; } 100% { transform: translateY(-90px) scale(1.05); opacity:0; } }
+  @media (prefers-reduced-motion: reduce) { #origen-splash .sp-glow, #origen-splash .sp-logo, #origen-splash .sp-ring, #origen-splash .sp-particles span { animation: none; } }
 </style>
 </head>
 
 <body class="font-body-md text-on-background">
+
+<!-- ===== Splash de carga (marca Origen): instantáneo, se oculta cuando la app está lista ===== -->
+<div id="origen-splash" aria-hidden="true">
+  <div class="sp-glow"></div>
+  <div class="sp-particles">
+    <span style="left:18%;animation-delay:0s"></span>
+    <span style="left:30%;animation-delay:1.4s"></span>
+    <span style="left:42%;animation-delay:.6s"></span>
+    <span style="left:50%;animation-delay:2.1s"></span>
+    <span style="left:58%;animation-delay:.3s"></span>
+    <span style="left:70%;animation-delay:1.8s"></span>
+    <span style="left:82%;animation-delay:.9s"></span>
+    <span style="left:26%;animation-delay:3s"></span>
+    <span style="left:74%;animation-delay:2.6s"></span>
+  </div>
+  <div class="sp-logo-wrap">
+    <img class="sp-logo" src="assets/origen-logo-light.svg" alt="Origen" onerror="this.style.display='none'">
+    <div class="sp-ring"></div>
+  </div>
+  <div class="sp-vignette"></div>
+</div>
+<script>
+  /* Define hideSplash lo antes posible: oculta el splash con un mínimo visible (para que no
+     parpadee) y un failsafe, de modo que nunca quede pegado si el init falla. */
+  (function(){
+    var splash = document.getElementById("origen-splash");
+    var start = performance.now();
+    window.hideSplash = function(){
+      if(!splash || splash.__hidden) return; splash.__hidden = true;
+      var wait = Math.max(0, 800 - (performance.now() - start)); // mínimo ~0.8 s visible
+      setTimeout(function(){
+        splash.classList.add("sp-hide");
+        setTimeout(function(){ if(splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 750);
+      }, wait);
+    };
+    window.addEventListener("load", function(){ setTimeout(window.hideSplash, 300); }); // respaldo
+    setTimeout(window.hideSplash, 6000); // failsafe duro
+  })();
+</script>
+
 <div id="phone">
 
 <!-- ===================== WELCOME ===================== -->
@@ -3960,6 +4015,7 @@ syncCart();
   // 3. *** NAVEGAR AHORA *** — muestra la pantalla al instante con datos del localStorage
   //    No esperar la hidratación de red; los datos del caché local son suficientes para el render inicial.
   navigate(currentUser() ? "home" : "welcome");
+  if (window.hideSplash) window.hideSplash(); // primera pantalla lista → oculta el splash de carga
   if (subReturn) showMessage({ icon: "event_available", title: "¡Suscripción activada!", text: "Tu pago con Stripe se procesó correctamente. Tu suscripción de Bs. 99/mes está activa. Puedes pausar o cancelar cuando quieras.", confirmLabel: "Listo", onConfirm: () => navigate("account") });
 
   // 4. Hidratar en segundo plano — sin bloquear la UI ya visible
